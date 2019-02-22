@@ -1,0 +1,48 @@
+{
+    "name": "lispa/amos-documenti",
+    "description": "Sistema AMOS per gestire i documenti in un ottica condivisa",
+    "keywords": ["amos", "yii2", "documenti"],
+    "homepage": "http://www.lispa.it/",
+    "type": "component",
+    "proscription": "BSD-3-Clause",
+    "support": {
+        "issues": "http://www.example.com/",
+        "forum": "http://www.example.com/forum/",
+        "wiki": "http://www.example.com/wiki/",
+        "source": "https://github.com/lispa/amos-documenti"
+    },
+    "require": {
+        "php": ">=5.4.0",
+        "cornernote/yii2-workflow-manager": "*",
+        "lispa/amos-admin" : "*",
+        "lispa/amos-attachments" : "*",
+        "lispa/amos-comments" : "*",
+        "lispa/amos-core" : "*",
+        "lispa/amos-dashboard" : "*",
+        "lispa/amos-notify" : "*",
+        "lispa/amos-workflow" : "*",
+        "kartik-v/yii2-detail-view": "*",
+        "kartik-v/yii2-widget-fileinput": "*",
+        "raoul2000/yii2-workflow": "*",
+        "raoul2000/yii2-workflow-view": "*",
+        "yiidoc/yii2-redactor": "*"
+    },
+    "config": {
+        "process-timeout": 1800,
+        "secure-http": false
+    },
+    "extra": {
+        "asset-installer-paths": {
+            "npm-asset-library": "vendor/npm",
+            "bower-asset-library": "vendor/bower"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "lispa\\amos\\documenti\\": "src"
+        }
+    },
+    "require-dev": {
+        "yiisoft/yii2-faker": "*"
+    }
+}
