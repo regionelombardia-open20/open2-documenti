@@ -36,7 +36,13 @@ class DefaultController extends DashboardController
      */
     public function actionIndex()
     {
-        return $this->redirect(['/documenti/documenti/own-interest-documents']);
+        $url = '/documenti/documenti/own-interest-documents';
+        $module = \Yii::$app->getModule('documenti');
+        if($module){
+            $url =  $module->defaultWidgetIndexUrl;
+        }
+        return $this->redirect([$url]);
+
         Url::remember();
         $params = [
             'currentDashboard' => $this->getCurrentDashboard()

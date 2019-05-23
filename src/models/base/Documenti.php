@@ -41,6 +41,7 @@ use yii\helpers\ArrayHelper;
  * @property integer $is_folder
  * @property integer $version
  * @property integer $version_parent_id
+ * @property string $link_document
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -91,6 +92,7 @@ abstract class Documenti extends ContentModel
             [[
                 'descrizione_breve'
             ], 'string', 'max' => 250],
+            [['link_document'], 'string', 'max' => 255],
             [[
                 'primo_piano',
                 'filemanager_mediafile_id',
@@ -147,6 +149,7 @@ abstract class Documenti extends ContentModel
             'is_folder' => AmosDocumenti::t('amosdocumenti', 'Is Folder'),
             'version' => AmosDocumenti::t('amosdocumenti', 'Version'),
             'version_parent_id' => AmosDocumenti::t('amosdocumenti', 'Version Parent ID'),
+            'link_document' => AmosDocumenti::t('amosdocumenti', '#link_document_field'),
             'created_at' => AmosDocumenti::t('amosdocumenti', 'Creato il'),
             'updated_at' => AmosDocumenti::t('amosdocumenti', 'Aggiornato il'),
             'deleted_at' => AmosDocumenti::t('amosdocumenti', 'Cancellato il'),

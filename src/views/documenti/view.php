@@ -72,6 +72,10 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
     ]);
 }
 
+/** @var \lispa\amos\report\AmosReport $reportModule */
+$reportModule = Yii::$app->getModule('report');
+$viewReportWidgets =  (!is_null($reportModule) && in_array($model->className(), $reportModule->modelsEnabled));
+
 ?>
 
 <div class="documents-view col-xs-12 nop">
@@ -112,11 +116,11 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
                 'layout' => $layoutPublishedByWidget,
                 'isTooltip' => true
             ]) ?>
-            <?=
-            \lispa\amos\report\widgets\ReportFlagWidget::widget([
-                'model' => $model,
-            ])
-            ?>
+            <?php if ($viewReportWidgets): ?>
+                <?= \lispa\amos\report\widgets\ReportFlagWidget::widget([
+                    'model' => $model,
+                ]) ?>
+            <?php endif; ?>
         </div>
     </div>
     <div class="clearfix"></div>
@@ -150,27 +154,48 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
             <div class="col-xs-12 action-document">
                 <div>
                     <div>
-                        <?=
-                        DocumentsUtility::getDocumentIcon($model);
-                        ?>
+                        <?= DocumentsUtility::getDocumentIcon($model); ?>
                     </div>
                     <div>
-                        <?=
-                        Html::tag('p', ((strlen($documentMainFile->name) > 80) ? substr($documentMainFile->name, 0, 75) . '[...]' : $documentMainFile->name) . '.' . $documentMainFile->type, ['class' => 'filename']);
+                        <?php
+                        if ($documentMainFile) {
+                            echo Html::tag(
+                                'p', 
+                                (
+                                    (strlen($documentMainFile->name) > 80) 
+                                        ? substr($documentMainFile->name, 0, 75) . '[...]' 
+                                        : $documentMainFile->name
+                                ) . '.' . $documentMainFile->type, 
+                                ['class' => 'filename']
+                            );
+                        } else {
+                            echo Html::a($model->link_document, $model->link_document, [
+                                'target' => '_blank',
+                                'class' => 'btn btn-navigation-primary'
+                            ]);
+                        }
                         ?>
                     </div>
                 </div>
                 <div>
-                    <?= Html::a(/*AmosDocumenti::tHtml('amosdocumenti', 'Scarica file') . */
-                        AmosIcons::show('download'), ['/attachments/file/download/', 'id' => $model->getDocumentMainFile()->id, 'hash' => $model->getDocumentMainFile()->hash], [
-                        'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
-                        'class' => 'bk-btnImport pull-right btn btn-icon',
-                    ]); ?>
-
                     <?php
+                    if ($documentMainFile) {
+                        echo Html::a(/*AmosDocumenti::tHtml('amosdocumenti', 'Scarica file') . */
+                        AmosIcons::show('download'), 
+                            [
+                                '/attachments/file/download/', 'id' => $model->getDocumentMainFile()->id, 
+                                'hash' => $model->getDocumentMainFile()->hash
+                            ],
+                            [
+                                'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
+                                'class' => 'bk-btnImport pull-right btn btn-icon',
+                            ]
+                        ); 
+                    }
+                    
                     if (!$isFolder && $controller->documentsModule->enableDocumentVersioning) {
                         if (Yii::$app->user->can('DOCUMENTI_UPDATE', ['model' => $model, 'newVersion' => true])) {
-                            $btn = \lispa\amos\core\utilities\ModalUtility::addConfirmRejectWithModal([
+                            echo \lispa\amos\core\utilities\ModalUtility::addConfirmRejectWithModal([
                                 'modalId' => 'new-document-version-modal-id-' . $model->id,
                                 'modalDescriptionText' => AmosDocumenti::t('amosdocumenti', '#NEW_DOCUMENT_VERSION_MODAL_TEXT'),
                                 'btnText' => AmosDocumenti::t('amosdocumenti', 'New document version'),
@@ -183,7 +208,6 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
                                     'class' => 'bk-btnImport pull-right btn btn-secondary m-r-5'],
 
                             ]);
-                            echo $btn;
                         }
                     }
                     ?>
@@ -195,16 +219,22 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
             <?= $model->descrizione; ?>
         </div>
         <div class="widget-body-content col-xs-12 nop">
+          <?php echo \lispa\amos\core\forms\editors\likeWidget\LikeWidget::widget([
+          'model' => $model,
+        ]);
+          ?>
+          
             <?=
             \lispa\amos\report\widgets\ReportDropdownWidget::widget([
                 'model' => $model,
             ]);
             ?>
+            <?php $baseUrl = (!empty(\Yii::$app->params['platform']['backendUrl']) ? \Yii::$app->params['platform']['backendUrl'] : '') ?>
             <?= \lispa\amos\core\forms\editors\socialShareWidget\SocialShareWidget::widget([
                 'mode' => \lispa\amos\core\forms\editors\socialShareWidget\SocialShareWidget::MODE_DROPDOWN,
                 'configuratorId' => 'socialShare',
                 'model' => $model,
-                'url' => \yii\helpers\Url::to(\Yii::$app->params['platform']['backendUrl'] . '/documenti/documenti/view?id=' . $model->id, true),
+                'url' => \yii\helpers\Url::to($baseUrl . '/documenti/documenti/public?id=' . $model->id, true),
                 'title' => $model->title,
                 'description' => $model->descrizione_breve,
 //                'imageUrl'      => !empty($model->getNewsImage()) ? $model->getNewsImage()->getWebUrl('square_small') : '',

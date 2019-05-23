@@ -12,6 +12,7 @@
 namespace lispa\amos\documenti\assets;
 
 use yii\web\AssetBundle;
+use lispa\amos\core\widget\WidgetAbstract;
 
 /**
  * Class ModuleDocumentiAsset
@@ -51,6 +52,11 @@ class ModuleDocumentiAsset extends AssetBundle
     public function init()
     {
         $moduleL = \Yii::$app->getModule('layout');
+
+        if(!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS){
+            $this->css = ['less/documents_fullsize.less'];
+        }
+
         if (!empty($moduleL)) {
             $this->depends [] = 'lispa\amos\layout\assets\BaseAsset';
         } else {

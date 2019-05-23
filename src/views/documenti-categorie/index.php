@@ -19,7 +19,7 @@ use lispa\amos\documenti\AmosDocumenti;
  * @var lispa\amos\documenti\models\search\DocumentiCategorieSearch $searchModel
  */
 
-$this->title = AmosDocumenti::t('amosdocumenti', 'Categorie documenti');
+$this->title = AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories');
 $this->params['breadcrumbs'][] = ['label' => AmosDocumenti::t('amosdocumenti', 'Documenti'), 'url' => '/documenti'];
 ?>
 <div class="documenti-categorie-index">

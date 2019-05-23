@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: michele.lafrancesca
@@ -12,30 +13,36 @@ use lispa\amos\documenti\models\Documenti;
 use yii\base\Widget;
 use yii\data\ActiveDataProvider;
 
-class DocumentsFrontendWidget extends Widget
-{
-    const TYPE_HIGHLIGHTS = 'highlights';
-    const TYPE_FRONTEND   = 'frontend';
-    const TYPE_ALL        = 'all';
+class DocumentsFrontendWidget extends Widget {
 
+    const TYPE_HIGHLIGHTS = 'highlights';
+    const TYPE_FRONTEND = 'frontend';
+    const TYPE_ALL = 'all';
+
+    public $tags = [];
+    public $andWhereInIds = [];
     public $category;
-    public $type                    = DocumentsFrontendWidget::TYPE_ALL;
-    public $statuses                = [];
+    public $type = DocumentsFrontendWidget::TYPE_ALL;
+    public $statuses = [];
     public $validated_at_least_once = false;
     public $queryOrderBy;
-    public $view_path               = '@vendor/lispa/amos-documenti/src/widgets/views/documents_frontend_item';
+    public $view_path = '@vendor/lispa/amos-documenti/src/widgets/views/documents_frontend_item';
     public $paginationPageSize = 20;
+    public $showPageSummary = true;
 
     /**
-     *
+     * @inheritdoc
      */
-    public function init()
-    {
+    public function init() {
         parent::init();
     }
 
-    public function run()
-    {
+    /**
+     * @inheritdoc
+     * 
+     * @return type
+     */
+    public function run() {
         $query = Documenti::find();
 
         if ($this->type == DocumentsFrontendWidget::TYPE_FRONTEND) {
@@ -53,6 +60,16 @@ class DocumentsFrontendWidget extends Widget
             }
         }
 
+        if (!empty($this->tags) && count($this->tags) > 0) {
+            $newsClassname = Documenti::className();
+            $newsClassname = addslashes($newsClassname);
+            $query->leftJoin('entitys_tags_mm', "entitys_tags_mm.record_id=news.id AND entitys_tags_mm.classname='$newsClassname'")
+                ->andFilterWhere(['entitys_tags_mm.tag_id' => $this->tags]);
+        }
+
+        if (!empty($this->andWhereInIds)) {
+            $query->andFilterWhere(['documenti.id' => $this->andWhereInIds]);
+        }
 
         if (!empty($this->category)) {
             $query->andWhere(['documenti_categorie_id' => $this->category]);
@@ -63,12 +80,21 @@ class DocumentsFrontendWidget extends Widget
         }
 
 
-        /** @var  $dataProvider ActiveDataProvider*/
+        /** @var  $dataProvider ActiveDataProvider */
         $dataProvider = new ActiveDataProvider([
             'query' => $query
         ]);
+
         $dataProvider->pagination->pageSize = $this->paginationPageSize;
 
-        return $this->render('documents_frontend_index', ['dataProvider' => $dataProvider, 'view_item' => $this->view_path]);
+        return $this->render(
+            'documents_frontend_index',
+            [
+                'dataProvider' => $dataProvider,
+                'view_item' => $this->view_path,
+                'widget' => $this
+            ]
+        );
     }
+
 }

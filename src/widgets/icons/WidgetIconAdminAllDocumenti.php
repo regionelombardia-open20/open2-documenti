@@ -15,6 +15,7 @@ use lispa\amos\core\widget\WidgetIcon;
 use lispa\amos\documenti\AmosDocumenti;
 use lispa\amos\documenti\models\Documenti;
 use lispa\amos\documenti\models\search\DocumentiSearch;
+use lispa\amos\core\widget\WidgetAbstract;
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -24,16 +25,6 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconAdminAllDocumenti extends WidgetIcon
 {
-    /**
-     * @inheritdoc
-     */
-    public function getOptions()
-    {
-        $options = parent::getOptions();
-
-        //aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
-        return ArrayHelper::merge($options, ["children" => []]);
-    }
 
     /**
      * @inheritdoc
@@ -42,27 +33,68 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
     {
         parent::init();
 
-        $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', 'Amministra documenti'));
-        $this->setDescription(AmosDocumenti::t('amosdocumenti', 'Visualizza tutti i documenti'));
+        $paramsClassSpan = [
+            'bk-backgroundIcon',
+            'color-primary'
+        ];
+
+        $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_all_admin'));
+        $this->setDescription(AmosDocumenti::t('amosdocumenti', '#documenti_widget_description_all_admin'));
         $this->setIcon('file-text-o');
         $this->setUrl(['/documenti/documenti/admin-all-documents']);
-
-        $DocumentiSearch = new DocumentiSearch();
-
-        $notifier = \Yii::$app->getModule('notify');
-        $count = 0;
-        if ($notifier) {
-            $count = $notifier->countNotRead(Yii::$app->getUser()->id, Documenti::class, $DocumentiSearch->buildQuery([], 'admin-all'));
-        }
-        $this->setBulletCount($count);
-
         $this->setCode('ADMIN-ALL-DOCUMENTI');
         $this->setModuleName('documenti');
         $this->setNamespace(__CLASS__);
 
-        $this->setClassSpan(ArrayHelper::merge($this->getClassSpan(), [
-            'bk-backgroundIcon',
-            'color-primary'
-        ]));
+        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+            $paramsClassSpan = [];
+        }
+
+        $this->setClassSpan(
+            ArrayHelper::merge(
+                $this->getClassSpan(),
+                $paramsClassSpan
+            )
+        );
+
+        $this->setBulletCount(
+            $this->makeBulletCounter(Yii::$app->getUser()->id)
+        );
     }
+
+    /**
+     * 
+     * @param type $user_id
+     * @return type
+     */
+    public function makeBulletCounter($user_id = null)
+    {
+        $DocumentiSearch = new DocumentiSearch();
+        $notifier = \Yii::$app->getModule('notify');
+
+        $count = 0;
+        if ($notifier) {
+            $count = $notifier->countNotRead(
+                $user_id,
+                Documenti::class,
+                $DocumentiSearch->buildQuery([], 'admin-all')
+            );
+        }
+
+        return $count;
+    }
+
+    /**
+     * Aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
+     * 
+     * @inheritdoc
+     */
+    public function getOptions()
+    {
+        return ArrayHelper::merge(
+            parent::getOptions(),
+            ['children' => []]
+        );
+    }
+
 }

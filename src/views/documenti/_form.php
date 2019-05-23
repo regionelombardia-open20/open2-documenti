@@ -47,8 +47,10 @@ $moduleCwh = Yii::$app->getModule('cwh');
 $enableGroupNotification = AmosDocumenti::instance()->enableGroupNotification;
 $primoPiano = '';
 $inEvidenza = '';
-$enableComments = '';
 
+$enableComments = '';
+/** @var \lispa\amos\comments\AmosComments $commentsModule */
+$commentsModule = Yii::$app->getModule('comments');
 
 if ($enableGroupNotification) {
 
@@ -155,6 +157,18 @@ JS;
     $this->registerJs($js);
 
 }
+
+/** @var \lispa\amos\report\AmosReport $reportModule */
+$reportModule = Yii::$app->getModule('report');
+$viewReportWidgets =  (!is_null($reportModule) && in_array($model->className(), $reportModule->modelsEnabled));
+
+$reportFlagWidget = '';
+if ($viewReportWidgets) {
+    $reportFlagWidget = \lispa\amos\report\widgets\ReportFlagWidget::widget([
+        'model' => $model,
+    ]);
+}
+
 ?>
 
 <?php
@@ -180,9 +194,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
         <div class="col-xs-12">
             <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#settings_general_title') .
                 CreatedUpdatedWidget::widget(['model' => $model, 'isTooltip' => true]) .
-                \lispa\amos\report\widgets\ReportFlagWidget::widget([
-                    'model' => $model,
-                ]), ['class' => 'subtitle-form']) ?>
+                $reportFlagWidget, ['class' => 'subtitle-form']) ?>
         </div>
         <div class="col-md-8 col-xs-12">
             <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
@@ -201,7 +213,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'documenti_categorie_id')->widget(Select2::className(), [
                         'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => FALSE],
-                        'data' => ArrayHelper::map(DocumentiCategorie::find()->orderBy('titolo')->all(), 'id', 'titolo')
+                        'data' => ArrayHelper::map(\lispa\amos\documenti\utility\DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo')
                     ]); ?>
                 </div>
                 <div class="col-md-6 col-xs-12">
@@ -231,6 +243,12 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                         ]
                     ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))->hint(AmosDocumenti::t('amosdocumenti', '#image_field_hint')) ?>
 
+                    <?= $form->field($model, 'link_document')->textInput([
+                        'maxlength' => true, 
+                        'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder')])
+                    ->hint(AmosDocumenti::t('amosdocumenti', '#link_document_field_hint')) 
+                    ?>
+                    
                     <?php if (!empty($documento)): ?>
                         <?= $documento->filename ?>
                         <?= Html::a(AmosIcons::show('download', ['class' => 'btn btn-tools-secondary']), ['/documenti/documenti/download-documento-principale', 'id' => $model->id], [
@@ -288,6 +306,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                     <?=
                     \lispa\amos\cwh\widgets\DestinatariPlusTagWidget::widget([
                         'model' => $model,
+                        'moduleCwh' => $moduleCwh
                     ]);
                     ?>
                 </div>
@@ -301,7 +320,9 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
 
     <div class="row">
         <div class="col-xs-12">
-            <?php if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
+            <?php 
+                if (\Yii::$app->user->can('EVENTS_PUBLISHER_FRONTEND')) :
+                    if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
 
                 <?php
                 $primoPiano = '';
@@ -338,7 +359,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                     ['class' => 'col-md-6 col-xs-12']);
                 ?>
             <?php endif; ?>
-
+        <?php endif; ?>
             <?php
             $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
             $publicationDate = '';
@@ -359,15 +380,19 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
 
             <?php if (!$isFolder) {
                 $model->comments_enabled = '1'; //default enable comment
-                $enableComments = Html::tag('div',
-                    $form->field($model, 'comments_enabled')->inline()->radioList(
-                        [
-                            '1' => AmosDocumenti::t('amosdocumenti', '#comments_ok'),
-                            '0' => AmosDocumenti::t('amosdocumenti', '#comments_no')
+                if (!is_null($commentsModule) && in_array($model->className(), $commentsModule->modelsEnabled)) {
+                    $enableComments = Html::tag('div',
+                        $form->field($model, 'comments_enabled')->inline()->radioList(
+                            [
+                                '1' => AmosDocumenti::t('amosdocumenti', '#comments_ok'),
+                                '0' => AmosDocumenti::t('amosdocumenti', '#comments_no')
 
-                        ],
-                        ['class' => 'comment-choice'])
-                    , ['class' => 'col-md-4 col-xs-12']);
+                            ],
+                            ['class' => 'comment-choice'])
+                        , ['class' => 'col-md-4 col-xs-12']);
+                } else {
+                    $enableComments = $form->field($model, 'comments_enabled')->hiddenInput()->label(false);
+                }
             }
             ?>
 

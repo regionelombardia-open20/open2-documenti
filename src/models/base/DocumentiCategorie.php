@@ -31,6 +31,8 @@ use lispa\amos\documenti\AmosDocumenti;
  * @property    integer $deleted_by
  *
  * @property \lispa\amos\documenti\models\Documenti $documenti
+ * @property \lispa\amos\documenti\models\DocumentiCategoryCommunityMm[] $documentiCategoryCommunityMms
+ * @property \lispa\amos\documenti\models\DocumentiCategoryRolesMm[] $documentiCategoryRolesMms
  */
 class DocumentiCategorie extends Record
 {
@@ -82,5 +84,27 @@ class DocumentiCategorie extends Record
     public function getDocumenti()
     {
         return $this->hasMany(\lispa\amos\documenti\models\Documenti::className(), ['documenti_categorie_id' => 'id']);
+    }
+
+    /**
+     * Relation between category and category-roles mm table.
+     * Returns an ActiveQuery related to model NewsCategoryRolesMm.
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getDocumentiCategoryRolesMms()
+    {
+        return $this->hasMany(DocumentiCategoryRolesMm::className(), ['documenti_categorie_id' => 'id']);
+    }
+
+    /**
+     * Relation between category and category-roles mm table.
+     * Returns an ActiveQuery related to model NewsCategoryCommunityMm.
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getDocumentiCategoryCommunityMms()
+    {
+        return $this->hasMany(DocumentiCategoryCommunityMm::className(), ['documenti_categorie_id' => 'id']);
     }
 }

@@ -13,6 +13,7 @@ namespace lispa\amos\documenti\widgets\icons;
 
 use lispa\amos\core\widget\WidgetIcon;
 use lispa\amos\documenti\AmosDocumenti;
+use lispa\amos\core\widget\WidgetAbstract;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -21,16 +22,6 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconDocumentiCategorie extends WidgetIcon
 {
-    /**
-     * @inheritdoc
-     */
-    public function getOptions()
-    {
-        $options = parent::getOptions();
-
-        //aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
-        return ArrayHelper::merge($options, ["children" => []]);
-    }
 
     /**
      * @inheritdoc
@@ -39,20 +30,42 @@ class WidgetIconDocumentiCategorie extends WidgetIcon
     {
         parent::init();
 
-        $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', 'Categorie documenti'));
-        $this->setDescription(AmosDocumenti::t('amosdocumenti', 'Visualizza le categorie dei documenti'));
+        $paramsClassSpan = [
+            'bk-backgroundIcon',
+            'color-primary'
+        ];
 
+        $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_categories'));
+        $this->setDescription(AmosDocumenti::t('amosdocumenti', '#documenti_widget_description_categories'));
         $this->setIcon('file-text-o');
-
         $this->setUrl(['/documenti/documenti-categorie/index']);
-
         $this->setCode('DOCUMENTI_CATEGORIE');
         $this->setModuleName('documenti');
         $this->setNamespace(__CLASS__);
 
-        $this->setClassSpan(ArrayHelper::merge($this->getClassSpan(), [
-            'bk-backgroundIcon',
-            'color-primary'
-        ]));
+        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+            $paramsClassSpan = [];
+        }
+
+        $this->setClassSpan(
+            ArrayHelper::merge(
+                $this->getClassSpan(),
+                $paramsClassSpan
+            )
+        );
     }
+
+    /**
+     * Aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
+     * 
+     * @inheritdoc
+     */
+    public function getOptions()
+    {
+        return ArrayHelper::merge(
+            parent::getOptions(),
+            ['children' => []]
+        );
+    }
+
 }

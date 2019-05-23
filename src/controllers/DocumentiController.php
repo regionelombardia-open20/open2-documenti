@@ -17,6 +17,7 @@ use lispa\amos\core\forms\CreateNewButtonWidget;
 use lispa\amos\core\helpers\BreadcrumbHelper;
 use lispa\amos\core\helpers\Html;
 use lispa\amos\core\icons\AmosIcons;
+use lispa\amos\cwh\utility\CwhUtil;
 use lispa\amos\dashboard\controllers\TabDashboardControllerTrait;
 use lispa\amos\documenti\AmosDocumenti;
 use lispa\amos\documenti\assets\ModuleDocumentiAsset;
@@ -169,6 +170,19 @@ class DocumentiController extends CrudController {
                                     'admin-all-documents'
                                 ],
                                 'roles' => ['AMMINISTRATORE_DOCUMENTI']
+                            ],
+                            [
+                                'allow' => true,
+                                'actions' => [
+                                    'go-to-view',
+                                    'go-to-update',
+                                    'go-to-groups',
+                                    'go-to-participants-tab',
+                                    'go-to-join',
+                                    'go-to-view-folder',
+                                    'go-to-update-folder',
+                                ],
+                                'roles' => ['@']
                             ],
                         ]
                     ],
@@ -389,6 +403,9 @@ class DocumentiController extends CrudController {
      */
     public function actionView($id) {
         $this->model = $this->findModel($id);
+        if ($this->model->isFolder()) {
+            return $this->redirect(['all-documents', 'parentId' => $this->model->id]);
+        }
 
         if ($this->model->load(Yii::$app->request->post()) && $this->model->save()) {
             return $this->redirect(['view', 'id' => $this->model->id, 'idDocumenti' => $id]);
@@ -402,9 +419,10 @@ class DocumentiController extends CrudController {
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate() {
+    public function actionCreate($isFolder = null, $isAjaxRequest = null, $regolaPubblicazione = null, $parentId = null, $from = null) {
         $this->setUpLayout('form');
 //        $this->model = new Documenti();
+        /** @var AmosDocumenti $module */
         $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
         $moduleGroups = \Yii::$app->getModule('groups');
         $enableGroupNotification = $module->enableGroupNotification;
@@ -423,6 +441,17 @@ class DocumentiController extends CrudController {
         }
         if (isset($params['parentId'])) {
             $this->model->parent_id = $params['parentId'];
+        }
+        if (isset($isAjaxRequest) && $isAjaxRequest = true) {
+            $this->model->regola_pubblicazione = $regolaPubblicazione;
+            $this->model->destinatari = Yii::$app->request->post()['Documenti']['destinatari'];
+            if (!$module->hidePubblicationDate) {
+                $this->model->data_pubblicazione = date("Y-m-d");
+            }
+            $this->model->setScenario(Documenti::SCENARIO_FOLDER);
+            $this->model->is_folder = Documenti::IS_FOLDER;
+            $this->model->validatori = "community-2";
+            $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
         if ($this->model->load(Yii::$app->request->post())) {
             if ($this->model->validate()) {
@@ -454,19 +483,39 @@ class DocumentiController extends CrudController {
                     $validateOnSave = false;
                 }
                 if ($this->model->save($validateOnSave)) {
-                    Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Documenti salvata con successo.'));
+                    if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
+                        Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Documenti salvata con successo.'));
+                    } else {
+                        return [
+                            'success' => true
+                        ];
+                    }
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
                     }
                     $this->redirectOnCreate($this->model);
                 } else {
-                    Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio'));
+                    if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
+                        Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio'));
+                    } else {
+                        return [
+                            'success' => false,
+                            'message' => AmosDocumenti::t('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio')
+                        ];
+                    }
                     return $this->render('create', [
                                 'model' => $this->model,
                     ]);
                 }
             } else {
-                Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Modifiche non salvate. Verifica l\'inserimento dei campi'));
+                if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
+                    Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Modifiche non salvate. Verifica l\'inserimento dei campi'));
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => AmosDocumenti::t('amosdocumenti', 'Modifiche non salvate. Verifica l\'inserimento dei campi')
+                    ];
+                }
             }
         }
         return $this->render('create', [
@@ -537,6 +586,12 @@ class DocumentiController extends CrudController {
             if ($this->model->load(Yii::$app->request->post())) {
                 if ($this->model->validate()) {
                     if ($this->model->save()) {
+                        
+                        if (!(empty($this->model->documentMainFile))) {
+                            $this->model->link_document = '';
+                            $this->model->save();
+                        }
+                        
                         Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Documento aggiornato con successo.'));
                         ;
                         if (!$this->model->is_folder) {
@@ -676,7 +731,7 @@ class DocumentiController extends CrudController {
         }
 
         $this->setDataProvider($this->getModelSearch()->searchOwnDocuments(Yii::$app->request->getQueryParams()));
-        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Documenti creati da me'));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_created_by_me'));
 
         $this->setAvailableViews([
             'grid' => [
@@ -721,7 +776,7 @@ class DocumentiController extends CrudController {
 
         $this->setDataProvider($this->getModelSearch()->searchOwnInterest(Yii::$app->request->getQueryParams()));
 
-        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Documenti di mio interesse'));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_own_interest'));
         $this->setCurrentView($this->getAvailableView($currentView));
         $this->setListViewsParams();
 
@@ -754,7 +809,7 @@ class DocumentiController extends CrudController {
         }
 
         $this->setDataProvider($this->getModelSearch()->searchToValidateDocuments(Yii::$app->request->getQueryParams()));
-        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Documenti da validare'));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_to_validate'));
 
         $this->setAvailableViews([
             'grid' => [
@@ -800,7 +855,7 @@ class DocumentiController extends CrudController {
 
         $this->setDataProvider($this->getModelSearch()->searchAll(Yii::$app->request->getQueryParams()));
 
-        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Tutti i documenti'));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_all'));
         $this->setCurrentView($this->getAvailableView($currentView));
         $this->setListViewsParams();
 
@@ -837,7 +892,7 @@ class DocumentiController extends CrudController {
         }
         $this->setDataProvider($this->getModelSearch()->searchAdminAll(Yii::$app->request->getQueryParams()));
 
-        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Amministra documenti'));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_all_admin'));
         $this->setCurrentView($this->getAvailableView($currentView));
         $this->setListViewsParams();
 
@@ -1089,6 +1144,200 @@ class DocumentiController extends CrudController {
         } else {
             return $this->redirect('/documenti/documenti/own-documents');
         }
+    }
+
+
+    /**
+     * @param $id
+     * @return string
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionPublic($id){
+        $model = $this->findModel($id);
+        $this->layout = 'form';
+        if($this->isContentShared($id)){
+            return $this->render('public', ['model' => $model]);
+        }
+    }
+
+
+
+    /**
+     * @param $fileHash
+     * @param $useStorePath
+     * @return string
+     */
+    public function getFilesDirPath($fileHash, $useStorePath = true)
+    {
+        if ($useStorePath) {
+            $path = $this->getStorePath() . DIRECTORY_SEPARATOR . $this->getSubDirs($fileHash);
+        } else {
+            $path = DIRECTORY_SEPARATOR . $this->getSubDirs($fileHash);
+        }
+
+        FileHelper::createDirectory($path, 0777);
+
+        return $path;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function getStorePath()
+    {
+        return \Yii::getAlias($this->storePath);
+    }
+
+    /**
+     * @param $fileHash
+     * @param int $depth
+     * @return string
+     */
+    public function getSubDirs($fileHash, $depth = 3)
+    {
+        $depth = min($depth, 9);
+        $path = '';
+
+        for ($i = 0; $i < $depth; $i++) {
+            $folder = substr($fileHash, $i * 3, 2);
+            $path .= $folder;
+            if ($i != $depth - 1) $path .= DIRECTORY_SEPARATOR;
+        }
+
+        return $path;
+    }
+
+    private function setScope($scopeId)
+    {
+        $moduleCwh = \Yii::$app->getModule('cwh');
+        $moduleCwh->setCwhScopeInSession([
+            'community' => $scopeId, // simple cwh scope for contents filtering, required
+        ],
+            [
+                // cwhRelation array specifying name of relation table, name of entity field on relation table and entity id field ,
+                // optional for compatibility with previous versions
+                'mm_name' => 'community_user_mm',
+                'entity_id_field' => 'community_id',
+                'entity_id' => $scopeId
+            ]);
+    }
+
+    private function setRouteStanze($id)
+    {
+        $routeStanze = Yii::$app->session->get('stanzePath', []);
+        if (sizeof($routeStanze) > 0) {
+            $routeStanze[] = [
+                'name' => Community::findOne(['id' => $id])->name,
+                'scope_id' => $id,
+                'isArea' => 0,
+            ];
+            Yii::$app->session->set('stanzePath', $routeStanze);
+        } else {
+            Yii::$app->session->set('stanzePath', [
+                [
+                    'name' => Community::findOne(['id' => $id])->name,
+                    'scope_id' => $id,
+                    'isArea' => 1,
+                ]
+            ]);
+        }
+        $this->setScope($id);
+    }
+
+    private function setFoldersPath($id)
+    {
+        $foldersPath = Yii::$app->session->get('foldersPath', []);
+        if (array_key_exists('links', $foldersPath)) {
+            if (sizeof($foldersPath['links']) > 0) {
+                $foldersPath['links'][sizeof($foldersPath['links']) - 1]['classes'] = "link";
+                $foldersPath['links'][sizeof($foldersPath['links']) - 1]['isNotLast'] = true;
+                $foldersPath['links'][] = [
+                    'classes' => '',
+                    'model-id' => $id,
+                    'name' => Documenti::findOne(['id' => $id])->titolo,
+                ];
+                Yii::$app->session->set('foldersPath', $foldersPath);
+            } else {
+                Yii::$app->session->set('foldersPath', [
+                    'links' => [
+                        [
+                            'classes' => '',
+                            'model-id' => $id,
+                            'name' => Documenti::findOne(['id' => $id])->titolo,
+                        ],
+                    ]
+                ]);
+            }
+        } else {
+            Yii::$app->session->set('foldersPath', [
+                'links' => [
+                    [
+                        'classes' => '',
+                        'model-id' => $id,
+                        'name' => Documenti::findOne(['id' => $id])->titolo,
+                    ],
+                ]
+            ]);
+        }
+    }
+
+    private function resetFoldersPath($scopeId)
+    {
+        Yii::$app->session->set('foldersPath', [
+            'links' => [
+                [
+                    'classes' => '',
+                    'model-id' => '',
+                    'name' => Community::findOne(['id' => $scopeId])->name
+                ],
+            ]
+        ]);
+    }
+
+    public function actionGoToView($id, $openScheda = false)
+    {
+        $this->setRouteStanze($id);
+        $this->resetFoldersPath($id);
+        return $this->redirect('/community/community/view?id=' . $id . ($openScheda ? "#tab-registry" : ""));
+    }
+
+    public function actionGoToParticipantsTab($id) {
+        $this->setRouteStanze($id);
+        $this->resetFoldersPath($id);
+        return $this->redirect('/community/community/update?id=' . $id . "&tabActive=tab-participants");
+    }
+
+    public function actionGoToUpdate($id)
+    {
+        $this->setRouteStanze($id);
+        $this->resetFoldersPath($id);
+        return $this->redirect('/community/community/update?id=' . $id);
+    }
+
+    public function actionGoToGroups($id)
+    {
+        $this->setRouteStanze($id);
+        $this->resetFoldersPath($id);
+        return $this->redirect('/groups/groups');
+    }
+
+    public function actionGoToJoin($id)
+    {
+        $this->setRouteStanze($id);
+        $this->resetFoldersPath($id);
+        return $this->redirect('/community/join?id=' . $id);
+    }
+
+    public function actionGoToUpdateFolder($id)
+    {
+        $this->setFoldersPath($id);
+        return $this->redirect('/documenti/documenti/update?id=' . $id . '&from=dashboard');
+    }
+
+    public function actionGoToViewFolder($id)
+    {
+        $this->setFoldersPath($id);
+        return $this->redirect('/documenti/documenti/view?id=' . $id);
     }
 
 }

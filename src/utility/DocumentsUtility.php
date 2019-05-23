@@ -17,14 +17,17 @@ use lispa\amos\core\utilities\Email;
 use lispa\amos\core\views\grid\ActionColumn;
 use lispa\amos\documenti\models\Documenti;
 use lispa\amos\documenti\models\DocumentiCategorie;
-use yii\base\Object;
+use lispa\amos\documenti\models\DocumentiCategoryCommunityMm;
+use lispa\amos\documenti\models\DocumentiCategoryRolesMm;
+use yii\base\BaseObject;
+use yii\db\ActiveQuery;
 use yii\db\Query;
 
 /**
  * Class DocumentsUtility
  * @package lispa\amos\documenti\utility
  */
-class DocumentsUtility extends Object
+class DocumentsUtility extends BaseObject
 {
     /**
      * @param Documenti $model
@@ -40,6 +43,11 @@ class DocumentsUtility extends Object
             }
             return AmosIcons::show($folderIconName, ['class' => 'icon_widget_graph'], 'dash');
         }
+        
+        if (!(empty($model->link_document) != '')) {
+            return AmosIcons::show('doc-www', ['class' => 'icon_widget_graph'], 'dash');
+        }
+        
         $iconName = 'file-o';
         $documentFile = $model->getDocumentMainFile();
         if (!is_null($documentFile)) {
@@ -182,5 +190,81 @@ class DocumentsUtility extends Object
         }
 
         return $options;
+    }
+
+    public static function resetRoutesDocumentsExplorer() {
+        \Yii::$app->session->set('stanzePath', []);
+        \Yii::$app->session->set('foldersPath', []);
+    }
+
+    /**
+     * @return ActiveQuery
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function getDocumentiCategorie()
+    {
+        /** @var ActiveQuery $query */
+        $query = DocumentiCategorie::find();
+        if(\Yii::$app->getModule('documenti')->filterCategoriesByRole){
+            //check enabled role for category active - user can publish under a category if there's at least one match betwwn category and user roles
+            $query->joinWith('documentiCategoryRolesMms')->innerJoin('auth_assignment', 'item_name='. DocumentiCategoryRolesMm::tableName().'.role and user_id ='. \Yii::$app->user->id);
+        }
+        if(\Yii::$app->getModule('documenti')->enableCategoriesForCommunity){
+            $moduleCwh = \Yii::$app->getModule('cwh');
+            $moduleCommunity = \Yii::$app->getModule('community');
+
+            if($moduleCwh && $moduleCommunity) {
+                $scope = $moduleCwh->getCwhScope();
+                if (!empty($scope) && isset($scope['community'])) {
+                    $isCommunityManager = DocumentsUtility::isCommunityManager($scope['community']);
+                    if(\Yii::$app->getModule('documenti')->showAllCategoriesForCommunity) {
+                        $query->joinWith('documentiCategoryCommunityMms')->andWhere([
+                            'OR',
+                            ['IS', 'community_id', null],
+                            ['community_id' => $scope['community']]
+                        ]);
+
+                    } else {
+                        $query2 = clone $query;
+                        $count = $query2->joinWith('documentiCategoryCommunityMms')
+                            ->andWhere(['community_id' => $scope['community']])->count();
+
+                        // if you have at least a category for this community show only them
+                        if($count > 0) {
+                            $query->joinWith('documentiCategoryCommunityMms')
+                                ->andWhere(['community_id' => $scope['community']]);
+                            if(!$isCommunityManager){
+                                $query->andWhere(['visible_to_participant' => true]);
+                            }
+                        } else {
+                            // If you don't have categories for this specific community, show all the categories the the aren't assigned to some community
+                            $query->joinWith('documentiCategoryCommunityMms')
+                                ->andWhere(['IS', 'community_id', NULL]);
+                        }
+                    }
+                }
+                else {
+                    // if you are on dashboard
+                    $query->joinWith('documentiCategoryCommunityMms')->andWhere(['IS', 'community_id', null]);
+                }
+            }
+            //check enabled role for category active - user can publish under a category if there's at least one match betwwn category and user roles
+        }
+        return $query;
+    }
+
+
+    /**
+     * @param $community_id
+     * @return bool
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function isCommunityManager($community_id){
+        $count = \lispa\amos\community\models\CommunityUserMm::find()
+            ->andWhere(['community_id' => $community_id])
+            ->andWhere(['user_id' => \Yii::$app->user->id])
+            ->andWhere(['role' => \lispa\amos\community\models\Community::ROLE_COMMUNITY_MANAGER])->count();
+        return ($count > 0);
+
     }
 }

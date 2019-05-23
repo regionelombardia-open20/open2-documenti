@@ -182,9 +182,21 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     {
         $rules = ArrayHelper::merge(parent::rules(), [
             [['destinatari_pubblicazione', 'destinatari_notifiche'], 'safe'],
-            [['documentMainFile'], 'required'],
+            [['documentMainFile'], 'required', 'when' => function($model) {
+                    return (trim($model->link_document) == '');
+                },
+                'whenClient' => "function(attribute, value) {
+                    return ($('#documenti-link_document').val() == '');
+                }"
+            ],
+            
             [['documentAttachments'], 'file', 'extensions' => (!empty($this->documentsModule)) ? $this->documentsModule->whiteListFilesExtensions : '', 'checkExtensionByMimeType' => false, 'maxFiles' => 0],
             [['documentMainFile'], 'file', 'skipOnEmpty' => true, 'extensions' => (!empty($this->documentsModule)) ? $this->documentsModule->whiteListFilesExtensions : '', 'checkExtensionByMimeType' => false, 'maxFiles' => 1],
+            
+            [['link_document'], 'url', 'skipOnEmpty' => function($model) {
+                    return $model->link_document == '';
+                }
+            ],
         ]);
 
         if ($this->scenario != self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE && $this->scenario != self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE && $this->scenario != self::SCENARIO_UPDATE_HIDE_PUBBLICATION_DATE) {
@@ -570,7 +582,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     {
         $panels = [];
         $count_comments = 0;
-
+        return $panels;
         try {
             $panels = parent::getStatsToolbar($disableLink);
             $filescount = $this->getFileCount() - 1;
@@ -1104,8 +1116,15 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     /**
      * @inheritdoc
      */
-    public function sendCommunication()
-    {
+    public function sendCommunication() {
         return !$this->is_folder;
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function getViewUrl() {
+        return 'documenti/documenti/view';
+    }
+
 }

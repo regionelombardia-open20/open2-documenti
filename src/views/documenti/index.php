@@ -110,7 +110,7 @@ if ($foldersEnabled) {
         'label' => AmosDocumenti::t('amosdocumenti', '#updated_by'),
         'value' => function ($model) {
             $profile = \lispa\amos\admin\models\UserProfile::find()->andWhere([
-                    'updated_by' => $model->updated_by])->one();
+                    'user_id' => $model->updated_by])->one();
             return Html::a($profile->nomeCognome,
                     ['/admin/user-profile/view', 'id' => $profile->id],
                     [
@@ -430,6 +430,7 @@ DataProviderView::widget([
     ],
     'listView' => [
         'itemView' => '_item',
+        'showItemToolbar' => false,
     /* 'masonry' => TRUE,
       'masonrySelector' => '.grid',
       'masonryOptions' => [

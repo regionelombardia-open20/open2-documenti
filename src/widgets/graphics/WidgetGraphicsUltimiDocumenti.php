@@ -16,6 +16,7 @@ use lispa\amos\documenti\AmosDocumenti;
 use lispa\amos\documenti\models\Documenti;
 use lispa\amos\documenti\models\search\DocumentiSearch;
 use lispa\amos\notificationmanager\base\NotifyWidgetDoNothing;
+use lispa\amos\core\widget\WidgetAbstract;
 
 /**
  * Class WidgetGraphicsUltimiDocumenti
@@ -63,8 +64,9 @@ class WidgetGraphicsUltimiDocumenti extends WidgetGraphic
         $moduleL = \Yii::$app->getModule('layout');
         $viewPath = '@vendor/lispa/amos-documenti/src/widgets/graphics/views/';
         $viewToRender = $viewPath . 'ultimi_documenti';
+
         if (empty($moduleL)) {
-            $viewToRender = $viewPath . 'ultimi_documenti_old';
+            $viewToRender .= '_old';
         }
 
         return $this->render($viewToRender, [

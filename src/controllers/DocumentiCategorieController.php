@@ -17,6 +17,8 @@ use lispa\amos\core\icons\AmosIcons;
 use lispa\amos\dashboard\controllers\TabDashboardControllerTrait;
 use lispa\amos\documenti\AmosDocumenti;
 use lispa\amos\documenti\models\DocumentiCategorie;
+use lispa\amos\documenti\models\DocumentiCategoryCommunityMm;
+use lispa\amos\documenti\models\DocumentiCategoryRolesMm;
 use lispa\amos\documenti\models\search\DocumentiCategorieSearch;
 use Yii;
 use yii\helpers\Url;
@@ -124,6 +126,8 @@ class DocumentiCategorieController extends CrudController
         if ($model->load(Yii::$app->request->post())) {
             if ($model->validate()) {
                 if ($model->save()) {
+                    $model->saveDocumentiCategorieCommunityMm();
+                    $model->saveDocumentiCategorieRolesMm();
                     Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Categoria documenti salvata con successo.'));
                     return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $model->id]);
                 } else {
@@ -151,10 +155,14 @@ class DocumentiCategorieController extends CrudController
         $this->setUpLayout('form');
 
         $model = $this->findModel($id);
+        $model->loadDocumentiCategoryCommunities();
+        $model->loadDocumentiCategoryRoles();
 
         if ($model->load(Yii::$app->request->post())) {
             if ($model->validate()) {
                 if ($model->save()) {
+                    $model->saveDocumentiCategorieCommunityMm();
+                    $model->saveDocumentiCategorieRolesMm();
                     Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Categoria documenti aggiornata con successo.'));
                     return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $model->id]);
                 } else {
@@ -183,7 +191,10 @@ class DocumentiCategorieController extends CrudController
     {
         $this->model = $this->findModel($id);
         if ($this->model) {
+            DocumentiCategoryCommunityMm::deleteAll(['documenti_categorie_id' => $this->id]);
+            DocumentiCategoryRolesMm::deleteAll(['documenti_categorie_id' => $this->id]);
             $this->model->delete();
+
             if (!$this->model->hasErrors()) {
                 Yii::$app->getSession()->addFlash('success', AmosDocumenti::t('amosdocumenti', 'Elemento cancellato correttamente.'));
             } else {

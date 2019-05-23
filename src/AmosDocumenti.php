@@ -58,6 +58,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableCategories = true;
 
     /**
+     * @var array
+     */
+    public $whiteListRolesCategories = ['ADMIN', 'BASIC_USER'];
+
+    /**
      * @var bool $enableDocumentVersioning If true enable the versioning of the documents. The folders aren't versioned.
      */
     public $enableDocumentVersioning = false;
@@ -65,7 +70,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var string List of the allowed extensions for the upload of files.
      */
-    public $whiteListFilesExtensions = 'txt, csv, pdf, txt, doc, docx, xls, xlsx, rtf';
+    public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx';
 
     /**
      * @var bool|false $hidePubblicationDate
@@ -102,9 +107,23 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $hideWizard = false;
 
     /**
-     * @var bool $hideWidgetGraphicsActions
+     * @var string
      */
-    public $hideWidgetGraphicsActions = false;
+    public $defaultWidgetIndexUrl = '/documenti/documenti/own-interest-documents';
+
+    /**
+     * @var bool
+     */
+    public $enableCategoriesForCommunity = false;
+
+    /**
+     * @var bool
+     */
+    public $filterCategoriesByRole = false;
+
+
+    public $showAllCategoriesForCommunity = true;
+
 
     /**
      * @inheritdoc

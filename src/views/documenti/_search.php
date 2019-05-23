@@ -35,6 +35,7 @@ $controller = Yii::$app->controller;
 
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 
+$enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPanel']) || \Yii::$app->params['enableAutoOpenSearchPanel'] === true;
 ?>
 
 <div class="documenti-search element-to-toggle" data-toggle-element="form-search">
@@ -45,7 +46,7 @@ $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
         'method' => 'get',
     ]);
 
-    echo Html::hiddenInput("enableSearch", "1");
+    echo Html::hiddenInput("enableSearch", $enableAutoOpenSearchPanel);
     echo Html::hiddenInput("currentView", Yii::$app->request->getQueryParam('currentView'));
 
     if (!is_null(Yii::$app->request->getQueryParam('parentId'))) {
@@ -113,13 +114,13 @@ $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
         <div class="col-xs-12">
             <?php
             $params = \Yii::$app->request->getQueryParams();
-            echo \lispa\amos\tag\widgets\TagWidget::widget([
+            /*echo \lispa\amos\tag\widgets\TagWidget::widget([
                 'model' => $model,
                 'attribute' => 'tagValues',
                 'form' => $form,
                 'isSearch' => true,
                 'form_values' => isset($params[$model->formName()]['tagValues']) ? $params[$model->formName()]['tagValues'] : []
-            ]);
+            ]);*/
             ?>
         </div>
     <?php endif; ?>

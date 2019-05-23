@@ -29,6 +29,9 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
      * @var $documentMainFile
      */
     public $documentCategoryImage;
+    public $documentiCategoryCommunities;
+    public $documentiCategoryRoles;
+    public $visibleToCommunityRole;
 
     /**
      */
@@ -36,6 +39,7 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
     {
         return ArrayHelper::merge(parent::rules(), [
             [['documentCategoryImage'], 'file', 'extensions' => 'jpeg, jpg, png, gif','maxFiles' => 1],
+            [['documentiCategoryRoles' ,'documentiCategoryCommunities','visibleToCommunityRole'], 'safe']
         ]);
     }
 
@@ -82,5 +86,74 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
     public function getDocumentCategoryImage()
     {
         return $this->hasOneFile('documentCategoryImage');
+    }
+
+
+    /**
+     *
+     */
+    public function saveDocumentiCategorieCommunityMm(){
+        DocumentiCategoryCommunityMm::deleteAll(['documenti_categorie_id' => $this->id]);
+        foreach ((Array) $this->documentiCategoryCommunities as $community_id){
+            $documentiCommunityMm = new DocumentiCategoryCommunityMm();
+            $documentiCommunityMm->documenti_categorie_id = $this->id;
+            $documentiCommunityMm->community_id = $community_id;
+
+            $documentiCommunityMm->visible_to_cm = 0;
+            if(array_search('COMMUNITY_MANAGER', $this->visibleToCommunityRole) !== false){
+                $documentiCommunityMm->visible_to_cm = 1;
+            }
+            $documentiCommunityMm->visible_to_participant = 0;
+            if(array_search('PARTICIPANT', $this->visibleToCommunityRole) !== false){
+                $documentiCommunityMm->visible_to_participant = 1;
+
+            }
+            $documentiCommunityMm->save();
+        }
+
+
+    }
+
+    /**
+     *  load documentiCategoryCommunities for Select2
+     */
+    public function loadDocumentiCategoryCommunities(){
+        $community_ids = [];
+        foreach ( (Array) $this->documentiCategoryCommunityMms as $categoryCommunityMms){
+            $community_ids []= $categoryCommunityMms->community_id;
+            if($categoryCommunityMms->visible_to_cm){
+                $this->visibleToCommunityRole []= 'COMMUNITY_MANAGER';
+            }
+            if($categoryCommunityMms->visible_to_participant){
+                $this->visibleToCommunityRole []= 'PARTICIPANT';
+            }
+        };
+        $this->documentiCategoryCommunities = $community_ids;
+
+    }
+
+
+    /**
+     *
+     */
+    public function saveDocumentiCategorieRolesMm(){
+        DocumentiCategoryRolesMm::deleteAll(['documenti_categorie_id' => $this->id]);
+        foreach ((Array) $this->documentiCategoryRoles as $role){
+            $newsCommunityMm = new DocumentiCategoryRolesMm();
+            $newsCommunityMm->documenti_categorie_id = $this->id;
+            $newsCommunityMm->role = $role;
+            $newsCommunityMm->save();
+        }
+    }
+
+    /**
+     *  load documentiCategoryRoles for Select2
+     */
+    public function loadDocumentiCategoryRoles(){
+        $roles = [];
+        foreach ($this->documentiCategoryRolesMms as $categoryRolesMms){
+            $roles []= $categoryRolesMms->role;
+        };
+        $this->documentiCategoryRoles = $roles;
     }
 }

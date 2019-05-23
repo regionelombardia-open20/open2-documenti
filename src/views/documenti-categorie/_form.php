@@ -20,6 +20,10 @@ use lispa\amos\core\helpers\Html;
  * @var lispa\amos\documenti\models\DocumentiCategorie $model
  * @var yii\widgets\ActiveForm $form
  */
+
+$module = \Yii::$app->getModule('documenti');
+$enableCategoriesForCommunity = $module->enableCategoriesForCommunity;
+$filterCategoriesByRole = $module->filterCategoriesByRole;
 ?>
 
 <div class="documenti-categorie-form col-xs-12">
@@ -58,7 +62,56 @@ use lispa\amos\core\helpers\Html;
             ])->label(AmosDocumenti::t('amosdocumenti', '#category_image_field'))->hint(AmosDocumenti::t('amosdocumenti', '#category_image_field_hint')) ?>
         </div>
     </div>
+    <?php if($filterCategoriesByRole) {
+        $whiteRoles = $module->whiteListRolesCategories;
+        $roles =  array_combine($whiteRoles, $whiteRoles);
+        ?>
+        <div class="row">
+            <div class="col-lg-12 col-sm-12">
+                <?= $form->field($model, 'documentiCategoryRoles')->widget(\kartik\select2\Select2::className(),[
+                    'data' => $roles,
+                    'pluginOptions' => [
+                        'allowClear' => true
+                    ],
+                    'options' => ['multiple' => true, 'placeholder' => AmosDocumenti::t('amosnews', 'Select...')]
+                ])->label(AmosDocumenti::t('amosdocumenti', 'Roles')) ?>
+            </div>
+        </div>
+    <?php  } ?>
+
     <div class="clearfix"></div>
+
+    <?php if($enableCategoriesForCommunity) {?>
+        <hr>
+        <h3><?= AmosDocumenti::t('amosdocumenti', 'Configuration for community')?></h3>
+        <div class="row">
+            <div class="col-lg-6 col-sm-12">
+                <?= $form->field($model, 'documentiCategoryCommunities')->widget(\kartik\select2\Select2::className(),[
+                    'data' => \yii\helpers\ArrayHelper::map(\lispa\amos\community\models\Community::find()->all(), 'id', 'name'),
+                    'pluginOptions' => [
+                        'allowClear' => true
+                    ],
+                    'options' => ['multiple' => true, 'placeholder' => AmosDocumenti::t('amosnews', 'Select...')]
+                ])->label(AmosDocumenti::t('amosdocumenti', 'Community')) ?>
+            </div>
+            <div class="col-lg-6 col-sm-12">
+                <?= $form->field($model, 'visibleToCommunityRole')->widget(\kartik\select2\Select2::className(),[
+                        'data' => [
+                            'COMMUNITY_MANAGER' => AmosDocumenti::t('amosdocumenti', 'Community manager'),
+                            'PARTICIPANT' => AmosDocumenti::t('amosdocumenti', 'Participant'),
+                        ],
+                        'options' =>  [
+                            'placeholder' => 'Select...',
+                            'multiple' => true
+
+                        ]
+                ])->label(AmosDocumenti::t('amosdocumenti', 'Visible to Community roles')); ?>
+
+            </div>
+        </div>
+
+    <?php } ?>
+
 
     <div class="col-xs-12"><?= CreatedUpdatedWidget::widget(['model' => $model]) ?></div>
     <?= CloseSaveButtonWidget::widget(['model' => $model]); ?>

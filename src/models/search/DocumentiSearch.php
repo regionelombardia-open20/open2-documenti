@@ -37,8 +37,13 @@ use lispa\amos\core\record\CmsField;
 class DocumentiSearch extends Documenti implements SearchModelInterface, ContentModelSearchInterface, CmsModelInterface
 {
     private $container;
+    
     public $parentId;
 
+    /**
+     * 
+     * @param array $config
+     */
     public function __construct(array $config = [])
     {
         $this->isSearch = true;
@@ -46,6 +51,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $this->modelClassName = Documenti::className();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function init()
     {
         parent::init();
@@ -65,7 +73,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         ];
     }
 
-
+    /**
+     * 
+     * @return type
+     */
     public function searchFieldsMatch(){
         return [
             'id',
@@ -82,19 +93,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         ];
     }
 
-//    /**
-//     * Array of fields to search with >= condition in search method
-//     *
-//     * @return array
-//     */
-//    public function searchFieldsGreaterEqual()
-//    {
-//        return [
-//            'data_pubblicazione'
-//        ];
-//    }
-
-
+    /**
+     * 
+     * @return type
+     */
     public function searchFieldsLike()
     {
         return [
@@ -107,6 +109,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         ];
     }
 
+    /**
+     * 
+     * @return type
+     */
     public function searchFieldsGlobalSearch(){
         return [
             'titolo',
@@ -141,15 +147,17 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     /**
      * Documents search method
      *
-     * @param array $params
-     * @param string $queryType
-     * @param int|null $limit
-     * @return ActiveDataProvider
+     * @param type $params
+     * @param type $queryType
+     * @param type $limit
+     * @param type $onlyDratfs
+     * @return type
      */
     public function search($params, $queryType = null, $limit = null, $onlyDratfs = false)
     {
-        $query = $this->buildQuery($params, $queryType);
-        $query->limit($limit);
+        $query = $this
+            ->buildQuery($params, $queryType)
+            ->limit($limit);
 
         /** Switch off notifications - method of NotifyRecord */
         $this->switchOffNotifications($query);
@@ -158,9 +166,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         if ($limit) {
             $dp_params ['pagination'] = false;
         }
+        
         //set the data provider
         $dataProvider = new ActiveDataProvider($dp_params);
-
         $dataProvider = $this->searchDefaultOrder($dataProvider);
 
         //overwrite default order in case  foldering is enabled
@@ -174,7 +182,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //if you don't use the seach form, the recursive search is not active
         if (!($this->load($params) && $this->validate())) {
-            $query->andWhere(['parent_id' => $this->parentId]);
+            //if you come from widget grphic LastDocuments Show also documents that are inside the folders
+            if(!(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
+                $query->andWhere(['parent_id' => $this->parentId]);
+            }
             return $dataProvider;
         }
 
@@ -184,8 +195,8 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             $listChildrenId = $currentFolder->getAllChildrens();
             $query->andWhere(['parent_id' => $listChildrenId]);
         }
+        
         //if parentid empty the search is without (parent_id IS NULL)
-
         if (isset($params[$this->formName()]['tagValues'])) {
 
             $tagValues = $params[$this->formName()]['tagValues'];
@@ -277,7 +288,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function lastDocuments($params, $limit = null)
     {
-        $dataProvider = $this->searchAll(Yii::$app->request->getQueryParams(), $limit);
+        $params = Yii::$app->request->getQueryParams();
+        $params['fromWidgetGraphic'] = true;
+        $dataProvider = $this->searchAll($params, $limit);
+        
         return $dataProvider;
     }
 
@@ -348,9 +362,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             ],
         ]);
 
-        if (!($this->load($params) && $this->validate())) {
-            return $dataProvider;
-        }
+//        if (!($this->load($params) && $this->validate())) {
+//            return $dataProvider;
+//        }
 
         return $dataProvider;
     }
@@ -362,13 +376,15 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function highlightedAndHomepageDocumentiQuery($params)
     {
         $tableName = $this->tableName();
-        $query = $this->baseSearch($params)
-            ->where([])
-            ->andWhere([$tableName . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
-            ->andWhere($tableName . '.deleted_at IS NULL')
-            ->andWhere($tableName . '.in_evidenza = 1')
-            ->andWhere($tableName . '.primo_piano = 1');
-        return $query;
+        
+        return $this
+            ->baseSearch($params)
+            ->andWhere([
+                $tableName . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
+                $tableName . '.deleted_at IS NULL',
+                $tableName . '.in_evidenza = 1',
+                $tableName . '.primo_piano = 1'
+            ]);
     }
 
     /**
@@ -378,12 +394,14 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function homepageDocumentsQuery($params)
     {
         $tableName = $this->tableName();
-        $query = $this->baseSearch($params)
-            ->where([])
-            ->andWhere([$tableName . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
-            ->andWhere($tableName . '.deleted_at IS NULL')
-            ->andWhere($tableName . '.primo_piano = 1');
-        return $query;
+        
+        return $this
+            ->baseSearch($params)
+            ->where([
+                $tableName . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
+                $tableName . '.deleted_at IS NULL',
+                $tableName . '.primo_piano = 1'
+            ]);
     }
 
     /**
@@ -392,19 +410,27 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function searchVersions($params)
     {
-        $currentDoc = Documenti::find()->select('max(version), id')->andWhere(['OR',
-            ['version_parent_id' => $params['parent_id']],
-            ['id' => $params['parent_id']],
-        ])->one();
+        $currentDoc = Documenti::find()
+            ->select('max(version), id')
+            ->andWhere([
+                'OR',
+                [
+                    'version_parent_id' => $params['parent_id'],
+                    'id' => $params['parent_id']
+                ],
+            ])
+            ->one();
 
         $query = Documenti::find()
-            ->andFilterWhere(['OR',
-                ['version_parent_id' => $params['parent_id']],
-                ['id' => $params['parent_id']],
+            ->andFilterWhere([
+                'OR',
+                [
+                    'version_parent_id' => $params['parent_id'],
+                    'id' => $params['parent_id']
+                ],
             ])
             ->andFilterWhere(['!=', 'id', $currentDoc->id])
             ->orderBy('version DESC');
-
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -420,6 +446,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function convertToSearchResult($model)
     {
         $searchResult = new SearchResult();
+        
         $searchResult->url = $model->getFullViewUrl();
         $searchResult->box_type = "file";
         $searchResult->id = $model->id;
@@ -427,33 +454,47 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $searchResult->data_pubblicazione = $model->data_pubblicazione;
         $searchResult->documento = $model->getDocumentMainFile();
         $searchResult->abstract = $model->descrizione_breve;
+        
         return $searchResult;
     }
 
     /**
-     * @inheritdoc
+     * 
+     * @param type $dataProvider
+     * @return type
      */
     public function searchDefaultOrder($dataProvider)
     {
         // Check if can use the custom module order
         if ($this->canUseModuleOrder()) {
             $dataProvider->setSort($this->createOrderClause());
-        } else { // For widget graphic last news, order is incorrect without this else
+        } else { 
+            // For widget graphic last news, order is incorrect without this else
             $dataProvider->setSort([
-                'defaultOrder' => [
-                    'data_pubblicazione' => SORT_DESC
-                ]
+                'defaultOrder' => ['data_pubblicazione' => SORT_DESC]
             ]);
         }
+        
         return $dataProvider;
     }
 
+    /**
+     * TBD - ????
+     * @param type $id
+     * @return boolean
+     */
     public function cmsIsVisible($id)
     {
         $retValue = true;
         return $retValue;
     }
 
+    /**
+     * 
+     * @param type $params
+     * @param type $limit
+     * @return ActiveDataProvider
+     */
     public function cmsSearch($params, $limit)
     {
         $params = array_merge($params, Yii::$app->request->get());
@@ -486,6 +527,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return $dataProvider;
     }
 
+    /**
+     * 
+     * @return array
+     */
     public function cmsSearchFields()
     {
         $searchFields = [];
@@ -497,14 +542,24 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return $searchFields;
     }
 
+    /**
+     * 
+     * @return array
+     */
     public function cmsViewFields()
     {
-        $viewFields = [];
+//        $viewFields = [];
+//        array_push($viewFields, new CmsField("titolo", "TEXT", 'amosdocumenti', $this->attributeLabels()['titolo']));
+//        array_push($viewFields, new CmsField("descrizione", "TEXT", 'amosdocumenti', $this->attributeLabels()['descrizione']));
+//        array_push($viewFields, new CmsField("descrizione_breve", "TEXT", 'amosdocumenti', $this->attributeLabels()['descrizione_breve']));
+//        array_push($viewFields, new CmsField("documentMainFile", "IMAGE", 'amosdocumenti', $this->attributeLabels()['documentMainFile']));
+//        return $viewFields;
 
-        array_push($viewFields, new CmsField("titolo", "TEXT", 'amosdocumenti', $this->attributeLabels()['titolo']));
-        array_push($viewFields, new CmsField("descrizione", "TEXT", 'amosdocumenti', $this->attributeLabels()['descrizione']));
-        array_push($viewFields, new CmsField("descrizione_breve", "TEXT", 'amosdocumenti', $this->attributeLabels()['descrizione_breve']));
-        array_push($viewFields, new CmsField("documentMainFile", "IMAGE", 'amosdocumenti', $this->attributeLabels()['documentMainFile']));
-        return $viewFields;
+        return [
+            new CmsField('titolo', 'TEXT', 'amosdocumenti', $this->attributeLabels()['titolo']),
+            new CmsField('descrizione', 'TEXT', 'amosdocumenti', $this->attributeLabels()['descrizione']),
+            new CmsField('descrizione_breve', 'TEXT', 'amosdocumenti', $this->attributeLabels()['descrizione_breve']),
+            new CmsField('documentMainFile', 'IMAGE', 'amosdocumenti', $this->attributeLabels()['documentMainFile'])
+        ];
     }
 }

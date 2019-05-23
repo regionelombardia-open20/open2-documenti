@@ -57,7 +57,7 @@ $documents = $listaDocumenti->getModels();
                     <?php if (count($documents) == 0): ?>
                         <?php
                         $textReadAll = AmosDocumenti::t('amosdocumenti', '#addDocument');
-                        $linkReadAll = ['/documenti/documenti-wizard/introduction'];
+                        $linkReadAll = ['/documenti/documenti/create'];
                         ?>
                         <div class="list-items list-empty">
                             <h2 class="box-widget-subtitle"><?= AmosDocumenti::tHtml('amosdocumenti', 'Nessun documento'); ?></h2>
