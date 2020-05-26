@@ -1,16 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\FileImport;
-use lispa\amos\documenti\models\DocumentiCategorie;
+use open20\amos\attachments\components\FileImport;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\DocumentiCategorie;
 use yii\db\Migration;
 use yii\db\Query;
 
@@ -44,7 +45,8 @@ class m170710_104252_migrate_documents_categories_attachments extends Migration
             $query->from(DocumentiCategorie::tableName())->orderBy(['id' => SORT_ASC]);
             $allDocumentCategories = $query->all();
             foreach ($allDocumentCategories as $documentCategory) {
-                $newDocumentCategory = new DocumentiCategorie($documentCategory);
+                /** @var DocumentiCategorie $newDocumentCategory */
+                $newDocumentCategory = AmosDocumenti::instance()->createModel('DocumentiCategorie', $documentCategory);
                 $newDocumentCategory->detachBehaviors();
                 $this->printConsoleMsg('********************************************************************************************************************************************************************');
                 $this->migrateSingleDocumentCategory($newDocumentCategory);

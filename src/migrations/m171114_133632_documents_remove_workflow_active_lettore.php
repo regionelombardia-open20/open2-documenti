@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\documenti\models\Documenti;
 
 /**
  * Class m171114_133632_documents_remove_workflow_active_lettore

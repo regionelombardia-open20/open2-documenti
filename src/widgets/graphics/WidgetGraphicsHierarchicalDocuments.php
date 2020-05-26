@@ -1,29 +1,29 @@
 <?php
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\graphics
+ * @package    open20\amos\documenti\widgets\graphics
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\graphics;
+namespace open20\amos\documenti\widgets\graphics;
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\module\AmosModule;
-use lispa\amos\core\widget\WidgetGraphic;
-use lispa\amos\cwh\query\CwhActiveQuery;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\utility\DocumentsUtility;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\module\AmosModule;
+use open20\amos\core\widget\WidgetGraphic;
+use open20\amos\cwh\query\CwhActiveQuery;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\utility\DocumentsUtility;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 
 /**
  * Class WidgetGraphicsHierarchicalDocuments
- * @package lispa\amos\documenti\widgets\graphics
+ * @package open20\amos\documenti\widgets\graphics
  */
 class WidgetGraphicsHierarchicalDocuments extends WidgetGraphic
 {
@@ -43,6 +43,11 @@ class WidgetGraphicsHierarchicalDocuments extends WidgetGraphic
     public $parent = null;
 
     /**
+     * @var AmosDocumenti $documentsModule
+     */
+    protected $documentsModule = null;
+
+    /**
      * @inheritdoc
      */
     public function init()
@@ -54,12 +59,16 @@ class WidgetGraphicsHierarchicalDocuments extends WidgetGraphic
         $this->setDescription(AmosDocumenti::t('amosdocumenti', 'Hierarchical Documents'));
         $this->setClassFullSize('grid-item-fullsize');
 
+        $this->documentsModule = AmosDocumenti::instance();
+
         if ((\Yii::$app->request->isAjax || \Yii::$app->request->isPjax) && \Yii::$app->request->get(self::paramName())) {
             $this->parentId = \Yii::$app->request->get(self::paramName());
         }
 
         if (!is_null($this->parentId) && is_numeric($this->parentId) && ($this->parentId > 0)) {
-            $this->parent = Documenti::findOne($this->parentId);
+            /** @var Documenti $documentiModel */
+            $documentiModel = $this->documentsModule->createModel('Documenti');
+            $this->parent = $documentiModel::findOne($this->parentId);
         }
 
         $this->initCurrentView();
@@ -104,8 +113,10 @@ class WidgetGraphicsHierarchicalDocuments extends WidgetGraphic
      */
     private function baseQuery()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         /** @var ActiveQuery $query */
-        $query = Documenti::find()->distinct();
+        $query = $documentiModel::find()->distinct();
         $query->andWhere(['parent_id' => $this->parentId]);
         $query = $this->addCwhQuery($query);
         return $query;
@@ -119,9 +130,9 @@ class WidgetGraphicsHierarchicalDocuments extends WidgetGraphic
     {
         $moduleCwh = \Yii::$app->getModule('cwh');
         $cwhActiveQuery = null;
-        $classname = Documenti::className();
+        $classname = $this->documentsModule->model('Documenti');
         if (isset($moduleCwh)) {
-            /** @var \lispa\amos\cwh\AmosCwh $moduleCwh */
+            /** @var \open20\amos\cwh\AmosCwh $moduleCwh */
             $moduleCwh->setCwhScopeFromSession();
             $cwhActiveQuery = new CwhActiveQuery($classname, ['queryBase' => $query]);
         }

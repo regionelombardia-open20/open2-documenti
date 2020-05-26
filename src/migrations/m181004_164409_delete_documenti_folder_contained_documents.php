@@ -1,16 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\libs\common\MigrationCommon;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\migration\libs\common\MigrationCommon;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\ActiveQuery;
 use yii\db\Migration;
 
@@ -51,8 +52,11 @@ class m181004_164409_delete_documenti_folder_contained_documents extends Migrati
      */
     private function findDeletedFolders()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = AmosDocumenti::instance()->createModel('Documenti');
+
         /** @var ActiveQuery $query */
-        $query = Documenti::basicFind();
+        $query = $documentiModel::basicFind();
         $query->andWhere(['is_folder' => Documenti::IS_FOLDER]);
         $query->andWhere(['is not', 'deleted_at', null]);
         $deletedFolders = $query->all();

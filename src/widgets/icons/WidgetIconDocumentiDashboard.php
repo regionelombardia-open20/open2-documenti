@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\icons
+ * @package    open20\amos\documenti\widgets\icons
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\icons;
+namespace open20\amos\documenti\widgets\icons;
 
-use lispa\amos\core\widget\WidgetIcon;
-use lispa\amos\dashboard\models\AmosUserDashboards;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetIcon;
+use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\dashboard\models\AmosUserDashboards;
+use open20\amos\documenti\AmosDocumenti;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\Application as Web;
 
 /**
  * Class WidgetIconDocumentiDashboard
- * @package lispa\amos\documenti\widgets\icons
+ * @package open20\amos\documenti\widgets\icons
  */
 class WidgetIconDocumentiDashboard extends WidgetIcon
 {
@@ -35,7 +35,6 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
 
         $paramsClassSpan = [
             'bk-backgroundIcon',
-            'color-primary'
         ];
 
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_dashboard'));
@@ -46,7 +45,7 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
         $this->setModuleName('documenti-dashboard');
         $this->setNamespace(__CLASS__);
 
-        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+        if (!empty(Yii::$app->params['dashboardEngine']) && Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
             $paramsClassSpan = [];
         }
 
@@ -57,50 +56,27 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
             )
         );
 
-        if (Yii::$app instanceof Web) {
-            $this->setBulletCount(
-                $this->makeBulletCounter(\Yii::$app->user->id)
-            );
+        if ($this->disableBulletCounters == false) {
+            if (Yii::$app instanceof Web) {
+                $this->setBulletCount(
+                    $this->makeBulletCounter(Yii::$app->user->getId())
+                );
+            }
         }
     }
 
     /**
      * 
+     * @param type $userId
+     * @param type $className
+     * @param type $externalQuery
      * @return type
      */
-    public function makeBulletCounter($user_id = null)
+    public function makeBulletCounter($userId = null, $className = null, $externalQuery = null)
     {
-        return $this->getBulletCountChildWidgets($user_id);
-    }
-
-    /**
-     * 
-     * @param type $user_id
-     * @return int - the sum of bulletCount internal widget
-     */
-    private function getBulletCountChildWidgets($user_id = null)
-    {
-        $count = 0;
-        try {
-            /** @var AmosUserDashboards $userModuleDashboard */
-            $userModuleDashboard = AmosUserDashboards::findOne([
-                'user_id' => user_id,
-                'module' => AmosDocumenti::getModuleName()
-            ]);
-
-            if (is_null($userModuleDashboard)) {
-                return 0;
-            }
-
-            $widgetAll = \Yii::createObject(WidgetIconAllDocumenti::className());
-            $widgetCreatedBy = \Yii::createObject(WidgetIconDocumentiCreatedBy::className());
-
-            $count = $widgetAll->getBulletCount() + $widgetCreatedBy->getBulletCount();
-        } catch (\Exception $ex) {
-            Yii::getLogger()->log($ex->getMessage(), \yii\log\Logger::LEVEL_ERROR);
-        }
-
-        return $count;
+        $widgetAll = \Yii::createObject(WidgetIconAllDocumenti::className());
+        
+        return $widgetAll->getBulletCount();
     }
 
     /**
@@ -111,8 +87,8 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-                parent::getOptions(),
-                ['children' => $this->getWidgetsIcon()]
+            parent::getOptions(),
+            ['children' => $this->getWidgetsIcon()]
         );
     }
 

@@ -1,8 +1,8 @@
 /**
 IMPORT AMOS-LAYOUT VARIABLES and UTILITY
  */
-@import (optional) "../../vendor/lispa/amos-layout/src/assets/resources/base/less/variables.less";
-@import (optional) "../../vendor/lispa/amos-layout/src/assets/resources/base/less/utility.less";
+@import (optional) "../../vendor/open20/amos-layout/src/assets/resources/base/less/v2/variables.less";
+@import (optional) "../../vendor/open20/amos-layout/src/assets/resources/base/less/v2/utility.less";
 /**
 IMPORT STYLE-CUSTOM
  */
@@ -92,7 +92,7 @@ DOCUMENTI VIEW
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         width: 70%;
         > div:nth-child(2) {
           width: 80%;
@@ -165,7 +165,7 @@ DOCUMENTI LIST VIEW
       }
       .badge{ /* override */
         top: 0;
-        right: -3px;
+        right: 35px;
       }
     }
     .manage {

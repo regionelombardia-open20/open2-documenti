@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\libs\common\MigrationCommon;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\migration\libs\common\MigrationCommon;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\Migration;
 
 /**
@@ -29,10 +29,10 @@ class m170619_152325_add_documenti_favourite_channel_notifications extends Migra
             MigrationCommon::printConsoleMessage(AmosDocumenti::t('amosdocumenti', 'Notify module not installed. Nothing to do.'));
             return true;
         }
-        $retval = \lispa\amos\notificationmanager\AmosNotify::manageNewChannelNotifications(
-            Documenti::className(),
-            \lispa\amos\notificationmanager\models\NotificationChannels::CHANNEL_FAVOURITES,
-            \lispa\amos\notificationmanager\models\NotificationChannels::MANAGE_UP);
+        $retval = \open20\amos\notificationmanager\AmosNotify::manageNewChannelNotifications(
+            AmosDocumenti::instance()->model('Documenti'),
+            \open20\amos\notificationmanager\models\NotificationChannels::CHANNEL_FAVOURITES,
+            \open20\amos\notificationmanager\models\NotificationChannels::MANAGE_UP);
         if (!$retval['success']) {
             foreach ($retval['errors'] as $error) {
                 MigrationCommon::printConsoleMessage($error);
@@ -51,10 +51,10 @@ class m170619_152325_add_documenti_favourite_channel_notifications extends Migra
             MigrationCommon::printConsoleMessage(AmosDocumenti::t('amosdocumenti', 'Notify module not installed. Nothing to do.'));
             return true;
         }
-        $retval = \lispa\amos\notificationmanager\AmosNotify::manageNewChannelNotifications(
-            Documenti::className(),
-            \lispa\amos\notificationmanager\models\NotificationChannels::CHANNEL_FAVOURITES,
-            \lispa\amos\notificationmanager\models\NotificationChannels::MANAGE_DOWN);
+        $retval = \open20\amos\notificationmanager\AmosNotify::manageNewChannelNotifications(
+            AmosDocumenti::instance()->model('Documenti'),
+            \open20\amos\notificationmanager\models\NotificationChannels::CHANNEL_FAVOURITES,
+            \open20\amos\notificationmanager\models\NotificationChannels::MANAGE_DOWN);
         if (!$retval['success']) {
             foreach ($retval['errors'] as $error) {
                 MigrationCommon::printConsoleMessage($error);

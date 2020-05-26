@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-categorie
+ * @package    open20\amos\documenti\views\documenti-categorie
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use lispa\amos\core\forms\CreatedUpdatedWidget;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
+use open20\amos\core\forms\CreatedUpdatedWidget;
+use open20\amos\documenti\AmosDocumenti;
 use yii\bootstrap\Tabs;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\DocumentiCategorie $model
+ * @var open20\amos\documenti\models\DocumentiCategorie $model
  * @var yii\widgets\ActiveForm $form
  */
 ?>
@@ -40,7 +40,7 @@ use yii\bootstrap\Tabs;
         </div>
         <div class="col-lg-4 col-sm-4">
             <?= $form->field($model,
-                'documentCategoryImage')->widget(\lispa\amos\attachments\components\AttachmentsInput::classname(), [
+                'documentCategoryImage')->widget(\open20\amos\attachments\components\AttachmentsInput::classname(), [
                 'options' => [
                     'multiple' => FALSE,
                     'accept' => "image/*",

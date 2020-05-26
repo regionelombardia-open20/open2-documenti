@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
+use open20\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
 
 /**
  * Class m170601_100329_add_document_basic_user_dashboard_widget

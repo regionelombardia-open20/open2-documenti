@@ -1,20 +1,23 @@
 <?php
+
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\controllers
+ * @package    open20\amos\documenti\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\controllers;
+namespace open20\amos\documenti\controllers;
 
-use lispa\amos\dashboard\controllers\base\DashboardController;
+use open20\amos\dashboard\controllers\base\DashboardController;
+
 use yii\helpers\Url;
 
 class DefaultController extends DashboardController
 {
+
     /**
      * @var string $layout Layout per la dashboard interna.
      */
@@ -23,11 +26,12 @@ class DefaultController extends DashboardController
     /**
      * @inheritdoc
      */
-    public function init() {
+    public function init()
+    {
 
         parent::init();
+
         $this->setUpLayout();
-        // custom initialization code goes here
     }
 
     /**
@@ -38,16 +42,11 @@ class DefaultController extends DashboardController
     {
         $url = '/documenti/documenti/own-interest-documents';
         $module = \Yii::$app->getModule('documenti');
-        if($module){
-            $url =  $module->defaultWidgetIndexUrl;
+        if ($module) {
+            $url = $module->defaultWidgetIndexUrl;
         }
-        return $this->redirect([$url]);
 
-        Url::remember();
-        $params = [
-            'currentDashboard' => $this->getCurrentDashboard()
-        ];
-        return $this->render('index', $params);
+        return $this->redirect([$url]);
     }
 
     /**
@@ -58,16 +57,20 @@ class DefaultController extends DashboardController
     {
         if ($layout === false) {
             $this->layout = false;
+            
             return true;
         }
+
         $this->layout = (!empty($layout)) ? $layout : $this->layout;
+
         $module = \Yii::$app->getModule('layout');
         if (empty($module)) {
             if (strpos($this->layout, '@') === false) {
-                $this->layout = '@vendor/lispa/amos-core/views/layouts/'.(!empty($layout) ? $layout : $this->layout);
+                $this->layout = '@vendor/open20/amos-core/views/layouts/' . $this->layout;
             }
-            return true;
         }
+
         return true;
     }
+
 }

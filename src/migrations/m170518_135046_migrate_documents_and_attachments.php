@@ -1,16 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\FileImport;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\attachments\components\FileImport;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\Migration;
 use yii\db\Query;
 
@@ -50,7 +51,8 @@ class m170518_135046_migrate_documents_and_attachments extends Migration
                 $docAttachmentsIsToMigrate = false;
             }
             foreach ($allDocuments as $document) {
-                $newDocument = new Documenti($document);
+                /** @var Documenti $newDocument */
+                $newDocument = AmosDocumenti::instance()->createModel('Documenti', $document);
                 $newDocument->detachBehaviors();
                 $this->printConsoleMsg('********************************************************************************************************************************************************************');
                 $this->migrateSingleDocument($newDocument);

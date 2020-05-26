@@ -1,10 +1,21 @@
 <?php
 
-namespace lispa\amos\documenti\models\base;
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    Open20Package
+ * @category   CategoryName
+ */
 
-use Yii;
+namespace open20\amos\documenti\models\base;
+
+use open20\amos\documenti\AmosDocumenti;
 
 /**
+ * Class DocumentiCategoryCommunityMm
+ *
  * This is the base-model class for table "documenti_category_community_mm".
  *
  * @property integer $id
@@ -17,12 +28,12 @@ use Yii;
  * @property integer $updated_by
  * @property integer $deleted_by
  *
- * @property \lispa\amos\documenti\models\DocumentiCategorie $documentiCategorie
+ * @property \open20\amos\documenti\models\DocumentiCategorie $documentiCategorie
+ *
+ * @package open20\amos\documenti\models\base
  */
-class  DocumentiCategoryCommunityMm extends \lispa\amos\core\record\Record
+class  DocumentiCategoryCommunityMm extends \open20\amos\core\record\Record
 {
-
-
     /**
      * @inheritdoc
      */
@@ -41,7 +52,7 @@ class  DocumentiCategoryCommunityMm extends \lispa\amos\core\record\Record
             [['visible_to_cm', 'visible_to_participant', 'documenti_categorie_id', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['community_id'], 'string', 'max' => 255],
-            [['documenti_categorie_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\documenti\models\DocumentiCategorie::className(), 'targetAttribute' => ['documenti_categorie_id' => 'id']],
+            [['documenti_categorie_id'], 'exist', 'skipOnError' => true, 'targetClass' => AmosDocumenti::instance()->model('DocumentiCategorie'), 'targetAttribute' => ['documenti_categorie_id' => 'id']],
         ];
     }
 
@@ -51,15 +62,15 @@ class  DocumentiCategoryCommunityMm extends \lispa\amos\core\record\Record
     public function attributeLabels()
     {
         return [
-            'id' => Yii::t('amosdocumenti', 'ID'),
-            'documenti_categorie_id' => Yii::t('amosdocumenti', 'Documenti Category ID'),
-            'community_id' => Yii::t('amosdocumenti', 'Community'),
-            'created_at' => Yii::t('amosdocumenti', 'Created at'),
-            'updated_at' => Yii::t('amosdocumenti', 'Updated at'),
-            'deleted_at' => Yii::t('amosdocumenti', 'Deleted at'),
-            'created_by' => Yii::t('amosdocumenti', 'Created by'),
-            'updated_by' => Yii::t('amosdocumenti', 'Updated by'),
-            'deleted_by' => Yii::t('amosdocumenti', 'Deleted by'),
+            'id' => AmosDocumenti::t('amosdocumenti', 'ID'),
+            'documenti_categorie_id' => AmosDocumenti::t('amosdocumenti', 'Documenti Category ID'),
+            'community_id' => AmosDocumenti::t('amosdocumenti', 'Community'),
+            'created_at' => AmosDocumenti::t('amosdocumenti', 'Created at'),
+            'updated_at' => AmosDocumenti::t('amosdocumenti', 'Updated at'),
+            'deleted_at' => AmosDocumenti::t('amosdocumenti', 'Deleted at'),
+            'created_by' => AmosDocumenti::t('amosdocumenti', 'Created by'),
+            'updated_by' => AmosDocumenti::t('amosdocumenti', 'Updated by'),
+            'deleted_by' => AmosDocumenti::t('amosdocumenti', 'Deleted by'),
         ];
     }
 
@@ -68,6 +79,6 @@ class  DocumentiCategoryCommunityMm extends \lispa\amos\core\record\Record
      */
     public function getDocumentiCategorie()
     {
-        return $this->hasOne(\lispa\amos\documenti\models\DocumentiCategorie::className(), ['id' => 'documenti_categorie_id']);
+        return $this->hasOne(AmosDocumenti::instance()->model('DocumentiCategorie'), ['id' => 'documenti_categorie_id']);
     }
 }

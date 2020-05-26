@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\rbac\Permission;
 
 /**
@@ -27,7 +27,7 @@ class m170412_085218_add_permission_document_validate extends AmosMigrationPermi
                 'name' => 'DocumentValidate',
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission to validate a document with cwh query',
-                'ruleName' => \lispa\amos\core\rules\ValidatorUpdateContentRule::className(),
+                'ruleName' => \open20\amos\core\rules\ValidatorUpdateContentRule::className(),
                 'parent' => ['VALIDATORE_DOCUMENTI']
             ],
             [

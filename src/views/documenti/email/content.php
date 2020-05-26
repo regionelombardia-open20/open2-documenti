@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\comments\views\comment\email
+ * @package    open20\amos\comments\views\comment\email
  * @category   CategoryName
  */
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\cwh\base\ModelContentInterface;
+use open20\amos\core\helpers\Html;
+use open20\amos\cwh\base\ModelContentInterface;
 
 ?>
 <div style="border:1px solid #cccccc;padding:10px;margin-bottom: 10px;background-color: #ffffff;margin-top:20px">
     <div style="color:#000000;">
         <h2 style="font-size:2em;line-height: 1;margin:0;padding:10px 0;">
-            <?= Html::a(\lispa\amos\documenti\AmosDocumenti::t('amosdocumenti', "É stato caricato il documento '"). $modelDocument->title . "'", Yii::$app->getUrlManager()->createAbsoluteUrl(['/documenti/documenti/view', 'id' => $modelDocument->id]), ['style' => 'color: green;']) ?>
+            <?= Html::a(\open20\amos\documenti\AmosDocumenti::t('amosdocumenti', "É stato caricato il documento '"). $modelDocument->title . "'", Yii::$app->getUrlManager()->createAbsoluteUrl(['/documenti/documenti/view', 'id' => $modelDocument->id]), ['style' => 'color: green;']) ?>
         </h2>
     </div>
 
@@ -33,7 +33,7 @@ use lispa\amos\cwh\base\ModelContentInterface;
                     $layout = '{publisher}';
                     ?>
                     <?php if ($modelCreator != null): ?>
-                        <?= \lispa\amos\admin\widgets\UserCardWidget::widget([
+                        <?= \open20\amos\admin\widgets\UserCardWidget::widget([
                             'model' => $modelCreator,
                             'onlyAvatar' => true,
                             'absoluteUrl' => true
@@ -43,7 +43,7 @@ use lispa\amos\cwh\base\ModelContentInterface;
                 </div>
 
                 <div style="margin-left: 20px;">
-                    <?= \lispa\amos\core\forms\PublishedByWidget::widget([
+                    <?= \open20\amos\core\forms\PublishedByWidget::widget([
                         'model' => $modelCreator,
                         'layout' => $layout,
                     ]) ?>

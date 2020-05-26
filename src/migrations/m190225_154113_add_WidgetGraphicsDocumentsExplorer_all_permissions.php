@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
-use lispa\amos\documenti\rules\DeleteOwnDocumentiRule;
-use lispa\amos\documenti\rules\DeleteFacilitatorOwnDocumentiRule;
-use lispa\amos\documenti\rules\UpdateFacilitatorOwnDocumentiRule;
-use lispa\amos\documenti\rules\UpdateOwnDocumentiRule;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\documenti\rules\DeleteOwnDocumentiRule;
+use open20\amos\documenti\rules\DeleteFacilitatorOwnDocumentiRule;
+use open20\amos\documenti\rules\UpdateFacilitatorOwnDocumentiRule;
+use open20\amos\documenti\rules\UpdateOwnDocumentiRule;
+use open20\amos\documenti\models\Documenti;
 use yii\rbac\Permission;
 
 class m190225_154113_add_WidgetGraphicsDocumentsExplorer_all_permissions extends AmosMigrationPermissions
@@ -27,7 +27,7 @@ class m190225_154113_add_WidgetGraphicsDocumentsExplorer_all_permissions extends
     {
         $this->authorizations = [
             [
-                'name' => lispa\amos\documenti\widgets\graphics\WidgetGraphicsDocumentsExplorer::className(),
+                'name' => open20\amos\documenti\widgets\graphics\WidgetGraphicsDocumentsExplorer::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetGraphicsDocumentsExplorer',
                 'ruleName' => null,

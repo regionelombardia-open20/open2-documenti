@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\rbac\Permission;
 
 /**
@@ -21,7 +21,7 @@ class m171117_141402_add_documenti_permission_admin_all_widget extends AmosMigra
     {
         $this->authorizations = [
             [
-                'name' => \lispa\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti::className(),
+                'name' => \open20\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission description',
                 'ruleName' => null,

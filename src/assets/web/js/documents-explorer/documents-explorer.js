@@ -19,6 +19,8 @@ function documentsExplorer() {
     var translatedStrings = [];
     var dataNavbar = [];
     var dataBreadcrumb = [];
+    
+    dataBreadcrumb['links'] = [];
 
     /**
      * Structure for this array:
@@ -203,7 +205,7 @@ function documentsExplorer() {
          */
         $("#content-explorer-breadcrumb .link").click(function () {
             removeBreadcrumb($(this).attr('data-parent-id'));
-            refreshExplorer($(this).attr('data-parent-id'),currentScope);
+            refreshExplorer($(this).attr('data-parent-id'), currentScope);
         });
     }
 
@@ -287,18 +289,17 @@ function documentsExplorer() {
      */
     function getFolders(parentId) {
         var d = $.Deferred();
-        if (parentId !== undefined && parentId !== "" && currentScope !== undefined && currentScope !== "" && currentScope !== null) {
-            $.ajax(
-                {
-                    method: "POST",
-                    url: '/documenti/documenti-ajax/get-folders',
-                    data: {
-                        'parent-id': parentId,
-                        'scope-id': currentScope,
-                        'foldersPath': JSON.stringify(dataBreadcrumb),
-                    },
-                    cache: false
-                }).done(function (resp) {
+        if (parentId !== undefined && currentScope !== undefined && currentScope !== null) {
+            $.ajax({
+                method: "post",
+                url: '/documenti/documenti-ajax/get-folders',
+                data: {
+                    'parent-id': parentId,
+                    'scope-id': currentScope,
+                    'foldersPath': JSON.stringify(dataBreadcrumb),
+                },
+                cache: false
+            }).done(function (resp) {
                 resp = $.parseJSON(resp);
                 var htmlFolders = Mustache.render(templateFolders, resp);
                 $('#content-explorer-folders').append(htmlFolders);
@@ -507,11 +508,21 @@ function documentsExplorer() {
                 $("#documents-explorer-create-new-version-document-modal-content").modal();
                 return false;
             case 'download':
-                window.open('/attachments/file/download?id=' + $(currentObject).attr('data-file-id') + '&hash=' + $(currentObject).attr('data-model-hash'), '_blank', 'location=no,height=50,width=50,scrollbars=no,status=no');
+                download($(currentObject).attr('data-file-id'), $(currentObject).attr('data-model-hash'));
                 return false;
+                
+                
+                
+//                window.open('/attachments/file/download?id=' + $(currentObject).attr('data-file-id') + '&hash=' + $(currentObject).attr('data-model-hash'), '_blank', 'location=no,height=50,width=50,scrollbars=no,status=no');
+//                return false;
             case 'delete':
                 $("#documents-explorer-delete-file-modal-yes").click(function (e) {
-                    removeModel(modelId, $("#documents-explorer-delete-file-modal-no"), $("#documents-explorer-delete-file-modal-content"), "documents");
+                    removeModel(
+                        modelId, 
+                        $("#documents-explorer-delete-file-modal-no"), 
+                        $("#documents-explorer-delete-file-modal-content"), 
+                        "documents"
+                    );
                     $("#documents-explorer-delete-file-modal-yes").unbind();
                 });
                 $("#documents-explorer-delete-file-modal-content").find(".errors").empty();
@@ -554,10 +565,10 @@ function documentsExplorer() {
      */
     function getDocuments(parentId) {
         var d = $.Deferred();
-        if (parentId !== undefined && parentId !== "" && currentScope !== undefined && currentScope !== "" && currentScope !== null) {
+        if (parentId !== undefined && currentScope !== undefined && currentScope !== null) {
             $.ajax(
                 {
-                    method: "POST",
+                    method: "post",
                     url: '/documenti/documenti-ajax/get-documents',
                     data: {
                         'parent-id': parentId,
@@ -610,6 +621,15 @@ function documentsExplorer() {
         r = Mustache.render(templateNewFolderModal);
         $.when(reloadFolders(), reloadDocuments()).done(function () {
             createNewFolderModalBehavior();
+            
+            $("#create-new-folder-modal").click(function () {
+                parentIdInUrl = '?';
+                if (parentId !== null) {
+                    parentIdInUrl += 'parentId=' + parentId + '&';
+                }
+                window.open('/documenti/documenti/create' + parentIdInUrl + 'isFolder=1&from=dashboard', '_self');
+            });
+            
             $("#upload-new-files").click(function () {
                 parentIdInUrl = '?';
                 if (parentId !== null) {
@@ -633,50 +653,50 @@ function documentsExplorer() {
     }
 
     function createNewFolderModalBehavior() {
-        $("#create-new-folder-modal").click(function () {
-            $("#documents-explorer-new-folder-modal-content").find(".errors").empty();
-            //$("#documents-explorer-new-folder-modal-create-new-folder").find(".errors").empty();
-            $("#documents-explorer-new-folder-name").val("");
-            $("#content-explorer-folders").append(Mustache.render(templateNewFolderModal));
-            $("#documents-explorer-new-folder-modal-content").on($.modal.OPEN, function () {
-                $("#documents-explorer-new-folder-modal-create-new-folder").click(function () {
-                    //return false;
-                    $("#documents-explorer-new-folder-modal-content").find(".errors").empty();
-                    if ($("#documents-explorer-new-folder-name").val().trim() != "") {
-                        $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", true);
-                        $.ajax(
-                            {
-                                method: "POST",
-                                url: '/documenti/documenti-ajax/create-folder',
-                                data: {
-                                    'parent-id': currentParentId,
-                                    'scope': currentScope,
-                                    'folder-name': $("#documents-explorer-new-folder-name").val().trim(),
-                                },
-                                cache: false
-                            }).done(function (resp) {
-                            resp = $.parseJSON(resp);
-                            if (resp.success) {
-                                $("#documents-explorer-new-folder-modal-close").click();
-                                $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", false);
-                                $("#documents-explorer-new-folder-modal-create-new-folder").unbind();
-                                reloadFolders(true);
-                            } else {
-                                $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", false);
-                                $("#documents-explorer-new-folder-modal-content").find(".errors").append('<span>' + resp.message + '</span>');
-                            }
-                        });
-                    } else {
-                        $("#documents-explorer-new-folder-modal-content").find(".errors").append('<span>' + translatedStrings['ERROR--NOME-CARTELLA-NON-VUOTO'] + '</span>');
-                    }
-                });
-            });
-            $("#documents-explorer-new-folder-modal-content").modal().ready(function () {
-                $("#documents-explorer-new-folder-modal-content").on($.modal.AFTER_CLOSE, function () {
-                    $("#documents-explorer-new-folder-modal-content").remove();
-                });
-            });
-        });
+//        $("#create-new-folder-modal").click(function () {
+//            $("#documents-explorer-new-folder-modal-content").find(".errors").empty();
+//            //$("#documents-explorer-new-folder-modal-create-new-folder").find(".errors").empty();
+//            $("#documents-explorer-new-folder-name").val("");
+//            $("#content-explorer-folders").append(Mustache.render(templateNewFolderModal));
+//            $("#documents-explorer-new-folder-modal-content").on($.modal.OPEN, function () {
+//                $("#documents-explorer-new-folder-modal-create-new-folder").click(function () {
+//                    //return false;
+//                    $("#documents-explorer-new-folder-modal-content").find(".errors").empty();
+//                    if ($("#documents-explorer-new-folder-name").val().trim() != "") {
+//                        $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", true);
+//                        $.ajax({
+//                            method: "post",
+//                            url: '/documenti/documenti-ajax/create-folder',
+//                            data: {
+//                                'parent-id': currentParentId,
+//                                'scope': currentScope,
+//                                'folder-name': $("#documents-explorer-new-folder-name").val().trim(),
+//                            },
+//                            cache: false
+//                        }).done(function (resp) {
+//                            resp = $.parseJSON(resp);
+//                            if (resp.success) {
+//                                $("#documents-explorer-new-folder-modal-close").click();
+//                                $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", false);
+//                                $("#documents-explorer-new-folder-modal-create-new-folder").unbind();
+//                                reloadFolders(true);
+//                            } else {
+//                                $("#documents-explorer-new-folder-modal-create-new-folder").prop("disabled", false);
+//                                $("#documents-explorer-new-folder-modal-content").find(".errors").append('<span>' + resp.message + '</span>');
+//                            }
+//                        });
+//                    } else {
+//                        $("#documents-explorer-new-folder-modal-content").find(".errors").append('<span>' + translatedStrings['ERROR--NOME-CARTELLA-NON-VUOTO'] + '</span>');
+//                    }
+//                });
+//            });
+//            
+//            $("#documents-explorer-new-folder-modal-content").modal().ready(function () {
+//                $("#documents-explorer-new-folder-modal-content").on($.modal.AFTER_CLOSE, function () {
+//                    $("#documents-explorer-new-folder-modal-content").remove();
+//                });
+//            });
+//        });
     }
 
     function removeModel(modelId, modalCloseButton, modal, functionReload) {
@@ -686,7 +706,7 @@ function documentsExplorer() {
             $("#documents-explorer-delete-file-modal-yes").prop("disabled", true);
             $.ajax(
                 {
-                    method: "POST",
+                    method: "post",
                     url: '/documenti/documenti-ajax/delete-model',
                     data: {
                         'model-id': modelId
@@ -729,7 +749,7 @@ function documentsExplorer() {
     function getTranslationsAndButtons() {
         return $.ajax(
             {
-                method: "POST",
+                method: "post",
                 url: '/documenti/documenti-ajax/get-translations-and-options',
                 data: {
                 },
@@ -770,7 +790,7 @@ function documentsExplorer() {
     function getAree(resetScope) {
         if (!resetScope) resetScope = null;
         return $.ajax({
-            method: "GET",
+            method: "get",
             url: '/documenti/documenti-ajax/get-aree',
             data: {
                 resetScope: resetScope,
@@ -855,7 +875,7 @@ function documentsExplorer() {
     function getStanze(backToStanza) {
         if (!backToStanza) backToStanza = null;
         return $.ajax({
-            method: "GET",
+            method: "get",
             url: '/documenti/documenti-ajax/get-subcommunities',
             data: {
                 'idArea': currentScope,

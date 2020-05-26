@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationWidgets;
-use lispa\amos\dashboard\models\AmosWidgets;
+use open20\amos\core\migration\AmosMigrationWidgets;
+use open20\amos\dashboard\models\AmosWidgets;
 
 /**
  * Class m171117_141555_add_documenti_admin_all_widget
@@ -26,11 +26,11 @@ class m171117_141555_add_documenti_admin_all_widget extends AmosMigrationWidgets
     {
         $this->widgets = [
             [
-                'classname' => \lispa\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti::className(),
+                'classname' => \open20\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'dashboard_visible' => 0,
                 'default_order' => 80
             ]

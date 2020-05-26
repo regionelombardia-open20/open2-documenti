@@ -1,20 +1,19 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti
+ * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\controllers\DocumentiController;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\DocumentiCategorie;
-use lispa\amos\tag\AmosTag;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\controllers\DocumentiController;
+use open20\amos\documenti\models\DocumentiCategorie;
+use open20\amos\tag\AmosTag;
 use kartik\datecontrol\DateControl;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
@@ -23,12 +22,18 @@ use yii\widgets\ActiveForm;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\search\DocumentiSearch $model
+ * @var open20\amos\documenti\models\search\DocumentiSearch $model
  * @var yii\widgets\ActiveForm $form
  */
 
 /** @var AmosTag $moduleTag */
 $moduleTag = Yii::$app->getModule('tag');
+
+/** @var AmosDocumenti $documentsModule */
+$documentsModule = AmosDocumenti::instance();
+
+/** @var DocumentiCategorie $documentiCategorieModel */
+$documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
 
 /** @var DocumentiController $controller */
 $controller = Yii::$app->controller;
@@ -78,26 +83,28 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
             ]) ?>
         </div>
     <?php } ?>
-    <div class="col-sm-6 col-lg-4">
-        <?= $form->field($model, 'created_by')->widget(Select2::className(), [
-                'data' => (!empty($model->created_by) ? [$model->created_by => \lispa\amos\admin\models\UserProfile::findOne($model->created_by)->getNomeCognome()] : []),
-                'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Cerca ...')],
-                'pluginOptions' => [
-                    'allowClear' => true,
-                    'minimumInputLength' => 3,
-                    'ajax' => [
-                        'url' => \yii\helpers\Url::to(['/admin/user-profile-ajax/ajax-user-list']),
-                        'dataType' => 'json',
-                        'data' => new \yii\web\JsExpression('function(params) { return {q:params.term}; }')
+    <?php if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)): ?>
+        <div class="col-sm-6 col-lg-4">
+            <?= $form->field($model, 'created_by')->widget(Select2::className(), [
+                    'data' => (!empty($model->created_by) ? [$model->created_by => \open20\amos\admin\models\UserProfile::findOne($model->created_by)->getNomeCognome()] : []),
+                    'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Cerca ...')],
+                    'pluginOptions' => [
+                        'allowClear' => true,
+                        'minimumInputLength' => 3,
+                        'ajax' => [
+                            'url' => \yii\helpers\Url::to(['/admin/user-profile-ajax/ajax-user-list']),
+                            'dataType' => 'json',
+                            'data' => new \yii\web\JsExpression('function(params) { return {q:params.term}; }')
+                        ],
                     ],
-                ],
-            ]
-        ); ?>
-    </div>
+                ]
+            ); ?>
+        </div>
+    <?php endif; ?>
     <?php if ($controller->documentsModule->enableCategories): ?>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'documenti_categorie_id')->widget(Select::className(), [
-                'data' => ArrayHelper::map(DocumentiCategorie::find()->all(), 'id', 'titolo'),
+                'data' => ArrayHelper::map($documentiCategorieModel::find()->all(), 'id', 'titolo'),
                 'language' => substr(Yii::$app->language, 0, 2),
                 'options' => [
                     'multiple' => true,
@@ -110,11 +117,11 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
         </div>
     <?php endif; ?>
 
-    <?php if (isset($moduleTag) && in_array(Documenti::className(), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
+    <?php if (isset($moduleTag) && in_array($documentsModule->model('Documenti'), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
         <div class="col-xs-12">
             <?php
             $params = \Yii::$app->request->getQueryParams();
-            /*echo \lispa\amos\tag\widgets\TagWidget::widget([
+            /*echo \open20\amos\tag\widgets\TagWidget::widget([
                 'model' => $model,
                 'attribute' => 'tagValues',
                 'form' => $form,

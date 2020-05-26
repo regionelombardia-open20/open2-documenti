@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\i18n\en-GB
+ * @package    open20\amos\documenti\i18n\en-GB
  * @category   CategoryName
  */
 
@@ -25,6 +25,7 @@ return [
     'Allegati documento' => 'Document attachments',
     'Amministra documenti' => 'Manage documents',
     'Annulla' => 'Cancel',
+    'Apri' => 'Open',
     'Apri il profilo di {nome_profilo}' => 'Open {nome_profilo}\'s profile',
     '#article_indefinite' => 'a',
     '#article_plural' => 'the',
@@ -91,6 +92,7 @@ return [
     '#DAVALIDARE_labelFolder' => 'The folder is being approved for publication and can not be changed',
     '#DAVALIDARE_label' => 'The document is being approved for publication and can not be changed',
     'Decrescente' => 'Descending',
+    '#delete_category_not_possible' => "It's not possible to delete the category because it's associated at least with one document.",
     'Descrizione breve' => 'Short description',
     'Descrizione' => 'Description',
     '#DETAILS' => 'Details',
@@ -144,6 +146,7 @@ return [
     '#documents_wizard_page_title' => 'Create document',
     'Document uploaded' => 'Document uploaded',
     'Document validated!' => 'Document validated!',
+    '#download_document_for_view' => 'Download document',
     'Download file' => 'Download file',
     'Elemento cancellato correttamente.' => 'Component deleted',
     'Elemento non trovato.' => 'Component not found',
@@ -345,4 +348,20 @@ return [
     '#link_document_field_placeholder' => 'Specify the external document link',
     '#link_document_field' => 'External link document',
     '#link_document_field_hint' => 'Max limit: 255 chars',
+    '#main_document_required' => 'Upload a document or specify a link to an external document in the appropriate field',
+
+    'Import Workspace' => 'Import workspace',
+    'Upload files of great size' => 'Upload files of great size',
+    '#choose_nodes_title' => "Nome dell'Area di lavoro",
+    '#choose_nodes_description' => "Questo è il nome dell'Area di lavoro che stai importando, recuperato dall'importazione del file .ZIP. Se desideri puoi cambiare il nome.<br>Nel passaggio successivo potrai scegliere le Stanze da importare.",
+    '#choose_nodes_name_label' => "Nome dell'Area",
+    '#choose_nodes_title_2' => 'Scelta delle Stanze',
+    '#choose_nodes_description_2' => "Seleziona le Stanze di lavoro dall'elenco che desideri importare.<br><br>Nota: le voci non selezionate diventeranno automaticamente delle Cartelle",
+    '#choose_nodes_tree' => 'Seleziona Stanze',
+
+    'DocumentiWorkflow/BOZZA' => 'Bozza',
+    'DocumentiWorkflow/VALIDATO' => 'Validato',
+    'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
+    'DocumentiWorkflow/NONVALIDATO' => 'Non Validato',
+    'Open file' => 'Open file',
 ];

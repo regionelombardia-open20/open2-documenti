@@ -1,28 +1,28 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-wizard
+ * @package    open20\amos\documenti\views\documenti-wizard
  * @category   CategoryName
  */
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\PublishedByWidget;
-use lispa\amos\core\forms\ShowUserTagsWidget;
-use lispa\amos\core\forms\WizardPrevAndContinueButtonWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\PublishedByWidget;
+use open20\amos\core\forms\ShowUserTagsWidget;
+use open20\amos\core\forms\WizardPrevAndContinueButtonWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\web\View;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  * @var yii\widgets\ActiveForm $form
  * @var string $viewPublish
  * @var string $viewPublishRequest
@@ -120,7 +120,7 @@ $enableCategories = AmosDocumenti::instance()->enableCategories;
                             'layout' => '{publisher}{publishingRules}{targetAdv}',
                             'renderSections' => [
                                 '{publisher}' => function ($model, $widget) {
-                                    /** @var \lispa\amos\core\forms\PublishedByWidget $widget */
+                                    /** @var \open20\amos\core\forms\PublishedByWidget $widget */
                                     /** @var Documenti $model */
                                     $content = Html::beginTag('dl');
                                     $content .= Html::beginTag('dt') . AmosDocumenti::tHtml('amosdocumenti', 'Published by') . Html::endTag('dt');
@@ -129,19 +129,19 @@ $enableCategories = AmosDocumenti::instance()->enableCategories;
                                     return $content;
                                 },
                                 '{publishingRules}' => function ($model, $widget) {
-                                    /** @var \lispa\amos\core\forms\PublishedByWidget $widget */
+                                    /** @var \open20\amos\core\forms\PublishedByWidget $widget */
                                     /** @var Documenti $model */
                                     $content = Html::beginTag('dl');
                                     $content .= Html::beginTag('dt') . AmosDocumenti::tHtml('amosdocumenti', 'Publication rule') . Html::endTag('dt');
-                                    $content .= Html::beginTag('dd') . \lispa\amos\cwh\utility\CwhUtil::getPublicationRuleLabel($model->regola_pubblicazione) . Html::endTag('dd');
+                                    $content .= Html::beginTag('dd') . \open20\amos\cwh\utility\CwhUtil::getPublicationRuleLabel($model->regola_pubblicazione) . Html::endTag('dd');
                                     $content .= Html::endTag('dl');
                                     return $content;
                                 },
                                 '{targetAdv}' => function ($model, $widget) {
-                                    /** @var \lispa\amos\core\forms\PublishedByWidget $widget */
+                                    /** @var \open20\amos\core\forms\PublishedByWidget $widget */
                                     /** @var Documenti $model */
                                     $targets = $targets = $model->destinatari;;
-                                    $publicationRule = \lispa\amos\cwh\utility\CwhUtil::getPublicationRuleLabel($model->regola_pubblicazione);
+                                    $publicationRule = \open20\amos\cwh\utility\CwhUtil::getPublicationRuleLabel($model->regola_pubblicazione);
                                     $targetsString = $widget->getNodesAsString($targets);
                                     $content = Html::beginTag('dl');
                                     $content .= Html::beginTag('dt') . AmosDocumenti::tHtml('amosdocumenti', 'Recipients') . Html::endTag('dt');

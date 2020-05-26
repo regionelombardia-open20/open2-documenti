@@ -1,31 +1,31 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\utility
+ * @package    open20\amos\documenti\utility
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\utility;
+namespace open20\amos\documenti\utility;
 
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\user\User;
-use lispa\amos\core\utilities\Email;
-use lispa\amos\core\views\grid\ActionColumn;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\DocumentiCategorie;
-use lispa\amos\documenti\models\DocumentiCategoryCommunityMm;
-use lispa\amos\documenti\models\DocumentiCategoryRolesMm;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\user\User;
+use open20\amos\core\utilities\Email;
+use open20\amos\core\views\grid\ActionColumn;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCategorie;
+use open20\amos\documenti\models\DocumentiCategoryRolesMm;
 use yii\base\BaseObject;
 use yii\db\ActiveQuery;
 use yii\db\Query;
 
 /**
  * Class DocumentsUtility
- * @package lispa\amos\documenti\utility
+ * @package open20\amos\documenti\utility
  */
 class DocumentsUtility extends BaseObject
 {
@@ -44,51 +44,39 @@ class DocumentsUtility extends BaseObject
             return AmosIcons::show($folderIconName, ['class' => 'icon_widget_graph'], 'dash');
         }
         
-        if (!(empty($model->link_document) != '')) {
-            return AmosIcons::show('doc-www', ['class' => 'icon_widget_graph'], 'dash');
+        if (!(empty($model->link_document))) {
+            $linkIcon = 'doc-www';
+            if ($onlyIconName === false) {
+                $linkIcon = AmosIcons::show($linkIcon, ['class' => 'icon_widget_graph'], 'dash');
+            }
+            
+            return $linkIcon;
         }
         
         $iconName = 'file-o';
         $documentFile = $model->getDocumentMainFile();
         if (!is_null($documentFile)) {
             $docExtension = strtolower($documentFile->type);
-            switch ($docExtension) {
-                case 'doc':
-                    //$iconName = 'file-word-o';
-                    $iconName = 'file-doc-o';
-                    break;
-                case 'docx':
-//                    $iconName = 'file-word-o';
-                    $iconName = 'file-docx-o';
-                    break;
-                case 'rtf':
-//                    $iconName = 'file-o';
-                    $iconName = 'file-rtf-o';
-                    break;
-                case 'xls':
-//                    $iconName = 'file-excel-o';
-                    $iconName = 'file-xls-o';
-                    break;
-                case 'xlsx':
-//                    $iconName = 'file-excel-o';
-                    $iconName = 'file-xlsx-o';
-                    break;
-                case 'txt':
-//                    $iconName = 'file-text-o';
-                    $iconName = 'file-txt-o';
-                    break;
-                case 'pdf':
-//                    $iconName = 'file-pdf-o';
-                    $iconName = 'file-pdf-o2';
-                    break;
-                default:
-                    $iconName = 'file-o';
-                    break;
+            
+            $extensions = [
+                'doc'  => 'file-doc-o',
+                'docx' => 'file-docx-o',
+                'rtf'  => 'file-rtf-o',
+                'xls'  => 'file-xls-o',
+                'xlsx' => 'file-xlsx-o',
+                'txt'  => 'file-txt-o',
+                'pdf'  => 'file-pdf-o2',
+            ];
+            
+            if (isset($extensions[$docExtension])) {
+                $iconName = $extensions[$docExtension];
             }
         }
+        
         if ($onlyIconName) {
             return $iconName;
         }
+        
         return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash');
     }
 
@@ -158,8 +146,12 @@ class DocumentsUtility extends BaseObject
     {
         $documentsCategoriesIds = self::getDocumentsCategoriesIds();
         $documentsCategoriesForSelect = [];
+        /** @var AmosDocumenti $documentsModule */
+        $documentsModule = AmosDocumenti::instance();
         foreach ($documentsCategoriesIds as $documentCategoryId) {
-            $documentCategory = DocumentiCategorie::findOne($documentCategoryId);
+            /** @var DocumentiCategorie $documentiCategorieModel */
+            $documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
+            $documentCategory = $documentiCategorieModel::findOne($documentCategoryId);
             if (!is_null($documentCategory)) {
                 $documentsCategoriesForSelect[$documentCategory->id] = $documentCategory->titolo;
             }
@@ -203,8 +195,11 @@ class DocumentsUtility extends BaseObject
      */
     public static function getDocumentiCategorie()
     {
+        /** @var DocumentiCategorie $documentiCategorieModel */
+        $documentiCategorieModel = AmosDocumenti::instance()->createModel('DocumentiCategorie');
+
         /** @var ActiveQuery $query */
-        $query = DocumentiCategorie::find();
+        $query = $documentiCategorieModel::find();
         if(\Yii::$app->getModule('documenti')->filterCategoriesByRole){
             //check enabled role for category active - user can publish under a category if there's at least one match betwwn category and user roles
             $query->joinWith('documentiCategoryRolesMms')->innerJoin('auth_assignment', 'item_name='. DocumentiCategoryRolesMm::tableName().'.role and user_id ='. \Yii::$app->user->id);
@@ -260,10 +255,11 @@ class DocumentsUtility extends BaseObject
      * @throws \yii\base\InvalidConfigException
      */
     public static function isCommunityManager($community_id){
-        $count = \lispa\amos\community\models\CommunityUserMm::find()
+        $count = \open20\amos\community\models\CommunityUserMm::find()
             ->andWhere(['community_id' => $community_id])
             ->andWhere(['user_id' => \Yii::$app->user->id])
-            ->andWhere(['role' => \lispa\amos\community\models\Community::ROLE_COMMUNITY_MANAGER])->count();
+            ->andWhere(['role' => \open20\amos\community\models\Community::ROLE_COMMUNITY_MANAGER])->count();
+        
         return ($count > 0);
 
     }

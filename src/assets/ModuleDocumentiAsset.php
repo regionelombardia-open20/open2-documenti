@@ -1,29 +1,29 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\assets
+ * @package    open20\amos\documenti\assets
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\assets;
+namespace open20\amos\documenti\assets;
 
 use yii\web\AssetBundle;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetAbstract;
 
 /**
  * Class ModuleDocumentiAsset
- * @package lispa\amos\documenti\assets
+ * @package open20\amos\documenti\assets
  */
 class ModuleDocumentiAsset extends AssetBundle
 {
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@vendor/lispa/amos-documenti/src/assets/web';
+    public $sourcePath = '@vendor/open20/amos-documenti/src/assets/web';
 
     /**
      * @inheritdoc
@@ -58,9 +58,9 @@ class ModuleDocumentiAsset extends AssetBundle
         }
 
         if (!empty($moduleL)) {
-            $this->depends [] = 'lispa\amos\layout\assets\BaseAsset';
+            $this->depends [] = 'open20\amos\layout\assets\BaseAsset';
         } else {
-            $this->depends [] = 'lispa\amos\core\views\assets\AmosCoreAsset';
+            $this->depends [] = 'open20\amos\core\views\assets\AmosCoreAsset';
         }
         parent::init();
     }

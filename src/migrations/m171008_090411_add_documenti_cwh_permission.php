@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\rbac\Permission;
 
 /**
@@ -27,16 +27,16 @@ class m171008_090411_add_documenti_cwh_permission extends AmosMigrationPermissio
         $this->authorizations = [
 
             [
-                'name' => 'CWH_PERMISSION_CREATE_lispa\amos\documenti\models\Documenti',
+                'name' => 'CWH_PERMISSION_CREATE_open20\amos\documenti\models\Documenti',
                 'type' => Permission::TYPE_PERMISSION,
-                'description' => 'Creare lispa\\amos\\documenti\\models\\Docuemnti',
+                'description' => 'Creare open20\\amos\\documenti\\models\\Docuemnti',
                 'ruleName' => null,
                 'parent' => ['AMMINISTRATORE_CWH']
             ],
             [
-                'name' => 'CWH_PERMISSION_VALIDATE_lispa\amos\documenti\models\Documenti',
+                'name' => 'CWH_PERMISSION_VALIDATE_open20\amos\documenti\models\Documenti',
                 'type' => Permission::TYPE_PERMISSION,
-                'description' => 'Validare lispa\\amos\\documenti\\models\\Documenti',
+                'description' => 'Validare open20\\amos\\documenti\\models\\Documenti',
                 'ruleName' => null,
                 'parent' => ['AMMINISTRATORE_CWH']
             ],

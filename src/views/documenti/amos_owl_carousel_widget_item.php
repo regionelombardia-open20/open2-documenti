@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti
+ * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\ItemAndCardHeaderWidget;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\utility\DocumentsUtility;
+use open20\amos\core\forms\ItemAndCardHeaderWidget;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\utility\DocumentsUtility;
 use yii\helpers\Html;
 
 /**
- * @var \lispa\amos\documenti\models\Documenti $model
- * @var \lispa\amos\documenti\widgets\DocumentsOwlCarouselWidget $widget
+ * @var \open20\amos\documenti\models\Documenti $model
+ * @var \open20\amos\documenti\widgets\DocumentsOwlCarouselWidget $widget
  */
 
 $documentIcon = DocumentsUtility::getDocumentIcon($model);

@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-categorie
+ * @package    open20\amos\documenti\views\documenti-categorie
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use lispa\amos\core\forms\CreatedUpdatedWidget;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\core\helpers\Html;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
+use open20\amos\core\forms\CreatedUpdatedWidget;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\core\helpers\Html;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\DocumentiCategorie $model
+ * @var open20\amos\documenti\models\DocumentiCategorie $model
  * @var yii\widgets\ActiveForm $form
  */
 
@@ -45,7 +45,7 @@ $filterCategoriesByRole = $module->filterCategoriesByRole;
         </div>
         <div class="col-lg-4 col-xs-12">
             <?= $form->field($model,
-                'documentCategoryImage')->widget(\lispa\amos\attachments\components\AttachmentsInput::classname(), [
+                'documentCategoryImage')->widget(\open20\amos\attachments\components\AttachmentsInput::classname(), [
                 'options' => [
                     'multiple' => FALSE,
                     'accept' => "image/*",
@@ -87,7 +87,7 @@ $filterCategoriesByRole = $module->filterCategoriesByRole;
         <div class="row">
             <div class="col-lg-6 col-sm-12">
                 <?= $form->field($model, 'documentiCategoryCommunities')->widget(\kartik\select2\Select2::className(),[
-                    'data' => \yii\helpers\ArrayHelper::map(\lispa\amos\community\models\Community::find()->all(), 'id', 'name'),
+                    'data' => \yii\helpers\ArrayHelper::map(\open20\amos\community\models\Community::find()->all(), 'id', 'name'),
                     'pluginOptions' => [
                         'allowClear' => true
                     ],

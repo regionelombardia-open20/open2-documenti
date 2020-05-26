@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\graphics\views\hierarchical-documents
+ * @package    open20\amos\documenti\widgets\graphics\views\hierarchical-documents
  * @category   CategoryName
  */
 
-use lispa\amos\core\views\DataProviderView;
+use open20\amos\core\views\DataProviderView;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments $widget
+ * @var open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments $widget
  * @var yii\data\ActiveDataProvider $dataProvider
  * @var string $currentView
  */

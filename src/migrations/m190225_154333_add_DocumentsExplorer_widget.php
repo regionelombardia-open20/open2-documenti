@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationWidgets;
-use lispa\amos\dashboard\models\AmosWidgets;
+use open20\amos\core\migration\AmosMigrationWidgets;
+use open20\amos\dashboard\models\AmosWidgets;
 
 class m190225_154333_add_DocumentsExplorer_widget extends AmosMigrationWidgets
 {
@@ -23,7 +23,7 @@ class m190225_154333_add_DocumentsExplorer_widget extends AmosMigrationWidgets
     {
         $this->widgets = [
             [
-                'classname' => \lispa\amos\documenti\widgets\graphics\WidgetGraphicsDocumentsExplorer::className(),
+                'classname' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsDocumentsExplorer::className(),
                 'type' => AmosWidgets::TYPE_GRAPHIC,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,

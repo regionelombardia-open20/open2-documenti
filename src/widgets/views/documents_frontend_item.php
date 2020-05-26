@@ -1,10 +1,19 @@
 <?php
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\documenti\AmosDocumenti;
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    Open20Package
+ * @category   CategoryName
+ */
+
+use open20\amos\core\helpers\Html;
+use open20\amos\documenti\AmosDocumenti;
 
 ?>
-<?php /** @var $model \lispa\amos\documenti\models\Documenti */ ?>
+<?php /** @var $model \open20\amos\documenti\models\Documenti */ ?>
 <?php
     $file = $model->hasOneFile('documentMainFile');
     ?>

@@ -1,7 +1,17 @@
 <?php
 
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\seo\models\SeoData;
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    Open20Package
+ * @category   CategoryName
+ */
+
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\seo\models\SeoData;
 use yii\db\Migration;
 
 /**
@@ -12,10 +22,12 @@ class m181024_145810_populate_seo_data extends Migration {
         $totsave = 0;
         $totnotsave = 0;
         try {
-            foreach (Documenti::find()
+            /** @var Documenti $documentiModel */
+            $documentiModel = AmosDocumenti::instance()->createModel('Documenti');
+            foreach ($documentiModel::find()
                     ->orderBy(['id' => SORT_ASC])
                     ->all() as $document) {
-
+                /** @var Documenti $document */
                 $seoData = SeoData::findOne([
                             'classname' => $document->className(),
                             'content_id' => $document->id
@@ -51,10 +63,12 @@ class m181024_145810_populate_seo_data extends Migration {
     public function safeDown() {
         $totdel = 0;
         try {
-            foreach (Documenti::find()
+            /** @var Documenti $documentiModel */
+            $documentiModel = AmosDocumenti::instance()->createModel('Documenti');
+            foreach ($documentiModel::find()
                     ->orderBy(['id' => SORT_ASC])
                     ->all() as $document) {
-
+                /** @var Documenti $document */
                 $where = " classname LIKE '" . addslashes(addslashes($document->className())) . "' AND content_id = " . $document->id;
                 $this->delete(SeoData::tableName(), $where);
 

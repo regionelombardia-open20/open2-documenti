@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\models\base
+ * @package    open20\amos\documenti\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\models\base;
+namespace open20\amos\documenti\models\base;
 
-use lispa\amos\core\record\ContentModel;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\record\ContentModel;
+use open20\amos\documenti\AmosDocumenti;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -49,15 +49,20 @@ use yii\helpers\ArrayHelper;
  * @property integer $updated_by
  * @property integer $deleted_by
  *
- * @property \lispa\amos\documenti\models\DocumentiCategorie $documentiCategorie
- * @property \lispa\amos\documenti\models\Documenti $parent
- * @property \lispa\amos\documenti\models\Documenti[] $children
- * @property \lispa\amos\documenti\models\Documenti $versionParent
+ * @property \open20\amos\documenti\models\DocumentiCategorie $documentiCategorie
+ * @property \open20\amos\documenti\models\Documenti $parent
+ * @property \open20\amos\documenti\models\Documenti[] $children
+ * @property \open20\amos\documenti\models\Documenti $versionParent
  *
- * @package lispa\amos\documenti\models\base
+ * @package open20\amos\documenti\models\base
  */
 abstract class Documenti extends ContentModel
 {
+    /**
+     * @var AmosDocumenti $documentsModule
+     */
+    protected $documentsModule = null;
+
     /**
      * @inheritdoc
      */
@@ -69,13 +74,23 @@ abstract class Documenti extends ContentModel
     /**
      * @inheritdoc
      */
+    public function init()
+    {
+        parent::init();
+        $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function rules()
     {
-
-        $required = [
+        $defaultRequired = [
             'titolo',
             'status',
         ];
+        $required = ArrayHelper::merge($defaultRequired, $this->documentsModule->documentExtraRequiredFields);
+
         if ( !empty( AmosDocumenti::instance() ) && AmosDocumenti::instance()->enableCategories){
             $required[] =  'documenti_categorie_id';
         }
@@ -164,7 +179,7 @@ abstract class Documenti extends ContentModel
      */
     public function getDocumentiCategorie()
     {
-        return $this->hasOne(\lispa\amos\documenti\models\DocumentiCategorie::className(), ['id' => 'documenti_categorie_id']);
+        return $this->hasOne($this->documentsModule->model('DocumentiCategorie'), ['id' => 'documenti_categorie_id']);
     }
 
     /**
@@ -172,7 +187,7 @@ abstract class Documenti extends ContentModel
      */
     public function getParent()
     {
-        return $this->hasOne(\lispa\amos\documenti\models\Documenti::className(), ['id' => 'parent_id']);
+        return $this->hasOne($this->documentsModule->model('Documenti'), ['id' => 'parent_id']);
     }
 
     /**
@@ -180,7 +195,7 @@ abstract class Documenti extends ContentModel
      */
     public function getChildren()
     {
-        return $this->hasMany(\lispa\amos\documenti\models\Documenti::className(), ['parent_id' => 'id']);
+        return $this->hasMany($this->documentsModule->model('Documenti'), ['parent_id' => 'id']);
     }
 
     /**
@@ -188,6 +203,6 @@ abstract class Documenti extends ContentModel
      */
     public function getVersionParent()
     {
-        return $this->hasOne(\lispa\amos\documenti\models\Documenti::className(), ['id' => 'version_parent_id']);
+        return $this->hasOne($this->documentsModule->model('Documenti'), ['id' => 'version_parent_id']);
     }
 }

@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\models
+ * @package    open20\amos\documenti\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\models;
+namespace open20\amos\documenti\models;
 
 use yii\helpers\ArrayHelper;
-use lispa\amos\attachments\behaviors\FileBehavior;
+use open20\amos\attachments\behaviors\FileBehavior;
 
 /**
  * This is the model class for table "documenti_categorie".
  */
-class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCategorie
+class DocumentiCategorie extends \open20\amos\documenti\models\base\DocumentiCategorie
 {
 
     /**
@@ -34,6 +34,7 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
     public $visibleToCommunityRole;
 
     /**
+     * @see    \yii\base\Model::rules()    for more info.
      */
     public function rules()
     {
@@ -59,6 +60,7 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
     }
 
     /**
+     * @see    \yii\base\Component::behaviors()    for more info.
      */
     public function behaviors()
     {
@@ -93,9 +95,12 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
      *
      */
     public function saveDocumentiCategorieCommunityMm(){
-        DocumentiCategoryCommunityMm::deleteAll(['documenti_categorie_id' => $this->id]);
+        /** @var DocumentiCategoryCommunityMm $documentiCategoryCommunityMmModel */
+        $documentiCategoryCommunityMmModel = $this->documentsModule->createModel('DocumentiCategoryCommunityMm');
+        $documentiCategoryCommunityMmModel::deleteAll(['documenti_categorie_id' => $this->id]);
         foreach ((Array) $this->documentiCategoryCommunities as $community_id){
-            $documentiCommunityMm = new DocumentiCategoryCommunityMm();
+            /** @var DocumentiCategoryCommunityMm $documentiCommunityMm */
+            $documentiCommunityMm = $this->documentsModule->createModel('DocumentiCategoryCommunityMm');
             $documentiCommunityMm->documenti_categorie_id = $this->id;
             $documentiCommunityMm->community_id = $community_id;
 
@@ -110,8 +115,6 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
             }
             $documentiCommunityMm->save();
         }
-
-
     }
 
     /**
@@ -132,14 +135,16 @@ class DocumentiCategorie extends \lispa\amos\documenti\models\base\DocumentiCate
 
     }
 
-
     /**
      *
      */
     public function saveDocumentiCategorieRolesMm(){
-        DocumentiCategoryRolesMm::deleteAll(['documenti_categorie_id' => $this->id]);
+        /** @var DocumentiCategoryRolesMm $documentiCategoryRolesMmModel */
+        $documentiCategoryRolesMmModel = $this->documentsModule->createModel('DocumentiCategoryRolesMm');
+        $documentiCategoryRolesMmModel::deleteAll(['documenti_categorie_id' => $this->id]);
         foreach ((Array) $this->documentiCategoryRoles as $role){
-            $newsCommunityMm = new DocumentiCategoryRolesMm();
+            /** @var DocumentiCategoryRolesMm $newsCommunityMm */
+            $newsCommunityMm = $this->documentsModule->createModel('DocumentiCategoryRolesMm');
             $newsCommunityMm->documenti_categorie_id = $this->id;
             $newsCommunityMm->role = $role;
             $newsCommunityMm->save();

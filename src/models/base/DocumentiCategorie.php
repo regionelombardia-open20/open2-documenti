@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\models\base
+ * @package    open20\amos\documenti\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\models\base;
+namespace open20\amos\documenti\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\record\Record;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
  * This is the base-model class for table "documenti_categorie".
@@ -30,13 +30,19 @@ use lispa\amos\documenti\AmosDocumenti;
  * @property    integer $updated_by
  * @property    integer $deleted_by
  *
- * @property \lispa\amos\documenti\models\Documenti $documenti
- * @property \lispa\amos\documenti\models\DocumentiCategoryCommunityMm[] $documentiCategoryCommunityMms
- * @property \lispa\amos\documenti\models\DocumentiCategoryRolesMm[] $documentiCategoryRolesMms
+ * @property \open20\amos\documenti\models\Documenti $documenti
+ * @property \open20\amos\documenti\models\DocumentiCategoryCommunityMm[] $documentiCategoryCommunityMms
+ * @property \open20\amos\documenti\models\DocumentiCategoryRolesMm[] $documentiCategoryRolesMms
  */
 class DocumentiCategorie extends Record
 {
     /**
+     * @var AmosDocumenti $documentsModule
+     */
+    protected $documentsModule = null;
+
+    /**
+     * @see    \yii\db\ActiveRecord::tableName()    for more info.
      */
     public static function tableName()
     {
@@ -44,10 +50,21 @@ class DocumentiCategorie extends Record
     }
 
     /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+        $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
+    }
+
+    /**
+     * @see    \yii\base\Model::rules()    for more info.
      */
     public function rules()
     {
         return [
+            [['titolo'], 'required'],
             [['descrizione'], 'string'],
             [['filemanager_mediafile_id', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
@@ -56,6 +73,7 @@ class DocumentiCategorie extends Record
     }
 
     /**
+     * @see    Record::attributeLabels()    for more info.
      */
     public function attributeLabels()
     {
@@ -83,7 +101,7 @@ class DocumentiCategorie extends Record
      */
     public function getDocumenti()
     {
-        return $this->hasMany(\lispa\amos\documenti\models\Documenti::className(), ['documenti_categorie_id' => 'id']);
+        return $this->hasMany($this->documentsModule->model('Documenti'), ['documenti_categorie_id' => 'id']);
     }
 
     /**
@@ -94,7 +112,7 @@ class DocumentiCategorie extends Record
      */
     public function getDocumentiCategoryRolesMms()
     {
-        return $this->hasMany(DocumentiCategoryRolesMm::className(), ['documenti_categorie_id' => 'id']);
+        return $this->hasMany($this->documentsModule->model('DocumentiCategoryRolesMm'), ['documenti_categorie_id' => 'id']);
     }
 
     /**
@@ -105,6 +123,6 @@ class DocumentiCategorie extends Record
      */
     public function getDocumentiCategoryCommunityMms()
     {
-        return $this->hasMany(DocumentiCategoryCommunityMm::className(), ['documenti_categorie_id' => 'id']);
+        return $this->hasMany($this->documentsModule->model('DocumentiCategoryCommunityMm'), ['documenti_categorie_id' => 'id']);
     }
 }

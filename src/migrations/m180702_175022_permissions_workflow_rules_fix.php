@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 
 /**
  * Class m170719_122922_permissions_community
@@ -27,10 +27,10 @@ class m180702_175022_permissions_workflow_rules_fix extends AmosMigrationPermiss
                 'update' => true,
                 'newValues' => [
                     'removeParents' => [
-                        \lispa\amos\news\rules\workflow\NewsToValidateWorkflowRule::className()
+                        \open20\amos\news\rules\workflow\NewsToValidateWorkflowRule::className()
                     ],
                     'addParents' => [
-                        \lispa\amos\documenti\rules\workflow\DocumentiToValidateWorkflowRule::className()
+                        \open20\amos\documenti\rules\workflow\DocumentiToValidateWorkflowRule::className()
                     ],
                 ],
             ],

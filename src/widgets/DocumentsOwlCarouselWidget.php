@@ -1,23 +1,24 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets
+ * @package    open20\amos\documenti\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets;
+namespace open20\amos\documenti\widgets;
 
-use lispa\amos\core\forms\AmosOwlCarouselWidget;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\forms\AmosOwlCarouselWidget;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\ActiveQuery;
 
 /**
  * Class DocumentsOwlCarouselWidget
- * @package lispa\amos\documenti\widgets
+ * @package open20\amos\documenti\widgets
  */
 class DocumentsOwlCarouselWidget extends AmosOwlCarouselWidget
 {
@@ -39,11 +40,16 @@ class DocumentsOwlCarouselWidget extends AmosOwlCarouselWidget
         $documentsHighlights = [];
         $highlightsModule = \Yii::$app->getModule('highlights');
 
+        /** @var AmosDocumenti $documentsModule */
+        $documentsModule = AmosDocumenti::instance();
+
         if (!is_null($highlightsModule)) {
             /** @var \amos\highlights\Module $highlightsModule */
-            $documentsHighlightsIds = $highlightsModule->getHighlightedContents(Documenti::className());
+            $documentsHighlightsIds = $highlightsModule->getHighlightedContents($documentsModule->model('Documenti'));
+            /** @var Documenti $documentiModel */
+            $documentiModel = $documentsModule->createModel('Documenti');
             /** @var ActiveQuery $query */
-            $query = Documenti::find();
+            $query = $documentiModel::find();
             $query->distinct();
             $query->andWhere(['id' => $documentsHighlightsIds]);
             $query->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO]);

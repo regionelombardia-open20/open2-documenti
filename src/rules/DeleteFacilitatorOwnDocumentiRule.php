@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\rules;
+namespace open20\amos\documenti\rules;
 
-use lispa\amos\admin\rules\DefaultFacilitatorOwnContentRule;
+use open20\amos\admin\rules\DefaultFacilitatorOwnContentRule;
 
 class DeleteFacilitatorOwnDocumentiRule extends DefaultFacilitatorOwnContentRule
 {

@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\controllers
+ * @package    open20\amos\documenti\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\controllers;
+namespace open20\amos\documenti\controllers;
 
-use lispa\amos\core\behaviors\TaggableBehavior;
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\core\module\BaseAmosModule;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\components\PartsWizardDocumentiCreation;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
+use open20\amos\core\behaviors\TaggableBehavior;
+use open20\amos\core\controllers\CrudController;
+use open20\amos\core\module\BaseAmosModule;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\components\PartsWizardDocumentiCreation;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -27,9 +27,9 @@ use yii\helpers\Url;
 /**
  * Class DocumentiWizardController
  *
- * @property \lispa\amos\documenti\models\Documenti $model
+ * @property \open20\amos\documenti\models\Documenti $model
  *
- * @package lispa\amos\documenti\controllers
+ * @package open20\amos\documenti\controllers
  */
 class DocumentiWizardController extends CrudController
 {
@@ -43,8 +43,8 @@ class DocumentiWizardController extends CrudController
      */
     public function init()
     {
-        $this->setModelObj(new Documenti());
-        $this->setModelSearch(new DocumentiSearch());
+        $this->setModelObj($this->documentsModule->createModel('Documenti'));
+        $this->setModelSearch($this->documentsModule->createModel('DocumentiSearch'));
         $this->setAvailableViews([]);
         
         parent::init();
@@ -126,7 +126,7 @@ class DocumentiWizardController extends CrudController
         if (isset($id)) {
             $this->model = $this->findModel($id);
         } else {
-            $this->model = new Documenti();
+            $this->model = $this->documentsModule->createModel('Documenti');
             // creating document inside a folder
             if(isset($parentId)){
                 $this->model->parent_id = $parentId;
@@ -170,7 +170,7 @@ class DocumentiWizardController extends CrudController
             }
             $this->model->setDetailScenario();
         } else {
-            $this->model = new Documenti();
+            $this->model = $this->documentsModule->createModel('Documenti');
             $this->model->setDetailScenario();
             // creating document inside a folder
             if(isset($parentId)){
@@ -318,7 +318,7 @@ class DocumentiWizardController extends CrudController
         $module = \Yii::$app->getModule('layout');
         if (empty($module)) {
             if (strpos($this->layout, '@') === false) {
-                $this->layout = '@vendor/lispa/amos-core/views/layouts/'.(!empty($layout) ? $layout : $this->layout);
+                $this->layout = '@vendor/open20/amos-core/views/layouts/'.(!empty($layout) ? $layout : $this->layout);
             }
             return true;
         }

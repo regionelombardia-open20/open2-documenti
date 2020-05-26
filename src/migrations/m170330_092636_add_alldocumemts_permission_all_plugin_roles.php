@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\rbac\Permission;
 
 /**
@@ -28,14 +28,14 @@ class m170330_092636_add_alldocumemts_permission_all_plugin_roles extends AmosMi
                 'parent' => ['ADMIN']
             ],
             [
-                'name' => \lispa\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
+                'name' => \open20\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission description',
                 'ruleName' => null,
                 'parent' => ['AMMINISTRATORE_DOCUMENTI', 'CREATORE_DOCUMENTI', 'LETTORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
+                'name' => \open20\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission description',
                 'ruleName' => null,

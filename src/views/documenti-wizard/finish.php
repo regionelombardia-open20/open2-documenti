@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-wizard
+ * @package    open20\amos\documenti\views\documenti-wizard
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\WizardPrevAndContinueButtonWidget;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\forms\WizardPrevAndContinueButtonWidget;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  * @var string $finishMessage
  */
 
@@ -27,7 +27,7 @@ $this->title = $model;
         <div class="pull-left">
             <!-- ?= AmosIcons::show('file-text-o', ['class' => 'am-4 icon-calendar-intro m-r-15'], 'dash') ?-->
             <div class="like-widget-img color-primary ">
-                <?= \lispa\amos\core\icons\AmosIcons::show('file-text-o', [], 'dash'); ?>
+                <?= \open20\amos\core\icons\AmosIcons::show('file-text-o', [], 'dash'); ?>
             </div>
         </div>
         <div class="text-wrapper">

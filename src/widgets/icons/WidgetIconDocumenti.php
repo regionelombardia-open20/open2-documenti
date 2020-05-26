@@ -1,32 +1,30 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\icons
+ * @package    open20\amos\documenti\widgets\icons
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\icons;
+namespace open20\amos\documenti\widgets\icons;
 
-use lispa\amos\core\widget\WidgetIcon;
-use lispa\amos\dashboard\models\AmosWidgets;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetIcon;
+use open20\amos\dashboard\models\AmosWidgets;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
 use Yii;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class WidgetIconDocumenti
- * @package lispa\amos\documenti\widgets\icons
+ * @package open20\amos\documenti\widgets\icons
  */
 class WidgetIconDocumenti extends WidgetIcon
 {
-
     /**
      * @inheritdoc
      */
@@ -36,7 +34,6 @@ class WidgetIconDocumenti extends WidgetIcon
 
         $paramsClassSpan = [
             'bk-backgroundIcon',
-            'color-primary'
         ];
 
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_own_interest'));
@@ -47,7 +44,7 @@ class WidgetIconDocumenti extends WidgetIcon
         $this->setModuleName('documenti');
         $this->setNamespace(__CLASS__);
 
-        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+        if (!empty(Yii::$app->params['dashboardEngine']) && Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
             $paramsClassSpan = [];
         }
 
@@ -58,36 +55,21 @@ class WidgetIconDocumenti extends WidgetIcon
             )
         );
 
-        $this->setBulletCount(
-            $this->makeBulletCounter(Yii::$app->getUser()->id)
-        );
-    }
-
-    /**
-     * 
-     * @param type $user_id
-     * @return type
-     */
-    public function makeBulletCounter($user_id = null)
-    {
-        $DocumentiSearch = new DocumentiSearch();
-        $notifier = \Yii::$app->getModule('notify');
-
-        $count = 0;
-        if ($notifier) {
-            $count = $notifier->countNotRead(
-                $user_id,
-                Documenti::class,
-                $DocumentiSearch->searchOwnInterestsQuery([], 'own-interest')
+        if ($this->disableBulletCounters == false) {
+            $search = new DocumentiSearch();
+            $this->setBulletCount(
+                $this->makeBulletCounter(
+                    Yii::$app->getUser()->getId(),
+                    AmosDocumenti::instance()->model('Documenti'),
+                    $search->searchOwnInterestsQuery([], 'own-interest')
+                )
             );
         }
-
-        return $count;
     }
 
     /**
      * Aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
-     * 
+     *
      * @inheritdoc
      */
     public function getOptions()
@@ -99,8 +81,8 @@ class WidgetIconDocumenti extends WidgetIcon
     }
 
     /**
-     * 
-     * @return type
+     * @return mixed
+     * @throws \yii\base\InvalidConfigException
      */
     public function getWidgetsIcon()
     {
@@ -108,5 +90,4 @@ class WidgetIconDocumenti extends WidgetIcon
             ->andWhere(['child_of' => self::className()])
             ->all();
     }
-
 }

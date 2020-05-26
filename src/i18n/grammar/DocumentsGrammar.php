@@ -1,12 +1,12 @@
 <?php
 
-namespace lispa\amos\documenti\i18n\grammar;
+namespace open20\amos\documenti\i18n\grammar;
 
-use lispa\amos\core\interfaces\ModelGrammarInterface;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\interfaces\ModelGrammarInterface;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *

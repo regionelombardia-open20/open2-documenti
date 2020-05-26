@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\Migration;
 
 /**
@@ -22,9 +22,10 @@ class m171206_092631_add_documenti_fields_1 extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn(Documenti::tableName(), 'parent_id', $this->integer()->null()->defaultValue(null)->after('comments_enabled'));
+        /*$this->addColumn(Documenti::tableName(), 'parent_id', $this->integer()->null()->defaultValue(null)->after('comments_enabled'));
         $this->addColumn(Documenti::tableName(), 'is_folder', $this->boolean()->notNull()->defaultValue(0)->after('parent_id'));
-        $this->addColumn(Documenti::tableName(), 'version', $this->integer()->null()->defaultValue(null)->after('is_folder'));
+        $this->addColumn(Documenti::tableName(), 'version', $this->integer()->null()->defaultValue(null)->after('is_folder'));*/
+        return true;
     }
 
     /**
@@ -32,8 +33,9 @@ class m171206_092631_add_documenti_fields_1 extends Migration
      */
     public function safeDown()
     {
-        $this->dropColumn(Documenti::tableName(), 'parent_id');
+        /*$this->dropColumn(Documenti::tableName(), 'parent_id');
         $this->dropColumn(Documenti::tableName(), 'is_folder');
-        $this->dropColumn(Documenti::tableName(), 'version');
+        $this->dropColumn(Documenti::tableName(), 'version');*/
+        return true;
     }
 }

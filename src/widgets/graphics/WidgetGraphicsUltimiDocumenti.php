@@ -1,26 +1,26 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\graphics
+ * @package    open20\amos\documenti\widgets\graphics
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\graphics;
+namespace open20\amos\documenti\widgets\graphics;
 
-use lispa\amos\core\widget\WidgetGraphic;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\notificationmanager\base\NotifyWidgetDoNothing;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetGraphic;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
+use open20\amos\notificationmanager\base\NotifyWidgetDoNothing;
+use open20\amos\core\widget\WidgetAbstract;
 
 /**
  * Class WidgetGraphicsUltimiDocumenti
- * @package lispa\amos\documenti\widgets\graphics
+ * @package open20\amos\documenti\widgets\graphics
  */
 class WidgetGraphicsUltimiDocumenti extends WidgetGraphic
 {
@@ -62,7 +62,7 @@ class WidgetGraphicsUltimiDocumenti extends WidgetGraphic
         $listaDocumenti = $this->getDataProvider();
 
         $moduleL = \Yii::$app->getModule('layout');
-        $viewPath = '@vendor/lispa/amos-documenti/src/widgets/graphics/views/';
+        $viewPath = '@vendor/open20/amos-documenti/src/widgets/graphics/views/';
         $viewToRender = $viewPath . 'ultimi_documenti';
 
         if (empty($moduleL)) {

@@ -1,24 +1,24 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\controllers
+ * @package    open20\amos\documenti\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\controllers;
+namespace open20\amos\documenti\controllers;
 
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\assets\ModuleDocumentiAsset;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
+use open20\amos\core\controllers\CrudController;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\assets\ModuleDocumentiAsset;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
+use open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -28,9 +28,9 @@ use yii\helpers\Url;
 /**
  * Class HierarchicalDocumentsController
  *
- * @property \lispa\amos\documenti\models\Documenti $model
+ * @property \open20\amos\documenti\models\Documenti $model
  *
- * @package lispa\amos\documenti\controllers
+ * @package open20\amos\documenti\controllers
  */
 class HierarchicalDocumentsController extends CrudController
 {
@@ -44,12 +44,17 @@ class HierarchicalDocumentsController extends CrudController
      */
     public function init()
     {
-        $this->setModelObj(new Documenti());
-        $this->setModelSearch(new DocumentiSearch());
+        $this->setModelObj($this->documentsModule->createModel('Documenti'));
+        $this->setModelSearch($this->documentsModule->createModel('DocumentiSearch'));
 
         ModuleDocumentiAsset::register(Yii::$app->view);
 
         $this->setAvailableViews([
+            'expl' => [
+                'name' => 'expl',
+                'label' => AmosIcons::show('grid') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icone')),
+                'url' => '?currentView=expl'
+            ],
             'icon' => [
                 'name' => 'icon',
                 'label' => AmosIcons::show('grid') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icon')),

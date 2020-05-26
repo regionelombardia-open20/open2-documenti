@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\DocumentiCategoryCommunityMm;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCategoryCommunityMm;
 use yii\db\Migration;
 
 /**
@@ -33,8 +33,8 @@ class m190325_160731_add_field_category_comunity_mm extends Migration {
      * @inheritdoc
      */
     public function safeDown() {
-        $this->dropColumn(\lispa\amos\documenti\models\DocumentiCategoryCommunityMm::tableName(), 'visible_to_cm');
-        $this->dropColumn(\lispa\amos\documenti\models\DocumentiCategoryCommunityMm::tableName(), 'visible_to_participant');
+        $this->dropColumn(\open20\amos\documenti\models\DocumentiCategoryCommunityMm::tableName(), 'visible_to_cm');
+        $this->dropColumn(\open20\amos\documenti\models\DocumentiCategoryCommunityMm::tableName(), 'visible_to_participant');
     }
 
 }

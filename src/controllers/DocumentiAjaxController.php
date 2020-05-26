@@ -1,30 +1,28 @@
 <?php
+
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\controllers
+ * @package    open20\amos\documenti\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\controllers;
+namespace open20\amos\documenti\controllers;
 
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\community\AmosCommunity;
-use lispa\amos\community\models\Community;
-use lispa\amos\community\models\CommunityUserMm;
-use lispa\amos\community\models\search\CommunitySearch;
-use lispa\amos\community\rules\CommunityManagerRoleRule;
-use lispa\amos\community\rules\CreateSubcommunitiesRule;
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\cwh\models\CwhRegolePubblicazione;
-use lispa\amos\cwh\query\CwhActiveQuery;
-use lispa\amos\cwh\utility\CwhUtil;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\documenti\utility\DocumentsUtility;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\attachments\models\File;
+use open20\amos\community\AmosCommunity;
+use open20\amos\community\models\Community;
+use open20\amos\community\models\CommunityUserMm;
+use open20\amos\community\models\search\CommunitySearch;
+use open20\amos\cwh\models\CwhRegolePubblicazione;
+use open20\amos\cwh\query\CwhActiveQuery;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\utility\DocumentsUtility;
+use Yii;
 use yii\base\Controller;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
@@ -33,14 +31,28 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\helpers\Url;
-use Yii;
 
 class DocumentiAjaxController extends Controller
 {
 
+    public $moduleCwh;
+
     private $parentId = null;
 
     CONST DOCUMENTI_URL = '/documenti/documenti/view';
+
+    /**
+     * @var AmosDocumenti $documentsModule
+     */
+    public $documentsModule = null;
+
+    public function __construct($id, $module, $config = [])
+    {
+        parent::__construct($id, $module, $config);
+
+        $this->documentsModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
+        $this->moduleCwh = Yii::$app->getModule('cwh');
+    }
 
     /**
      * @inheritdoc
@@ -82,13 +94,17 @@ class DocumentiAjaxController extends Controller
                 ]
             ]
         ]);
+
         return $behaviors;
     }
 
-    public function actionGetTranslationsAndOptions($scope = null) {
-
+    /**
+     * @param null $scope
+     * @return string
+     */
+    public function actionGetTranslationsAndOptions($scope = null)
+    {
         $array = [];
-
         $array['translations'] = [
             'LABEL--CREATE-NEW-FOLDER' => AmosDocumenti::t('amosdocumenti', 'Nuova Cartella'),
             'LABEL--UPLOAD-NEW-FILES' => AmosDocumenti::t('amosdocumenti', 'Caricamento File'),
@@ -98,52 +114,58 @@ class DocumentiAjaxController extends Controller
         ];
 
         $array['foldersOptions'] = [
-            //'rename' => ['name' =>  AmosDocumenti::t('amosdocumenti','Rinomina')], //MEV
-            //'sep1' => "---------", //MEV
-            'open' => ['name' =>  AmosDocumenti::t('amosdocumenti','Visualizza informazioni')],
-            'edit' => ['name' =>  AmosDocumenti::t('amosdocumenti','Modifica informazioni')],
-            'sep2' => "---------",
-            'delete' => ['name' =>  AmosDocumenti::t('amosdocumenti','Rimuovi')],
+            'rename' => ['name' => AmosDocumenti::t('amosdocumenti', 'Rinomina')], //MEV
+            'sep1' => '---------', //MEV
+            'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
+            'edit' => ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')],
+            'sep2' => '---------',
+            'delete' => ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')],
         ];
 
         $array['documentsOptions'] = [
-            //'rename' => ['name' => AmosDocumenti::t('amosdocumenti','Rinomina')], //MEV
-            //'sep1' => "---------", //MEV
-            'open' => ['name' => AmosDocumenti::t('amosdocumenti','Visualizza informazioni')],
-            'edit' => ['name' => AmosDocumenti::t('amosdocumenti','Modifica informazioni')],
-            'sep2' => "---------",
-            'upload' => ['name' => AmosDocumenti::t('amosdocumenti','Carica nuova versione')],
-            'download' => ['name' => AmosDocumenti::t('amosdocumenti','Scarica')],
-            'sep3' => "---------",
-            'import' => ['name' =>  AmosDocumenti::t('amosdocumenti','Importa Documenti')],
-            'sep3' => "---------",
-            'delete' => ['name' => AmosDocumenti::t('amosdocumenti','Rimuovi')],
+            'rename' => ['name' => AmosDocumenti::t('amosdocumenti', 'Rinomina')], //MEV
+            'sep1' => '---------', //MEV
+            'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
+            'edit' => ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')],
+            'sep2' => '---------',
+            'upload' => ['name' => AmosDocumenti::t('amosdocumenti', 'Carica nuova versione')],
+            'download' => ['name' => AmosDocumenti::t('amosdocumenti', 'Scarica')],
+            'sep3' => '---------',
+            'import' => ['name' => AmosDocumenti::t('amosdocumenti', 'Importa Documenti')],
+            'sep3' => '---------',
+            'delete' => ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')],
         ];
 
         return Json::encode($array);
-
     }
 
-    public function actionDeleteModel() {
+    /**
+     * @return string
+     * @throws Yii\db\StaleObjectException
+     * @throws Yii\web\NotFoundHttpException
+     */
+    public function actionDeleteModel()
+    {
         $postParams = $this->isPostActions();
 
-        $documenti = Documenti::findOne(['id' => $postParams['model-id']]);
-        if($documenti) {
-            if (\Yii::$app->user->can('DOCUMENTI_DELETE', ['model' => $documenti])) {
-                //return Json::encode(Yii::$app->runAction('documenti/documenti/delete', ['id' => $postParams['model-id'], 'isAjaxRequest' => true]));
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
+        $documenti = $documentiModel::findOne(['id' => $postParams['model-id']]);
+        if ($documenti) {
+            if (Yii::$app->user->can('DOCUMENTI_DELETE', ['model' => $documenti])) {
                 return Json::encode($this->deleteFileOrFolder($postParams['model-id'], true));
-            } else {
-                return Json::encode([
-                    'success' => false,
-                    'message' => AmosDocumenti::t('amosdocumenti', 'Non sei autorizzato a cancellare il documento.'),
-                ]);
             }
-        } else {
+
             return Json::encode([
                 'success' => false,
-                'message' => AmosDocumenti::t('amosdocumenti', 'Documento non più presente.'),
+                'message' => AmosDocumenti::t('amosdocumenti', 'Non sei autorizzato a cancellare il documento.'),
             ]);
         }
+
+        return Json::encode([
+            'success' => false,
+            'message' => AmosDocumenti::t('amosdocumenti', 'Documento non più presente.'),
+        ]);
     }
 
     /**
@@ -151,27 +173,31 @@ class DocumentiAjaxController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      *
      * @param integer $id
-     * @return \yii\web\Response
+     * @return yii\web\Response
      * @throws \Exception
-     * @throws \yii\db\StaleObjectException
-     * @throws \yii\web\NotFoundHttpException
+     * @throws yii\db\StaleObjectException
+     * @throws yii\web\NotFoundHttpException
      */
     private function deleteFileOrFolder($id, $isAjaxRequest = false)
     {
-        $model = Documenti::findOne(['id' => $id]);
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
+        $model = $documentiModel::findOne(['id' => $id]);
         if ($model->is_folder) {
-            $relatedDocuments = Documenti::findAll(['parent_id' => $id]);
+            $relatedDocuments = $documentiModel::findAll(['parent_id' => $id]);
             if (count($relatedDocuments) > 0) {
                 if ($isAjaxRequest) {
                     return [
                         'success' => false,
-                        'message' => AmosDocumenti::t('amosdocumenti', 'La cartella selezionata non e\' vuota. Per eliminarla, eliminare tutti i file contenuti.'),
+                        'message' => AmosDocumenti::t('amosdocumenti', 'La cartella selezionata non è vuota. Per eliminarla, eliminare tutti i file contenuti.'),
                     ];
                 }
-                Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'La cartella selezionata non e\' vuota. Per eliminarla, eliminare tutti i file contenuti.'));
+                Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'La cartella selezionata non è vuota. Per eliminarla, eliminare tutti i file contenuti.'));
+
                 return $this->redirect(Url::previous('index'));
             }
         }
+
         $model->delete();
         if (!$model->getErrors()) {
             if ($isAjaxRequest) {
@@ -189,101 +215,117 @@ class DocumentiAjaxController extends Controller
             }
             Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Non sei autorizzato a cancellare il documento.'));
         }
+
         return $this->redirect(Url::previous('index'));
     }
 
-    public function actionDeleteCommunity() {
+    /**
+     *
+     * @return type
+     */
+    public function actionDeleteCommunity()
+    {
         $postParams = $this->isPostActions();
 
         $community = Community::findOne(['id' => $postParams['model-id']]);
-        if($community) {
-            if(\Yii::$app->user->can('COMMUNITY_DELETE', ['model' => $community])) {
+        if ($community) {
+            if (Yii::$app->user->can('COMMUNITY_DELETE', ['model' => $community])) {
                 return Json::encode($this->deleteCommunity($postParams['model-id']));
-            } else {
-                return Json::encode([
-                    'success' => false,
-                    'message' => AmosCommunity::t('amoscommunity', 'Non hai il permesso di eliminare la stanza.'),
-                ]);
             }
-        } else {
+
             return Json::encode([
                 'success' => false,
-                'message' => AmosCommunity::t('amoscommunity', 'Community not found.'),
+                'message' => AmosCommunity::t('amoscommunity', 'Non hai il permesso di eliminare la stanza.'),
             ]);
         }
-        //return Json::encode(Yii::$app->runAction('community/community/delete', ['id' => $postParams['model-id'], 'isAjaxRequest' => true]));
-        //return Json::encode($this->deleteCommunity($postParams['model-id']));
+
+        return Json::encode([
+            'success' => false,
+            'message' => AmosCommunity::t('amoscommunity', 'Community not found.'),
+        ]);
     }
 
     /**
      * Deletes an existing Community model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * in Community model beforeDelete is overwritten to allow deletion of related models
-     *
      * @param integer $id
      * @return array
+     * @see Community::beforeDelete()
+     *
      */
     private function deleteCommunity($id)
     {
         /** @var Community $model */
         $model = Community::findOne(['id' => $id]);
         if ($model) {
-            if(Yii::$app->user->can('COMMUNITY_DELETE', ['model' => $model])) {
+            if (Yii::$app->user->can('COMMUNITY_DELETE', ['model' => $model])) {
                 try {
                     $model->delete();
-                    return [
-                        'success' => true,
-                    ];
+                    return ['success' => true,];
                 } catch (\Exception $exception) {
                     return [
                         'success' => false,
                         'message' => AmosCommunity::t('amoscommunity', $exception->getMessage()),
                     ];
                 }
-            } else  {
-                return [
-                    'success' => false,
-                    'message' => AmosCommunity::t('amoscommunity', 'Non hai il permesso di eliminare la stanza.'),
-                ];
             }
-        } else {
+
             return [
                 'success' => false,
-                'message' => AmosCommunity::t('amoscommunity', 'Community not found.'),
+                'message' => AmosCommunity::t('amoscommunity', 'Non hai il permesso di eliminare la stanza.'),
             ];
         }
+
+
+        return [
+            'success' => false,
+            'message' => AmosCommunity::t('amoscommunity', 'Community not found.'),
+        ];
     }
 
-    public function actionRenameModel() {
-        /**
-         * TODO MEV
-         */
+    /**
+     * TODO MEV
+     */
+    public function actionRenameModel()
+    {
     }
 
-    public function actionGetAree() {
-        $resetScope = \Yii::$app->request->get('resetScope');
-        if($resetScope === 'true') {
-            $moduleCwh = \Yii::$app->getModule('cwh');
-            if (isset($moduleCwh)) {
-                $moduleCwh->resetCwhScopeInSession();
+    /**
+     *
+     * @return type
+     */
+    public function actionGetAree()
+    {
+        $resetScope = Yii::$app->request->get('resetScope');
+        if ($resetScope === 'true') {
+            Yii::$app->session->set('stanzePath', []);
+            Yii::$app->session->set('foldersPath', []);
+
+            if ($this->isSetCwh()) {
+                $this->moduleCwh->resetCwhScopeInSession();
             }
         }
 
         $communitySearch = new CommunitySearch();
 
-        /** @var \lispa\amos\cwh\AmosCwh $moduleCwh */
-        $moduleCwh = Yii::$app->getModule('cwh');
+        /** @var \open20\amos\cwh\AmosCwh $moduleCwh */
         $scope = null;
-        if (!empty($moduleCwh)) {
-            $scope = $moduleCwh->getCwhScope();
+        if ($this->isSetCwh()) {
+            $scope = $this->moduleCwh->getCwhScope();
         }
+
         if (!empty($scope)) {
             $scopeId = $scope['community'];
             $parentId = null;
-            if(array_key_exists('links', Yii::$app->session->get('foldersPath', []))) {
+            if (array_key_exists('links', Yii::$app->session->get('foldersPath', []))) {
                 if (sizeof(Yii::$app->session->get('foldersPath', [])['links']) > 0) {
-                    $parentId = Yii::$app->session->get('foldersPath', [])['links'][count(Yii::$app->session->get('foldersPath', [])['links']) - 1]['model-id'];
-                    $parentId = (($parentId == "") ? null : $parentId);
+                    $links = Yii::$app->session->get('foldersPath', [])['links'];
+                    if (isset($links[0])) {
+                        $links = array_shift($links);
+                    }
+
+                    $parentId = (($links['model-id'] == '') ? null : $links['model-id']);
                 } else {
                     Yii::$app->session->set('foldersPath', [
                         'links' => [
@@ -298,10 +340,9 @@ class DocumentiAjaxController extends Controller
             }
 
             $forceReset = false;
-            if(empty(Community::findOne(['id' => $scopeId]))) {
-                $moduleCwh = \Yii::$app->getModule('cwh');
-                if (isset($moduleCwh)) {
-                    $moduleCwh->resetCwhScopeInSession();
+            if (empty(Community::findOne(['id' => $scopeId]))) {
+                if ($this->isSetCwh()) {
+                    $this->moduleCwh->resetCwhScopeInSession();
                 }
                 Yii::$app->session->set('stanzePath', []);
                 Yii::$app->session->set('foldersPath', []);
@@ -309,10 +350,11 @@ class DocumentiAjaxController extends Controller
                 $scope = null;
                 $parentId = null;
             } else {
-                if(empty(Yii::$app->session->get('stanzePath', []))) {
+                if (empty(Yii::$app->session->get('stanzePath', []))) {
+                    $commName = Community::findOne(['id' => $scopeId])->name;
                     Yii::$app->session->set('stanzePath', [
                         [
-                            'name' => Community::findOne(['id' => $scopeId])->name,
+                            'name' => $commName,
                             'scope_id' => $scopeId,
                             'isArea' => false,
                             'isRootPathStanze' => true
@@ -321,9 +363,11 @@ class DocumentiAjaxController extends Controller
                     Yii::$app->session->set('foldersPath', [
                         [
                             'links' => [
-                                'classes' => '',
-                                'model-id' => '',
-                                'name' => Community::findOne(['id' => $scopeId])->name
+                                [
+                                    'classes' => '',
+                                    'model-id' => '',
+                                    'name' => $commName
+                                ]
                             ]
                         ]
                     ]);
@@ -339,71 +383,77 @@ class DocumentiAjaxController extends Controller
                 'breadcrumbFolders' => Yii::$app->session->get('foldersPath', [])
             ]);
         }
-        Yii::$app->session->set('stanzePath', []);
-        Yii::$app->session->set('foldersPath', []);
+
 
         $result = [
-            "isArea" => true,
-            "canCreate" => \Yii::$app->getUser()->can('COMMUNITY_CREATE'),
+            'isArea' => true,
+            'canCreate' => Yii::$app->getUser()->can('COMMUNITY_CREATE'),
         ];
 
-        /** @var Community $area */
-        /** @var Community $area */
-        foreach($communitySearch->buildQuery((\Yii::$app->getUser()->can('ADMIN') ? 'admin-all' : 'all'),[])->orderBy('name')->all() as $area) {
-            $permissions = [
-                'open' => ['name' => AmosDocumenti::t('amosdocumenti','Visualizza informazioni')],
-            ];
 
-            if(\Yii::$app->getUser()->can('COMMUNITY_UPDATE', ['model' => $area])) {
-                $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti','Modifica informazioni')];
+        /** @var Community $area */
+        $aree = $communitySearch->buildQuery(
+            [],
+            (Yii::$app->getUser()->can('ADMIN')
+                ? 'admin-all'
+                : 'all'
+            )
+        )
+            ->orderBy('name')
+            ->all();
+
+        foreach ($aree as $area) {
+            $permissions['move'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Sposta')];
+            $permissions['rename'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rinomina')];
+            $permissions['open'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')];
+
+            if (Yii::$app->getUser()->can('COMMUNITY_UPDATE', ['model' => $area])) {
+                $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')];
             }
 
             // Da abilitare se e quando l'importatore (con node?) verra' abilitato
-            /*if(\Yii::$app->getUser()->can('ADMIN')) {
-                $permissions['import'] = ['name' =>  AmosDocumenti::t('amosdocumenti','Importa Documenti')];
-            }*/
+            /* if(Yii::$app->getUser()->can('ADMIN')) {
+              $permissions['import'] = ['name' =>  AmosDocumenti::t('amosdocumenti','Importa Documenti')];
+              } */
 
-            $showSep2 = false;
-            if($area->hasRole(\Yii::$app->user->id, [
+            if ($area->hasRole(Yii::$app->user->id, [
                     CommunityUserMm::ROLE_COMMUNITY_MANAGER,
                     CommunityUserMm::ROLE_EDITOR,
                     CommunityUserMm::ROLE_AUTHOR,
-                ]) ||
-                \Yii::$app->getUser()->can('ADMIN')) {
-                $showSep2 = true;
+                ])
+                || Yii::$app->getUser()->can('ADMIN')) {
+                $permissions['sep2'] = '---------';
             }
 
-            if($showSep2) {
-                $permissions['sep2'] = "---------";
-            }
-
-            if($area->hasRole(\Yii::$app->user->id, [
+            if ($area->hasRole(Yii::$app->user->id, [
                     CommunityUserMm::ROLE_COMMUNITY_MANAGER,
-                ]) ||
-                \Yii::$app->getUser()->can('ADMIN')) {
-                $permissions['participants'] = ['name' => AmosDocumenti::t('amosdocumenti','Condividi con...')];
+                ])
+                || Yii::$app->getUser()->can('ADMIN')) {
+                $permissions['participants'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Condividi con...')];
             }
 
-            if($area->hasRole(\Yii::$app->user->id, [
-                    CommunityUserMm::ROLE_COMMUNITY_MANAGER,
-                    CommunityUserMm::ROLE_EDITOR,
-                    CommunityUserMm::ROLE_AUTHOR,
-                ]) ||
-                \Yii::$app->getUser()->can('ADMIN')) {
-                $permissions['sharingGroups'] = ['name' => AmosDocumenti::t('amosdocumenti','Gruppi di condivisione')];
+//            if($area->hasRole(Yii::$app->user->id, [
+//                    CommunityUserMm::ROLE_COMMUNITY_MANAGER,
+//                    CommunityUserMm::ROLE_EDITOR,
+//                    CommunityUserMm::ROLE_AUTHOR,
+//                ]) ||
+//                Yii::$app->getUser()->can('ADMIN')) {
+//                $permissions['sharingGroups'] = ['name' => AmosDocumenti::t('amosdocumenti','Gruppi di condivisione')];
+//            }
+
+            if ($area->isCommunityManager() || Yii::$app->getUser()->can('COMMUNITY_DELETE')) {
+                $permissions['sep4'] = '---------';
+                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')];
             }
 
-            if($area->isCommunityManager() || \Yii::$app->getUser()->can('COMMUNITY_DELETE')) {
-                $permissions['sep4'] = "---------";
-                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti','Rimuovi')];
-            }
-
-            $permissions['sep5'] = "---------";
-            $permissions['cooperation'] = ['name' => AmosDocumenti::t('amosdocumenti','Collaborazione')];
+            $permissions['sep5'] = '---------';
+            $permissions['cooperation'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Collaborazione')];
 
             $result['areas'][] = [
                 'name' => $area->name,
-                'description' => strlen(strip_tags($area->description)) > 100 ? substr(strip_tags($area->description), 0, 99) . '...' : strip_tags($area->description),
+                'description' => strlen(strip_tags($area->description)) > 100
+                    ? substr(strip_tags($area->description), 0, 99) . '...'
+                    : strip_tags($area->description),
                 'id' => $area->id,
                 'permissions' => $permissions,
             ];
@@ -412,128 +462,151 @@ class DocumentiAjaxController extends Controller
         return Json::encode($result);
     }
 
-    public function actionGetSubcommunities() {
-        $idArea = \Yii::$app->request->get('idArea');
-        $routeStanze = \Yii::$app->request->get('routeStanze');
+    /**
+     *
+     * @return type
+     */
+    public function actionGetSubcommunities()
+    {
+        $idArea = Yii::$app->request->get('idArea');
+        $routeStanze = Yii::$app->request->get('routeStanze');
         $routeStanze = Json::decode($routeStanze);
-        $removeStanza = \Yii::$app->request->get('removeStanza');
+        $removeStanza = Yii::$app->request->get('removeStanza');
 
         $this->setScope($idArea);
 
         $currentCommunity = Community::findOne(['id' => $idArea]);
         $currentCommunityName = CommunitySearch::findOne(['id' => $idArea])->name;
 
-        if($removeStanza !== "true") {
+        if ($removeStanza !== 'true') {
             $routeStanze[] = [
                 'name' => $currentCommunityName,
                 'scope_id' => $idArea,
                 'isArea' => true,
             ];
         }
+
         Yii::$app->session->set('stanzePath', $routeStanze);
 
         $result = [
-            "current-community-name" => $currentCommunityName,
-            "isArea" => false,
-            "canCreate" => \Yii::$app->getUser()->can('COMMUNITY_CREATE', ['model' => CommunitySearch::findOne(['id' => $idArea])]),
+            'current-community-name' => $currentCommunityName,
+            'isArea' => false,
+            'canCreate' => Yii::$app->getUser()->can('COMMUNITY_CREATE', ['model' => CommunitySearch::findOne(['id' => $idArea])]),
         ];
 
         $communitySearch = new CommunitySearch();
         $communitySearch->subcommunityMode = true;
 
-        if(empty($currentCommunity)) {
-            $moduleCwh = \Yii::$app->getModule('cwh');
-            if (isset($moduleCwh)) {
-                $moduleCwh->resetCwhScopeInSession();
+        if (empty($currentCommunity)) {
+            if ($this->isSetCwh()) {
+                $this->moduleCwh->resetCwhScopeInSession();
             }
             Yii::$app->session->set('stanzePath', []);
             Yii::$app->session->set('foldersPath', []);
+
             return Json::encode([
                 'forceReset' => true,
                 'routeStanze' => Yii::$app->session->get('stanzePath', []),
                 'breadcrumbFolders' => Yii::$app->session->get('foldersPath', [])
             ]);
-        } else {
-            $subcommunitiesQuery = $currentCommunity->getSubcommunities();
-            if (!$currentCommunity->isCommunityManager()) {
-                $subcommunitiesQuery->joinWith('communityUsers')->andWhere([CommunityUserMm::tableName() . '.user_id' => Yii::$app->user->id]);
+        }
+
+        $subcommunitiesQuery = $currentCommunity->getSubcommunities();
+        if (!$currentCommunity->isCommunityManager()) {
+            $subcommunitiesQuery->joinWith('communityUsers')->andWhere([CommunityUserMm::tableName() . '.user_id' => Yii::$app->user->id]);
+        }
+
+        //foreach($communitySearch->buildQuery('all',[])->orderBy('name')->all() as $subcommunity) {
+        $subCommunities = $subcommunitiesQuery->all();
+        foreach ($subCommunities as $subcommunity) {
+            $permissions = [
+                'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
+            ];
+
+            if (Yii::$app->getUser()->can('COMMUNITY_UPDATE', ['model' => $subcommunity])) {
+                $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')];
             }
 
-            //foreach($communitySearch->buildQuery('all',[])->orderBy('name')->all() as $subcommunity) {
-            foreach ($subcommunitiesQuery->all() as $subcommunity) {
-                $permissions = [
-                    'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
-                ];
+            // Da abilitare se e quando l'importatore (con node?) verra' abilitato
+            /* if (Yii::$app->getUser()->can('ADMIN')) {
+                $permissions['import'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Importa Documenti')];
+                } */
 
-                if (\Yii::$app->getUser()->can('COMMUNITY_UPDATE', ['model' => $subcommunity])) {
-                    $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')];
-                }
-
-                // Da abilitare se e quando l'importatore (con node?) verra' abilitato
-                /*if (\Yii::$app->getUser()->can('ADMIN')) {
-                    $permissions['import'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Importa Documenti')];
-                }*/
-
-                $showSep2 = false;
-                if ($subcommunity->hasRole(\Yii::$app->user->id, [
-                        CommunityUserMm::ROLE_COMMUNITY_MANAGER,
-                        CommunityUserMm::ROLE_EDITOR,
-                        CommunityUserMm::ROLE_AUTHOR,
-                    ]) ||
-                    \Yii::$app->getUser()->can('ADMIN')) {
-                    $showSep2 = true;
-                }
-
-                if ($showSep2) {
-                    $permissions['sep2'] = "---------";
-                }
-
-                if ($subcommunity->hasRole(\Yii::$app->user->id, [
-                        CommunityUserMm::ROLE_COMMUNITY_MANAGER,
-                    ]) ||
-                    \Yii::$app->getUser()->can('ADMIN')) {
-                    $permissions['participants'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Condividi con...')];
-                }
-
-                if ($subcommunity->hasRole(\Yii::$app->user->id, [
-                        CommunityUserMm::ROLE_COMMUNITY_MANAGER,
-                        CommunityUserMm::ROLE_EDITOR,
-                        CommunityUserMm::ROLE_AUTHOR,
-                    ]) ||
-                    \Yii::$app->getUser()->can('ADMIN')) {
-                    $permissions['sharingGroups'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Gruppi di condivisione')];
-                }
-
-                if (\Yii::$app->getUser()->can('COMMUNITY_DELETE', ['model' => $subcommunity])) {
-                    $permissions['sep4'] = "---------";
-                    $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')];
-                }
-
-                $permissions['sep5'] = "---------";
-                $permissions['cooperation'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Collaborazione')];
-
-                $result['subcommunities'][] = [
-                    'name' => $subcommunity->name,
-                    'id' => $subcommunity->id,
-                    'description' => strlen(strip_tags($subcommunity->description)) > 100 ? substr(strip_tags($subcommunity->description), 0, 99) . '...' : strip_tags($subcommunity->description),
-                    'permissions' => $permissions,
-                ];
+            $showSep2 = false;
+            if ($subcommunity->hasRole(Yii::$app->user->id, [
+                    CommunityUserMm::ROLE_COMMUNITY_MANAGER,
+                    CommunityUserMm::ROLE_EDITOR,
+                    CommunityUserMm::ROLE_AUTHOR,
+                ])
+                || Yii::$app->getUser()->can('ADMIN')) {
+                $showSep2 = true;
             }
+
+            if ($showSep2) {
+                $permissions['sep2'] = '---------';
+            }
+
+            if ($subcommunity->hasRole(Yii::$app->user->id, [
+                    CommunityUserMm::ROLE_COMMUNITY_MANAGER,
+                ])
+                || Yii::$app->getUser()->can('ADMIN')) {
+                $permissions['participants'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Condividi con...')];
+            }
+
+//                if ($subcommunity->hasRole(Yii::$app->user->id, [
+//                        CommunityUserMm::ROLE_COMMUNITY_MANAGER,
+//                        CommunityUserMm::ROLE_EDITOR,
+//                        CommunityUserMm::ROLE_AUTHOR,
+//                    ]) ||
+//                    Yii::$app->getUser()->can('ADMIN')) {
+//                    $permissions['sharingGroups'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Gruppi di condivisione')];
+//                }
+
+            if (Yii::$app->getUser()->can('COMMUNITY_DELETE', ['model' => $subcommunity])) {
+                $permissions['sep4'] = '---------';
+                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')];
+            }
+
+            $permissions['sep5'] = '---------';
+            $permissions['cooperation'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Collaborazione')];
+
+            $result['subcommunities'][] = [
+                'name' => $subcommunity->name,
+                'id' => $subcommunity->id,
+                'description' => strlen(strip_tags($subcommunity->description)) > 100
+                    ? substr(strip_tags($subcommunity->description), 0, 99) . '...'
+                    : strip_tags($subcommunity->description),
+                'permissions' => $permissions,
+            ];
         }
 
         return Json::encode($result);
     }
 
-    public function actionCreateFolder() {
+    /**
+     *
+     * @return type
+     */
+    public function actionCreateFolder()
+    {
         $postParams = $this->isPostActions();
 
-        $cwhActiveQuery = new CwhActiveQuery(Documenti::className());
-        $queryUsers = $cwhActiveQuery->getRecipients(CwhRegolePubblicazione::ALL_USERS_IN_DOMAINS, [], [Community::tableName().'-'.$postParams['scope']]);
-        $queryDestinatari = UserProfile::find()->andWhere([
-            'in',
-            'user_id',
-            $queryUsers->select('user.id')->asArray()->column()
-        ])->all();
+        $documentiClassName = $this->documentsModule->model('Documenti');
+        $cwhActiveQuery = new CwhActiveQuery($documentiClassName);
+        $queryUsers = $cwhActiveQuery
+            ->getRecipients(
+                CwhRegolePubblicazione::ALL_USERS_IN_DOMAINS,
+                [],
+                [Community::tableName() . '-' . $postParams['scope']]
+            );
+
+        $queryDestinatari = UserProfile::find()->andWhere(
+            [
+                'in',
+                'user_id',
+                $queryUsers->select('user.id')->asArray()->column()
+            ])
+            ->all();
 
         $idDestinatari = [];
         foreach ($queryDestinatari as $destinatario) {
@@ -544,7 +617,7 @@ class DocumentiAjaxController extends Controller
             Yii::$app->request->csrfParam => Yii::$app->request->csrfToken,
             'Documenti' => [
                 'destinatari' => [
-                    Community::tableName().'-'.$postParams['scope'],
+                    Community::tableName() . '-' . $postParams['scope'],
                 ],
                 'titolo' => $postParams['folder-name'],
                 'regola_pubblicazione' => CwhRegolePubblicazione::ALL_USERS_IN_DOMAINS,
@@ -552,12 +625,25 @@ class DocumentiAjaxController extends Controller
             'selection-profiles' => $idDestinatari,
         ]);
 
-        return Json::encode(Yii::$app->runAction('documenti/documenti/create', ['isFolder' => true, 'isAjaxRequest' => true, 'regolaPubblicazione' => CwhRegolePubblicazione::ALL_USERS_IN_DOMAINS, 'parentId' => $this->parentId]));
+        return Json::encode(
+            Yii::$app->runAction('documenti/documenti/create',
+                [
+                    'isFolder' => true,
+                    'isAjaxRequest' => true,
+                    'regolaPubblicazione' => CwhRegolePubblicazione::ALL_USERS_IN_DOMAINS,
+                    'parentId' => $this->parentId
+                ]
+            )
+        );
     }
 
-    public function setScope($scopeId) {
-        $moduleCwh = \Yii::$app->getModule('cwh');
-        $moduleCwh->setCwhScopeInSession([
+    /**
+     *
+     * @param type $scopeId
+     */
+    public function setScope($scopeId)
+    {
+        $this->moduleCwh->setCwhScopeInSession([
             'community' => $scopeId, // simple cwh scope for contents filtering, required
         ],
             [
@@ -569,7 +655,12 @@ class DocumentiAjaxController extends Controller
             ]);
     }
 
-    public function actionGetFolders() {
+    /**
+     *
+     * @return type
+     */
+    public function actionGetFolders()
+    {
         $post = $this->isPostActions();
 
         $this->setScope($post['scope-id']);
@@ -588,11 +679,16 @@ class DocumentiAjaxController extends Controller
         /** @var ActiveQuery $folders */
         $folders = $this->getDataProviderFolders();
 
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         $foldersFound = [
             'count' => $folders->count,
             'available' => $folders->count != 0,
             'folders' => [],
-            'canCreate' => \Yii::$app->getUser()->can('DOCUMENTI_CREATE', ['model' => new Documenti()]),
+            'canCreate' => (
+                Yii::$app->getUser()->can('DOCUMENTI_CREATE', ['model' => $documentiModel])
+                && $this->documentsModule->enableFolders == true
+            ),
         ];
 
         // PER VERIFICARE IL RUOLO DELL'UTENTE NELLA COMMUNITY/STANZA/AREA IN CUI CI SI TROVA
@@ -605,41 +701,48 @@ class DocumentiAjaxController extends Controller
 //        }
 //        if (!empty($scope)) {
 //            $currentCommunity = CommunitySearch::findOne(['id' => $idArea]);
-//            $isCurrentUserCommunityManager = $currentCommunity->hasRole(\Yii::$app->user->id, [
+//            $isCurrentUserCommunityManager = $currentCommunity->hasRole(Yii::$app->user->id, [
 //                CommunityUserMm::ROLE_COMMUNITY_MANAGER,
 //            ]);
 //        }
 
         /** @var Documenti $folder */
-        foreach($folders->getModels() as $folder) {
-
+        $foldersModels = $folders->getModels();
+        foreach ($foldersModels as $folder) {
             //$folder->par
             $permissions = [
-                'open' => ['name' => AmosDocumenti::t('amosdocumenti','Visualizza informazioni')],
+                'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
             ];
 
-            if(\Yii::$app->getUser()->can('DOCUMENTI_UPDATE', ['model' => $folder])) {
-                $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti','Modifica informazioni')];
+            if (Yii::$app->getUser()->can('DOCUMENTI_UPDATE', ['model' => $folder])) {
+                $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')];
             }
 
-            if(\Yii::$app->getUser()->can('DOCUMENTI_DELETE', ['model' => $folder])) {
+            if (Yii::$app->getUser()->can('DOCUMENTI_DELETE', ['model' => $folder])) {
                 $permissions['sep4'] = "---------";
-                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti','Rimuovi')];
+                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')];
             }
+
             $foldersFound['folders'][] = [
                 'model-id' => $folder->id,
                 'name' => $folder->titolo,
                 'permissions' => $permissions,
             ];
         }
+
         return Json::encode($foldersFound);
     }
 
-    private function isPostActions() {
-        $postParams = \Yii::$app->request->post();
+    /**
+     *
+     * @return type
+     */
+    private function isPostActions()
+    {
+        $postParams = Yii::$app->request->post();
 
-        if($postParams) {
-            if(array_key_exists('parent-id', $postParams) && $postParams['parent-id'] != "") {
+        if ($postParams) {
+            if (array_key_exists('parent-id', $postParams) && $postParams['parent-id'] != "") {
                 $this->parentId = $postParams['parent-id'];
             }
         }
@@ -647,7 +750,12 @@ class DocumentiAjaxController extends Controller
         return $postParams;
     }
 
-    public function actionGetDocuments() {
+    /**
+     *
+     * @return type
+     */
+    public function actionGetDocuments()
+    {
         $post = $this->isPostActions();
 
         $this->setScope($post['scope-id']);
@@ -655,11 +763,13 @@ class DocumentiAjaxController extends Controller
         /** @var ActiveQuery $folders */
         $files = $this->getDataProviderDocuments();
 
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         $filesFound = [
             'count' => $files->count,
             'available' => $files->count != 0,
             'files' => [],
-            'canCreate' => \Yii::$app->getUser()->can('DOCUMENTI_CREATE', ['model' => new Documenti()]),
+            'canCreate' => Yii::$app->getUser()->can('DOCUMENTI_CREATE', ['model' => $documentiModel]),
         ];
 
         // PER VERIFICARE IL RUOLO DELL'UTENTE NELLA COMMUNITY/STANZA/AREA IN CUI CI SI TROVA
@@ -672,66 +782,73 @@ class DocumentiAjaxController extends Controller
 //        }
 //        if (!empty($scope)) {
 //            $currentCommunity = CommunitySearch::findOne(['id' => $idArea]);
-//            $isCurrentUserCommunityManager = $currentCommunity->hasRole(\Yii::$app->user->id, [
+//            $isCurrentUserCommunityManager = $currentCommunity->hasRole(Yii::$app->user->id, [
 //                CommunityUserMm::ROLE_COMMUNITY_MANAGER,
 //            ]);
 //        }
 
-        foreach($files->getModels() as $file) {
-
+        foreach ($files->getModels() as $file) {
             $permissions = [
-                'open' => ['name' => AmosDocumenti::t('amosdocumenti','Visualizza informazioni')],
+                'open' => ['name' => AmosDocumenti::t('amosdocumenti', 'Visualizza informazioni')],
             ];
 
-            if(\Yii::$app->getUser()->can('DOCUMENTI_UPDATE', ['model' => $file])) {
-                if(Yii::$app->getModule('documenti')->enableDocumentVersioning) {
-                    $permissions['new-version'] = ['name' => AmosDocumenti::t('amosdocumenti','Crea nuova versione')];
+            if (Yii::$app->getUser()->can('DOCUMENTI_UPDATE', ['model' => $file])) {
+                if (Yii::$app->getModule('documenti')->enableDocumentVersioning) {
+                    $permissions['new-version'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Crea nuova versione')];
                 } else {
-                    $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti','Modifica informazioni')];
+                    $permissions['edit'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Modifica informazioni')];
                 }
             }
 
-            if(\Yii::$app->getUser()->can('DOCUMENTI_DELETE', ['model' => $file])) {
-                $permissions['sep4'] = "---------";
-                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti','Rimuovi')];
+            $permissions['sep4'] = '---------';
+            $permissions['download'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Scarica documento')];
+
+            if (Yii::$app->getUser()->can('DOCUMENTI_DELETE', ['model' => $file])) {
+                $permissions['sep5'] = '---------';
+                $permissions['delete'] = ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')];
             }
 
-            $permissions['sep5'] = "---------";
-            $permissions['download'] = ['name' => AmosDocumenti::t('amosdocumenti','Scarica documento')];
+            $link = '';
+            $title = $file->titolo;
+            if (!empty($file->link_document)) {
+                $link = \open20\amos\core\utilities\StringUtils::shortText($file->link_document, 50);
+            }
 
             $filesFound['files'][] = [
-                'name' => $file->titolo,
+                'link' => $link,
+                'name' => $title,
                 'icon-class' => DocumentsUtility::getDocumentIcon($file, true),
                 'url' => Url::toRoute([self::DOCUMENTI_URL, 'id' => $file->id]),
                 'date' => date('d/m/Y', strtotime((isset($file->updated_at) && $file->updated_at != "") ? $file->updated_at : $file->created_at)),
-                'size' => $this->getSize($file->getDocumentMainFile()->size),
+                'size' => empty($file->link_document)
+                    ? $this->getSize($file->getDocumentMainFile()->size)
+                    : null,
                 'model-id' => $file->id,
-                'model-file-id' => $file->getDocumentMainFile()->id,
-                'model-hash' => $file->getDocumentMainFile()->hash,
+                'model-file-id' => empty($file->link_document)
+                    ? $file->getDocumentMainFile()->id
+                    : null,
+                'model-hash' => empty($file->link_document)
+                    ? $file->getDocumentMainFile()->hash
+                    : null,
                 'permissions' => $permissions,
             ];
         }
+
         return Json::encode($filesFound);
     }
 
-    private function getSize($size) {
-        $dimScale = [
-            'b',
-            'kb',
-            'mb',
-            'gb',
-            'tb'
-        ];
-        $numIterations = 0;
+    /**
+     *
+     * @param type $size
+     * @return type
+     */
+    private function getSize($size)
+    {
+        $dimScale = ['b', 'kb', 'mb', 'gb', 'tb'];
         $size = intval($size);
+        $power = $size > 0 ? floor(log($size, 1024)) : 0;
 
-        while ($size >= 920) {
-            $size = $size / 1024;
-            $numIterations++;
-        }
-
-        return round($size, 2) . ' ' . $dimScale[$numIterations];
-
+        return number_format($size / pow(1024, $power), 2, '.', ',') . ' ' . $dimScale[$power];
     }
 
     /**
@@ -739,11 +856,14 @@ class DocumentiAjaxController extends Controller
      */
     private function baseQuery()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         /** @var ActiveQuery $query */
-        $query = Documenti::find()->distinct();
-        $query->andWhere(['parent_id' => $this->parentId]);
-        $query = $this->addCwhQuery($query);
-        return $query;
+        return $this->addCwhQuery(
+            $documentiModel::find()
+                ->distinct()
+                ->andWhere(['parent_id' => $this->parentId])
+        );
     }
 
     /**
@@ -752,33 +872,32 @@ class DocumentiAjaxController extends Controller
      */
     private function addCwhQuery($query)
     {
-        $moduleCwh = \Yii::$app->getModule('cwh');
         $cwhActiveQuery = null;
-        $classname = Documenti::className();
-        if (isset($moduleCwh)) {
-            /** @var \lispa\amos\cwh\AmosCwh $moduleCwh */
-            $moduleCwh->setCwhScopeFromSession();
+        $classname = $this->documentsModule->model('Documenti');
+        if ($this->isSetCwh()) {
+            /** @var \open20\amos\cwh\AmosCwh $moduleCwh */
+            $this->moduleCwh->setCwhScopeFromSession();
             $cwhActiveQuery = new CwhActiveQuery($classname, ['queryBase' => $query]);
         }
-        $isSetCwh = $this->isSetCwh($moduleCwh, $classname);
-        if ($isSetCwh) {
+
+        if ($this->isSetCwh($classname)) {
             $query = $cwhActiveQuery->getQueryCwhAll();
         }
+
         return $query;
     }
 
     /**
-     * @param AmosModule $moduleCwh
      * @param string $classname
      * @return bool
      */
-    private function isSetCwh($moduleCwh, $classname)
+    private function isSetCwh($classname = null)
     {
-        if (isset($moduleCwh) && in_array($classname, $moduleCwh->modelsEnabled)) {
-            return true;
-        } else {
-            return false;
+        if ($classname == null) {
+            return isset($this->moduleCwh);
         }
+
+        return (isset($this->moduleCwh) && in_array($classname, $this->moduleCwh->modelsEnabled));
     }
 
     /**
@@ -786,10 +905,10 @@ class DocumentiAjaxController extends Controller
      */
     private function getDataProvider($isFolderField)
     {
-        $query = $this->baseQuery();
-        $query->andWhere(['is_folder' => $isFolderField]);
-        $dataProvider = new ActiveDataProvider([
-            'query' => $query,
+        return new ActiveDataProvider([
+            'query' => $this
+                ->baseQuery()
+                ->andWhere(['is_folder' => $isFolderField]),
             'sort' => [
                 'defaultOrder' => [
                     'titolo' => SORT_ASC
@@ -797,7 +916,6 @@ class DocumentiAjaxController extends Controller
             ],
             'pagination' => false
         ]);
-        return $dataProvider;
     }
 
     /**
@@ -816,15 +934,48 @@ class DocumentiAjaxController extends Controller
         return $this->getDataProvider(Documenti::IS_DOCUMENT);
     }
 
-    public function actionSessions() {
+    /**
+     *
+     */
+    public function actionSessions()
+    {
         pr(Yii::$app->session->get('stanzePath', []), 'routeStanze');
         pr(Yii::$app->session->get('foldersPath', []), 'routeFolders');
-        die;
+        pr(Yii::$app->session->get('myCurrentView', []));
+//        die;
     }
 
-    public function actionResetSessions() {
+    /**
+     *
+     */
+    public function actionResetSessions()
+    {
         DocumentsUtility::resetRoutesDocumentsExplorer();
-        pr("reset successfully");
+        // pr("reset successfully");
+    }
+
+    public function actionDowload()
+    {
+        $postParams = $this->isPostActions();
+
+        if (!empty($postParams['id']) && !empty($postParams['hash']) != '') {
+            $file = File::findOne([
+                'id' => $postParams['id'],
+                'hash' => $postParams['hash']
+            ]);
+
+            $filePath = $this->getModule()->getFilesDirPath($file->hash) . DIRECTORY_SEPARATOR . $file->hash . '.' . $file->type;
+
+            if (file_exists($filePath)) {
+                if (!in_array($file->type, ['jpg', 'jpeg', 'png', 'gif'])) {
+                    $this->addDownloadNumber($file);
+
+                    return Json::encode(\Yii::$app->response->sendFile($filePath, "$file->name.$file->type"));
+                }
+            }
+        }
+
+        return Json::encode(false);
     }
 
 }

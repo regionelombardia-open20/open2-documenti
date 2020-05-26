@@ -1,27 +1,28 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\icons
+ * @package    open20\amos\documenti\widgets\icons
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\icons;
+namespace open20\amos\documenti\widgets\icons;
 
-use lispa\amos\core\widget\WidgetIcon;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetIcon;
+use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
 use Yii;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class WidgetIconAdminAllDocumenti
- * @package lispa\amos\documenti\widgets\icons
+ * @package open20\amos\documenti\widgets\icons
  */
 class WidgetIconAdminAllDocumenti extends WidgetIcon
 {
@@ -35,7 +36,6 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
 
         $paramsClassSpan = [
             'bk-backgroundIcon',
-            'color-primary'
         ];
 
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_all_admin'));
@@ -46,7 +46,7 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
         $this->setModuleName('documenti');
         $this->setNamespace(__CLASS__);
 
-        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+        if (!empty(Yii::$app->params['dashboardEngine']) && Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
             $paramsClassSpan = [];
         }
 
@@ -57,31 +57,16 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
             )
         );
 
-        $this->setBulletCount(
-            $this->makeBulletCounter(Yii::$app->getUser()->id)
-        );
-    }
-
-    /**
-     * 
-     * @param type $user_id
-     * @return type
-     */
-    public function makeBulletCounter($user_id = null)
-    {
-        $DocumentiSearch = new DocumentiSearch();
-        $notifier = \Yii::$app->getModule('notify');
-
-        $count = 0;
-        if ($notifier) {
-            $count = $notifier->countNotRead(
-                $user_id,
-                Documenti::class,
-                $DocumentiSearch->buildQuery([], 'admin-all')
-            );
-        }
-
-        return $count;
+//        if ($this->disableBulletCounters == false) {
+//            $search = new DocumentiSearch();
+//            $this->setBulletCount(
+//                $this->makeBulletCounter(
+//                    Yii::$app->getUser()->getId(),
+//                    Documenti::className(),
+//                    $search->buildQuery([], 'admin-all')
+//                )
+//            );
+//        }
     }
 
     /**
@@ -92,8 +77,8 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-            parent::getOptions(),
-            ['children' => []]
+                parent::getOptions(),
+                ['children' => []]
         );
     }
 

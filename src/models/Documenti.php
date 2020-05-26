@@ -1,34 +1,33 @@
 <?php
-
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\models
+ * @package    open20\amos\documenti\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\models;
+namespace open20\amos\documenti\models;
 
-use lispa\amos\attachments\behaviors\FileBehavior;
-use lispa\amos\attachments\models\File;
-use lispa\amos\comments\models\CommentInterface;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\interfaces\ContentModelInterface;
-use lispa\amos\core\interfaces\ModelDocumentInterface;
-use lispa\amos\core\interfaces\ModelImageInterface;
-use lispa\amos\core\interfaces\ViewModelInterface;
-use lispa\amos\core\interfaces\WorkflowMetadataInterface;
-use lispa\amos\core\views\toolbars\StatsToolbarPanels;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\i18n\grammar\DocumentsGrammar;
-use lispa\amos\documenti\i18n\grammar\FoldersGrammar;
-use lispa\amos\documenti\utility\DocumentsUtility;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
-use lispa\amos\notificationmanager\behaviors\NotifyBehavior;
-use lispa\amos\seo\behaviors\SeoContentBehavior;
-use lispa\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
+use open20\amos\attachments\behaviors\FileBehavior;
+use open20\amos\attachments\models\File;
+use open20\amos\comments\models\CommentInterface;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\interfaces\ContentModelInterface;
+use open20\amos\core\interfaces\ModelDocumentInterface;
+use open20\amos\core\interfaces\ModelImageInterface;
+use open20\amos\core\interfaces\ViewModelInterface;
+use open20\amos\core\interfaces\WorkflowMetadataInterface;
+use open20\amos\core\views\toolbars\StatsToolbarPanels;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\i18n\grammar\DocumentsGrammar;
+use open20\amos\documenti\i18n\grammar\FoldersGrammar;
+use open20\amos\documenti\utility\DocumentsUtility;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
+use open20\amos\notificationmanager\behaviors\NotifyBehavior;
+use open20\amos\seo\behaviors\SeoContentBehavior;
+use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
 use raoul2000\workflow\base\SimpleWorkflowBehavior;
 use Yii;
 use yii\base\Exception;
@@ -48,13 +47,13 @@ use yii\log\Logger;
  * @method string|null getRegolaPubblicazione()
  * @method array getTargets()
  *
- * @property \lispa\amos\documenti\models\Documenti[] $allParents
- * @property \lispa\amos\documenti\models\Documenti[] $allDocumentVersions
+ * @property \open20\amos\documenti\models\Documenti[] $allParents
+ * @property \open20\amos\documenti\models\Documenti[] $allDocumentVersions
  * @property string $versionInfo
  *
- * @package lispa\amos\documenti\models
+ * @package open20\amos\documenti\models
  */
-class Documenti extends \lispa\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface
+class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface
 {
     // Workflow ID
     const DOCUMENTI_WORKFLOW = 'DocumentiWorkflow';
@@ -137,20 +136,14 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     private static $categories;
 
     /**
-     * @var AmosDocumenti $documentsModule
-     */
-    protected $documentsModule = null;
-
-    /**
      * @inheritdoc
      */
     public function init()
     {
         parent::init();
 
-        $this->documentsModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
-
         if ($this->isNewRecord) {
+            $this->is_folder = Documenti::IS_DOCUMENT;
             $this->status = $this->getWorkflowSource()->getWorkflow(self::DOCUMENTI_WORKFLOW)->getInitialStatusId();
             if (!empty($this->documentsModule)) {
                 if ($this->documentsModule->hidePubblicationDate) {
@@ -181,17 +174,36 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     public function rules()
     {
         $rules = ArrayHelper::merge(parent::rules(), [
-            [['destinatari_pubblicazione', 'destinatari_notifiche'], 'safe'],
-            [['documentMainFile'], 'required', 'when' => function($model) {
-                    return (trim($model->link_document) == '');
+            [['destinatari_pubblicazione', 'destinatari_notifiche','count_link_download'], 'safe'],
+            [['documentMainFile'], 
+                'required', 
+                'when' => function($model) {
+                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == ''));
                 },
                 'whenClient' => "function(attribute, value) {
-                    return ($('#documenti-link_document').val() == '');
-                }"
+                    return (" . (!$this->documentsModule->documentsOnlyText ? "true" : "false") . " && ($('#documenti-link_document').val() == ''));
+                }",
+                'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
             ],
-            
-            [['documentAttachments'], 'file', 'extensions' => (!empty($this->documentsModule)) ? $this->documentsModule->whiteListFilesExtensions : '', 'checkExtensionByMimeType' => false, 'maxFiles' => 0],
-            [['documentMainFile'], 'file', 'skipOnEmpty' => true, 'extensions' => (!empty($this->documentsModule)) ? $this->documentsModule->whiteListFilesExtensions : '', 'checkExtensionByMimeType' => false, 'maxFiles' => 1],
+
+            [['documentAttachments'], 
+                'file', 
+                'extensions' => (!empty($this->documentsModule)) 
+                    ? $this->documentsModule->whiteListFilesExtensions 
+                    : '', 
+                'checkExtensionByMimeType' => false, 
+                'maxFiles' => 0
+            ],
+
+            [['documentMainFile'], 
+                'file', 
+                'skipOnEmpty' => true, 
+                'extensions' => (!empty($this->documentsModule)) 
+                    ? $this->documentsModule->whiteListFilesExtensions 
+                    : '', 
+                'checkExtensionByMimeType' => false, 
+                'maxFiles' => 1,                
+            ],
             
             [['link_document'], 'url', 'skipOnEmpty' => function($model) {
                     return $model->link_document == '';
@@ -477,6 +489,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
         if (empty($this->documentMainFile)) {
             $this->documentMainFile = $this->hasOneFile('documentMainFile')->one();
         }
+        
         return $this->documentMainFile;
     }
 
@@ -590,7 +603,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
             if ($this->isCommentable()) {
                 $commentModule = \Yii::$app->getModule('comments');
                 if ($commentModule) {
-                    /** @var \lispa\amos\comments\AmosComments $commentModule */
+                    /** @var \open20\amos\comments\AmosComments $commentModule */
                     $count_comments = $commentModule->countComments($this);
                 }
                 $panels = ArrayHelper::merge($panels, StatsToolbarPanels::getCommentsPanel($this, $count_comments, $disableLink));
@@ -622,7 +635,10 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
      */
     public function getCategory()
     {
-        return $this->hasOne(\lispa\amos\documenti\models\DocumentiCategorie::className(), ['id' => 'documenti_categorie_id']);
+        return $this->hasOne(
+            $this->documentsModule->model('DocumentiCategorie'),
+            ['id' => 'documenti_categorie_id']
+        );
     }
 
     /**
@@ -695,7 +711,9 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
         $arrayChildren = [];
         $children = $this->getAllChildrens();
         foreach ($children as $childId) {
-            $child = Documenti::findOne($childId);
+            /** @var Documenti $documentiModel */
+            $documentiModel = $this->documentsModule->createModel('Documenti');
+            $child = $documentiModel::findOne($childId);
             if (!$child->is_folder && $child->version_parent_id == null) {
                 $arrayChildren[] = $child->id;
             }
@@ -758,10 +776,11 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
             $child->delete();
             if ($child->hasErrors()) {
                 if ($errorsByFlashMessages) {
-                    $errorMsg = ($child->isDocument() ?
-                            AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione del documento') :
-                            AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione della cartella')
-                        ) . " '" . $childTitle . "'";
+                    $errorMsg = ($child->isDocument() 
+                        ? AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione del documento') 
+                        : AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione della cartella')
+                        ) 
+                        . " '" . $childTitle . "'";
                     Yii::$app->getSession()->addFlash('danger', $errorMsg);
                 } else {
                     Yii::getLogger()->log("Errore durante la cancellazione del documento con id '$childId'", Logger::LEVEL_ERROR);
@@ -779,8 +798,11 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
      */
     public function getAllDocumentVersions()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
+
         /** @var ActiveQuery $query */
-        $query = Documenti::find();
+        $query = $documentiModel::find();
         if (is_null($this->version_parent_id)) {
             $query->andWhere(['or',
                 ['version_parent_id' => $this->id],
@@ -802,11 +824,13 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
      */
     public function getLastOldDocumentVersion()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         $query = new Query();
         $query->from(self::tableName());
         $query->andWhere(['version_parent_id' => $this->id, 'deleted_at' => null]);
         $maxVersion = $query->max('version');
-        $document = Documenti::find()->andWhere([
+        $document = $documentiModel::find()->andWhere([
             'version_parent_id' => $this->id,
             'version' => $maxVersion
         ])->one();
@@ -822,7 +846,10 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
         if (!$this->documentsModule->enableDocumentVersioning || $this->is_folder || ($this->version == -1)) {
             return true;
         }
-        $newDocument = new Documenti();
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
+        /** @var Documenti $newDocument */
+        $newDocument = $this->documentsModule->createModel('Documenti');
         $newDocument->setAttributes($this->attributes);
         $newDocument->behaviors['workflow']->initStatus();
         $newDocument->version_parent_id = $this->id;
@@ -883,8 +910,10 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
      */
     public function deleteThisDocumentMainFileRow()
     {
+        /** @var Documenti $documentiModel */
+        $documentiModel = $this->documentsModule->createModel('Documenti');
         $file = File::findOne([
-            'model' => Documenti::className(),
+            'model' => $this->documentsModule->model('Documenti'),
             'attribute' => 'documentMainFile',
             'itemId' => $this->id
         ]);
@@ -904,7 +933,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     public function deleteThisDocumentAttachmentRows()
     {
         $files = File::find()->andWhere([
-            'model' => Documenti::className(),
+            'model' => $this->documentsModule->model('Documenti'),
             'attribute' => 'documentMainFile',
             'itemId' => $this->id
         ])->all();
@@ -929,7 +958,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     public function duplicateDocumentMainFile($newDocument)
     {
         $oldFile = File::findOne([
-            'model' => Documenti::className(),
+            'model' => $this->documentsModule->model('Documenti'),
             'attribute' => 'documentMainFile',
             'itemId' => $this->id
         ]);
@@ -947,7 +976,7 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
     public function duplicateDocumentAttachments($newDocument)
     {
         $oldFiles = File::find()->andWhere([
-            'model' => Documenti::className(),
+            'model' => $this->documentsModule->model('Documenti'),
             'attribute' => 'documentAttachments',
             'itemId' => $this->id
         ])->all();
@@ -1078,22 +1107,30 @@ class Documenti extends \lispa\amos\documenti\models\base\Documenti implements C
         ];
         $isCommunityManager = false;
         if (\Yii::$app->getModule('community')) {
-            $isCommunityManager = \lispa\amos\community\utilities\CommunityUtil::isLoggedCommunityManager();
+            $isCommunityManager = \open20\amos\community\utilities\CommunityUtil::isLoggedCommunityManager();
             if ($isCommunityManager) {
                 $isCommunityManager = true;
             }
         }
+        
         // if you are a community manager a validator/facilitator or ADMIN you Can publish directly
         if (Yii::$app->user->can('DocumentValidate', ['model' => $this]) || Yii::$app->user->can('ADMIN') || $isCommunityManager) {
-            $statusToRender = ArrayHelper::merge($statusToRender,
-                [Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => AmosDocumenti::t('amosnews', 'Pubblicata')]);
+            $statusToRender = ArrayHelper::merge(
+                $statusToRender,
+                [Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => AmosDocumenti::t('amosnews', 'Pubblicata')]
+            );
             $hideDraftStatus = [];
         } else {
-            $statusToRender = ArrayHelper::merge($statusToRender, [
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => AmosDocumenti::t('amosnews', 'Richiedi pubblicazione'),
-            ]);
+            $statusToRender = ArrayHelper::merge(
+                $statusToRender, 
+                [
+                    Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => AmosDocumenti::t('amosnews', 'Richiedi pubblicazione'),
+                ]
+            );
+            
             $hideDraftStatus[] = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
+        
         return ['statusToRender' => $statusToRender, 'hideDraftStatus' => $hideDraftStatus];
     }
 

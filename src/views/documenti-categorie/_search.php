@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-categorie
+ * @package    open20\amos\documenti\views\documenti-categorie
  * @category   CategoryName
  */
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\search\DocumentiCategorieSearch $model
+ * @var open20\amos\documenti\models\search\DocumentiCategorieSearch $model
  * @var yii\widgets\ActiveForm $form
  */
 ?>

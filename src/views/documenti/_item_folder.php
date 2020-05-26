@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti
+ * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\notificationmanager\forms\NewsWidget;
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\notificationmanager\forms\NewsWidget;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  */
 
 $modelViewUrl = [Yii::$app->controller->action->id, 'parentId' => $model->id];

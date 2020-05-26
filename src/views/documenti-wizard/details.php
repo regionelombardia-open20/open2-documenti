@@ -1,33 +1,41 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti-wizard
+ * @package    open20\amos\documenti\views\documenti-wizard
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\AttachmentsInput;
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\core\forms\WizardPrevAndContinueButtonWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\attachments\components\AttachmentsInput;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\core\forms\WizardPrevAndContinueButtonWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\DocumentiCategorie;
 use kartik\datecontrol\DateControl;
 use yii\helpers\ArrayHelper;
 use yii\redactor\widgets\Redactor;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  * @var yii\widgets\ActiveForm $form
  */
 
 $this->title = AmosDocumenti::t('amosdocumenti', '#documents_wizard_page_title');
 $enableCategories = AmosDocumenti::instance()->enableCategories;
+
+/** @var AmosDocumenti $documentsModule */
+$documentsModule = AmosDocumenti::instance();
+
+/** @var DocumentiCategorie $documentiCategorieModel */
+$documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
+
 ?>
 
 <div class="document-wizard-details">
@@ -99,7 +107,7 @@ $enableCategories = AmosDocumenti::instance()->enableCategories;
                 <div class="col-lg-6 col-sm-6">
                     <?= $form->field($model, 'documenti_categorie_id')->widget(Select::className(), [
                         'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => FALSE],
-                        'data' => ArrayHelper::map(lispa\amos\documenti\models\DocumentiCategorie::find()->orderBy('titolo')->all(), 'id', 'titolo')
+                        'data' => ArrayHelper::map($documentiCategorieModel::find()->orderBy('titolo')->all(), 'id', 'titolo')
                     ]); ?>
                 </div>
             <?php endif; ?>

@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\i18n\grammar
+ * @package    open20\amos\documenti\i18n\grammar
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\i18n\grammar;
+namespace open20\amos\documenti\i18n\grammar;
 
-use lispa\amos\core\interfaces\ModelGrammarInterface;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\core\interfaces\ModelGrammarInterface;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
  * Class FoldersGrammar
- * @package lispa\amos\documenti\i18n\grammar
+ * @package open20\amos\documenti\i18n\grammar
  */
 class FoldersGrammar implements ModelGrammarInterface
 {

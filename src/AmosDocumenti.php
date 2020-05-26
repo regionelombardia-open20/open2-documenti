@@ -1,38 +1,38 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti;
+namespace open20\amos\documenti;
 
-use lispa\amos\core\exceptions\AmosException;
-use lispa\amos\core\module\AmosModule;
-use lispa\amos\core\module\ModuleInterface;
-use lispa\amos\core\interfaces\SearchModuleInterface;
-use lispa\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
-use lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
-use lispa\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti;
-use lispa\amos\documenti\widgets\icons\WidgetIconAllDocumenti;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumenti;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
-use lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
+use open20\amos\core\exceptions\AmosException;
+use open20\amos\core\module\AmosModule;
+use open20\amos\core\module\ModuleInterface;
+use open20\amos\core\interfaces\SearchModuleInterface;
+use open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
+use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
+use open20\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti;
+use open20\amos\documenti\widgets\icons\WidgetIconAllDocumenti;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumenti;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
 use Yii;
 use yii\helpers\ArrayHelper;
-use lispa\amos\core\interfaces\CmsModuleInterface;
+use open20\amos\core\interfaces\CmsModuleInterface;
 
 /**
  * Class AmosDocumenti
- * @package lispa\amos\documenti
+ * @package open20\amos\documenti
  */
-class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface,CmsModuleInterface
+class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface
 {
     public static $CONFIG_FOLDER = 'config';
 
@@ -45,7 +45,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
 
     public $name = 'Documenti';
 
-    public $controllerNamespace = 'lispa\amos\documenti\controllers';
+    public $controllerNamespace = 'open20\amos\documenti\controllers';
 
     /**
      * @var bool|false if document foldering is enabled or not
@@ -68,6 +68,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableDocumentVersioning = false;
 
     /**
+     * @var array $documentExtraRequiredFields - extra mandatory fields in document form
+     */
+    public $documentExtraRequiredFields = [];
+
+    /**
      * @var string List of the allowed extensions for the upload of files.
      */
     public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx';
@@ -80,8 +85,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
-    public $defaultListViews = ['list', 'grid'];
-
+    public $defaultListViews = ['list', 'grid', 'expl'];
+    
+    
+    /**
+     * @var string $defaultView Set the default view for module
+     */
+    public $defaultView = 'list';
+    
     /**
      * @var array
      */
@@ -124,7 +135,31 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
 
     public $showAllCategoriesForCommunity = true;
 
+    /**
+     * @var bool disableStandardWorkflow Disable standard worflow, direct publish
+     */
+    public $disableStandardWorkflow = false;
+    
+    /**
+     * @var bool $alwaysLinkToViewWidgetGraphicLastDocs
+     */
+    public $alwaysLinkToViewWidgetGraphicLastDocs = false;
 
+    /**
+     * @var string new explorer view
+     */
+    public $viewExpl;
+
+    /**
+     * @var int used by uploader 
+     */
+    public $timeout;
+
+    /**
+     * @var bool $documentsOnlyText If true the main document file and the external document link are not required at all.
+     */
+    public $documentsOnlyText = false;
+    
     /**
      * @inheritdoc
      */
@@ -148,7 +183,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     {
         parent::init();
 
-        Yii::setAlias('@lispa/amos/' . static::getModuleName() . '/controllers', __DIR__ . '/controllers/');
+        Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers', __DIR__ . '/controllers/');
 
         //Configuration: merge default module configurations loaded from config.php with module configurations set by the application
         $config = require(__DIR__ . DIRECTORY_SEPARATOR . self::$CONFIG_FOLDER . DIRECTORY_SEPARATOR . 'config.php');
@@ -196,6 +231,10 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
             'DocumentiSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiSearch',
             'DocumentiCategorie' => __NAMESPACE__ . '\\' . 'models\DocumentiCategorie',
             'DocumentiCategorieSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiCategorieSearch',
+            'DocumentiCategoryCommunityMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryCommunityMm',
+            'DocumentiCategoryRolesMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryRolesMm',
+            'ReportNode' => __NAMESPACE__ . '\\' . 'models\ReportNode',
+            'UploaderImportList' => __NAMESPACE__ . '\\' . 'models\UploaderImportList',
         ];
     }
 

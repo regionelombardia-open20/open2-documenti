@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgetRs\graphics
+ * @package    open20\amos\documenti\widgetRs\graphics
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\widgets\graphics;
+namespace open20\amos\documenti\widgets\graphics;
 
-use lispa\amos\core\widget\WidgetGraphic;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\search\DocumentiSearch;
-use lispa\amos\notificationmanager\base\NotifyWidgetDoNothing;
+use open20\amos\core\widget\WidgetGraphic;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
+use open20\amos\notificationmanager\base\NotifyWidgetDoNothing;
 
 class WidgetGraphicsDocumentsExplorer extends WidgetGraphic
 {
@@ -32,7 +32,6 @@ class WidgetGraphicsDocumentsExplorer extends WidgetGraphic
 
     public function getHtml()
     {
-            $viewToRender = 'documents-explorer/documents_explorer';
-            return $this->render($viewToRender);
+        return $this->render('documents-explorer/documents_explorer');
     }
 }

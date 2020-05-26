@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\graphics\views
+ * @package    open20\amos\documenti\widgets\graphics\views
  * @category   CategoryName
  */
 
@@ -16,11 +16,11 @@
  * @var string $toRefreshSectionId
  */
 
-use lispa\amos\core\forms\WidgetGraphicsActions;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimeDocumenti;
+use open20\amos\core\forms\WidgetGraphicsActions;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimeDocumenti;
 use yii\data\ActiveDataProvider;
 use yii\helpers\Html;
 use yii\web\View;

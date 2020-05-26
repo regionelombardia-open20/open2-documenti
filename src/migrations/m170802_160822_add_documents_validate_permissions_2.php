@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\rbac\Permission;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\Documenti;
 
 class m170802_160822_add_documents_validate_permissions_2 extends AmosMigrationPermissions
 {
@@ -25,7 +25,7 @@ class m170802_160822_add_documents_validate_permissions_2 extends AmosMigrationP
                 'name' => 'DocumentValidateOnDomain',
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission to validate at least one document in a domain with cwh permission',
-                'ruleName' => \lispa\amos\core\rules\UserValidatorContentRule::className(),
+                'ruleName' => \open20\amos\core\rules\UserValidatorContentRule::className(),
                 'parent' => ['VALIDATORE_DOCUMENTI', 'VALIDATED_BASIC_USER']
             ],
             [
@@ -36,7 +36,7 @@ class m170802_160822_add_documents_validate_permissions_2 extends AmosMigrationP
                 ]
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
                 'update' => true,
                 'newValues' => [
                     'addParents' => ['DocumentValidateOnDomain']

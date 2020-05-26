@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationWidgets;
-use lispa\amos\dashboard\models\AmosWidgets;
+use open20\amos\core\migration\AmosMigrationWidgets;
+use open20\amos\dashboard\models\AmosWidgets;
 
 /**
  * Class m170215_112112_update_widgets_documenti
@@ -38,7 +38,7 @@ class m170215_112112_update_widgets_documenti extends AmosMigrationWidgets
     {
         return [
             [
-                'classname' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'classname' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
@@ -46,47 +46,47 @@ class m170215_112112_update_widgets_documenti extends AmosMigrationWidgets
                 'update' => true
             ],
             [
-                'classname' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
+                'classname' => \open20\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 10,
                 'update' => true
             ],
             [
-                'classname' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy::className(),
+                'classname' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 30,
                 'update' => true
             ],
             [
-                'classname' => \lispa\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
+                'classname' => \open20\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 40,
                 'update' => true
             ],
             [
-                'classname' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
+                'classname' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 50,
                 'update' => true
             ],
             [
-                'classname' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie::className(),
+                'classname' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 60,
                 'update' => true
             ]
@@ -101,11 +101,11 @@ class m170215_112112_update_widgets_documenti extends AmosMigrationWidgets
     {
         return [
             [
-                'classname' => \lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
+                'classname' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
                 'type' => AmosWidgets::TYPE_GRAPHIC,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED,
-                'child_of' => \lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'child_of' => \open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'default_order' => 1,
                 'update' => true
             ]

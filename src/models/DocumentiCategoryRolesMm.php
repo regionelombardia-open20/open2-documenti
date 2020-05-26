@@ -1,22 +1,35 @@
 <?php
 
-namespace lispa\amos\documenti\models;
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    open20\amos\documenti\models
+ * @category   CategoryName
+ */
 
-use Yii;
-use yii\helpers\ArrayHelper;
+namespace open20\amos\documenti\models;
 
 /**
+ * Class DocumentiCategoryRolesMm
  * This is the model class for table "documenti_category_roles_mm".
+ * @package open20\amos\documenti\models
  */
-class DocumentiCategoryRolesMm extends \lispa\amos\documenti\models\base\DocumentiCategoryRolesMm
+class DocumentiCategoryRolesMm extends \open20\amos\documenti\models\base\DocumentiCategoryRolesMm
 {
+    /**
+     * @inheritdoc
+     */
     public function representingColumn()
     {
         return [
-//inserire il campo o i campi rappresentativi del modulo
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     public function attributeHints()
     {
         return [
@@ -24,31 +37,13 @@ class DocumentiCategoryRolesMm extends \lispa\amos\documenti\models\base\Documen
     }
 
     /**
-     * Returns the text hint for the specified attribute.
-     * @param string $attribute the attribute name
-     * @return string the attribute hint
+     * @inheritdoc
      */
     public function getAttributeHint($attribute)
     {
         $hints = $this->attributeHints();
         return isset($hints[$attribute]) ? $hints[$attribute] : null;
     }
-
-    public function rules()
-    {
-        return ArrayHelper::merge(parent::rules(), [
-        ]);
-    }
-
-    public function attributeLabels()
-    {
-        return
-            ArrayHelper::merge(
-                parent::attributeLabels(),
-                [
-                ]);
-    }
-
 
     public static function getEditFields()
     {
@@ -108,6 +103,4 @@ class DocumentiCategoryRolesMm extends \lispa\amos\documenti\models\base\Documen
     {
         return NULL; //TODO
     }
-
-
 }

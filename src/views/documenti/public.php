@@ -1,30 +1,30 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti
+ * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\forms\ItemAndCardHeaderWidget;
-use lispa\amos\core\forms\PublishedByWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\utility\DocumentsUtility;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\forms\ItemAndCardHeaderWidget;
+use open20\amos\core\forms\PublishedByWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\utility\DocumentsUtility;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use yii\web\View;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  */
 
 $this->title = $model->titolo;
@@ -32,7 +32,7 @@ $ruolo = Yii::$app->authManager->getRolesByUser(Yii::$app->getUser()->getId());
 $documentMainFile = $model->documentMainFile;
 
 
-/** @var \lispa\amos\documenti\controllers\DocumentiController $controller */
+/** @var \open20\amos\documenti\controllers\DocumentiController $controller */
 
 
 ?>

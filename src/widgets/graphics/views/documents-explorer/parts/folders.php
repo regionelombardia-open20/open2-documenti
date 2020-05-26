@@ -1,14 +1,26 @@
+<?php
+
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    Open20Package
+ * @category   CategoryName
+ */
+use \open20\amos\documenti\AmosDocumenti;
+?>
 <script id="documents-explorer-folders" type="text/template">
     <div class="col-xs-12 header">
-        <h3>Cartelle ({{count}})</h3> <!--TODO change with folder count-->
+        <h3><?= AmosDocumenti::t('amosdocumenti', 'Cartelle ') ?>({{count}})</h3> <!--TODO change with folder count-->
         {{#canCreate}}
         <button id="create-new-folder-modal" class="btn btn-administration-primary"><span class="am am-plus"></span>
-            <?= \Yii::t('amosdocumenti', 'Nuova Cartella'); ?>
+            <?= AmosDocumenti::t('amosdocumenti', 'Nuova Cartella'); ?>
         </button>
         {{/canCreate}}
     </div>
     {{#available}}
-    <div class="col-xs-12">
+    <div class="col-xs-12 nop">
         {{#folders}}
         <div class="col-sm-4 col-xs-12 folder-item folder-container">
             <div class="folder">

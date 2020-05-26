@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\Documenti;
 use yii\db\Migration;
 
 /**
@@ -22,7 +22,7 @@ class m180518_154404_disable_documenti_dashboard extends Migration
      */
     public function safeUp()
     {
-        $this->update('amos_widgets', ['status' => 0], ['classname' => 'lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard', 'module' => 'documenti']);
+        $this->update('amos_widgets', ['status' => 0], ['classname' => 'open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard', 'module' => 'documenti']);
     }
 
     /**
@@ -30,6 +30,6 @@ class m180518_154404_disable_documenti_dashboard extends Migration
      */
     public function safeDown()
     {
-        $this->update('amos_widgets', ['status' => 1], ['classname' => 'lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard', 'module' => 'documenti']);
+        $this->update('amos_widgets', ['status' => 1], ['classname' => 'open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard', 'module' => 'documenti']);
     }
 }

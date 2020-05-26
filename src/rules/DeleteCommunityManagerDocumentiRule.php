@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\news
+ * @package    open20\amos\news
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\rules;
+namespace open20\amos\documenti\rules;
 
-use lispa\amos\core\rules\BasicCommunityManagerRoleRule;
+use open20\amos\core\rules\BasicCommunityManagerRoleRule;
 use Yii;
 
 

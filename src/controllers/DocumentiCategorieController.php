@@ -1,39 +1,34 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\controllers
+ * @package    open20\amos\documenti\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\controllers;
+namespace open20\amos\documenti\controllers;
 
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\dashboard\controllers\TabDashboardControllerTrait;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\DocumentiCategorie;
-use lispa\amos\documenti\models\DocumentiCategoryCommunityMm;
-use lispa\amos\documenti\models\DocumentiCategoryRolesMm;
-use lispa\amos\documenti\models\search\DocumentiCategorieSearch;
+use open20\amos\core\controllers\CrudController;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\dashboard\controllers\TabDashboardControllerTrait;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\DocumentiCategoryCommunityMm;
+use open20\amos\documenti\models\DocumentiCategoryRolesMm;
 use Yii;
 use yii\helpers\Url;
-
-/**
- * DocumentiCategorieController implements the CRUD actions for DocumentiCategorie model.
- */
 
 /**
  * Class DocumentiCategorieController
  * DocumentiCategorieController implements the CRUD actions for DocumentiCategorie model.
  *
- * @property \lispa\amos\documenti\models\DocumentiCategorie $model
+ * @property \open20\amos\documenti\models\DocumentiCategorie $model
+ * @property \open20\amos\documenti\models\search\DocumentiCategorieSearch $modelSearch
  *
- * @package lispa\amos\documenti\controllers
+ * @package open20\amos\documenti\controllers
  */
 class DocumentiCategorieController extends CrudController
 {
@@ -45,7 +40,12 @@ class DocumentiCategorieController extends CrudController
     /**
      * @var string $layout
      */
-    public $layout = 'list';
+    public $layout = 'main';
+
+    /**
+     * @var AmosDocumenti $documentsModule
+     */
+    public $documentsModule = null;
 
     /**
      * @inheritdoc
@@ -54,8 +54,10 @@ class DocumentiCategorieController extends CrudController
     {
         $this->initDashboardTrait();
 
-        $this->setModelObj(new DocumentiCategorie());
-        $this->setModelSearch(new DocumentiCategorieSearch());
+        $this->documentsModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
+
+        $this->setModelObj($this->documentsModule->createModel('DocumentiCategorie'));
+        $this->setModelSearch($this->documentsModule->createModel('DocumentiCategorieSearch'));
 
         $this->setAvailableViews([
             'grid' => [
@@ -63,18 +65,23 @@ class DocumentiCategorieController extends CrudController
                 'label' => AmosIcons::show('view-list-alt') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Tabella')),
                 'url' => '?currentView=grid'
             ],
-            /* 'map' => [
-              'name' => 'map',
-              'label' => AmosDocumenti::t('amosdocumenti', '{iconaMappa}'.Html::tag('p',AmosDocumenti::tHtml('amosdocumenti', 'Mappa')), [
-              'iconaMappa' => AmosIcons::show('map-alt')
-              ]),
-              'url' => '?currentView=map'
-              ], */
         ]);
 
         parent::init();
 
         $this->setUpLayout();
+    }
+
+    /**
+     * Used for set page title and breadcrumbs.
+     * @param string $pageTitle
+     */
+    public function setTitleAndBreadcrumbs($pageTitle)
+    {
+        Yii::$app->view->title = $pageTitle;
+        Yii::$app->view->params['breadcrumbs'] = [
+            ['label' => $pageTitle]
+        ];
     }
 
     /**
@@ -86,12 +93,10 @@ class DocumentiCategorieController extends CrudController
     public function actionIndex($layout = NULL)
     {
         Url::remember();
-
         $this->setUpLayout('list');
-
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
-
-        $this->setDataProvider($this->getModelSearch()->search(Yii::$app->request->getQueryParams()));
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories'));
+        $this->setDataProvider($this->modelSearch->search(Yii::$app->request->getQueryParams()));
         return parent::actionIndex();
     }
 
@@ -103,13 +108,8 @@ class DocumentiCategorieController extends CrudController
      */
     public function actionView($id)
     {
-        $model = $this->findModel($id);
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        } else {
-            return $this->render('view', ['model' => $model]);
-        }
+        $this->model = $this->findModel($id);
+        return $this->render('view', ['model' => $this->model]);
     }
 
     /**
@@ -121,15 +121,15 @@ class DocumentiCategorieController extends CrudController
     {
         $this->setUpLayout('form');
 
-        $model = new DocumentiCategorie;
+        $this->model = $this->documentsModule->createModel('DocumentiCategorie');
 
-        if ($model->load(Yii::$app->request->post())) {
-            if ($model->validate()) {
-                if ($model->save()) {
-                    $model->saveDocumentiCategorieCommunityMm();
-                    $model->saveDocumentiCategorieRolesMm();
+        if ($this->model->load(Yii::$app->request->post())) {
+            if ($this->model->validate()) {
+                if ($this->model->save()) {
+                    $this->model->saveDocumentiCategorieCommunityMm();
+                    $this->model->saveDocumentiCategorieRolesMm();
                     Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Categoria documenti salvata con successo.'));
-                    return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $model->id]);
+                    return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $this->model->id]);
                 } else {
                     Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio'));
                 }
@@ -139,7 +139,7 @@ class DocumentiCategorieController extends CrudController
         }
 
         return $this->render('create', [
-            'model' => $model,
+            'model' => $this->model,
         ]);
     }
 
@@ -154,17 +154,17 @@ class DocumentiCategorieController extends CrudController
     {
         $this->setUpLayout('form');
 
-        $model = $this->findModel($id);
-        $model->loadDocumentiCategoryCommunities();
-        $model->loadDocumentiCategoryRoles();
+        $this->model = $this->findModel($id);
+        $this->model->loadDocumentiCategoryCommunities();
+        $this->model->loadDocumentiCategoryRoles();
 
-        if ($model->load(Yii::$app->request->post())) {
-            if ($model->validate()) {
-                if ($model->save()) {
-                    $model->saveDocumentiCategorieCommunityMm();
-                    $model->saveDocumentiCategorieRolesMm();
+        if ($this->model->load(Yii::$app->request->post())) {
+            if ($this->model->validate()) {
+                if ($this->model->save()) {
+                    $this->model->saveDocumentiCategorieCommunityMm();
+                    $this->model->saveDocumentiCategorieRolesMm();
                     Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Categoria documenti aggiornata con successo.'));
-                    return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $model->id]);
+                    return $this->redirect(['/documenti/documenti-categorie/update', 'id' => $this->model->id]);
                 } else {
                     Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio'));
                 }
@@ -174,7 +174,7 @@ class DocumentiCategorieController extends CrudController
         }
 
         return $this->render('update', [
-            'model' => $model,
+            'model' => $this->model,
         ]);
     }
 
@@ -191,39 +191,26 @@ class DocumentiCategorieController extends CrudController
     {
         $this->model = $this->findModel($id);
         if ($this->model) {
-            DocumentiCategoryCommunityMm::deleteAll(['documenti_categorie_id' => $this->id]);
-            DocumentiCategoryRolesMm::deleteAll(['documenti_categorie_id' => $this->id]);
-            $this->model->delete();
+            if ($this->model->getDocumenti()->count() == 0) {
+                /** @var DocumentiCategoryCommunityMm $documentiCategoryCommunityMmModel */
+                $documentiCategoryCommunityMmModel = $this->documentsModule->createModel('DocumentiCategoryCommunityMm');
+                $documentiCategoryCommunityMmModel::deleteAll(['documenti_categorie_id' => $this->id]);
+                /** @var DocumentiCategoryRolesMm $documentiCategoryRolesMmModel */
+                $documentiCategoryRolesMmModel = $this->documentsModule->createModel('DocumentiCategoryRolesMm');
+                $documentiCategoryRolesMmModel::deleteAll(['documenti_categorie_id' => $this->id]);
+                $this->model->delete();
 
-            if (!$this->model->hasErrors()) {
-                Yii::$app->getSession()->addFlash('success', AmosDocumenti::t('amosdocumenti', 'Elemento cancellato correttamente.'));
+                if (!$this->model->hasErrors()) {
+                    Yii::$app->getSession()->addFlash('success', AmosDocumenti::t('amosdocumenti', 'Elemento cancellato correttamente.'));
+                } else {
+                    Yii::$app->getSession()->addFlash('danger', AmosDocumenti::t('amosdocumenti', 'Non sei autorizzato a cancellare questo elemento.'));
+                }
             } else {
-                Yii::$app->getSession()->addFlash('danger', AmosDocumenti::t('amosdocumenti', 'Non sei autorizzato a cancellare questo elemento.'));
+                Yii::$app->getSession()->addFlash('danger', AmosDocumenti::t('amosdocumenti', 'Non è possibile cancellare la categoria perché associata ad almeno un documento.'));
             }
         } else {
             Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Elemento non trovato.'));
         }
-        return $this->redirect(['index']);
-    }
-
-    /**
-     * @param null $layout
-     * @return bool
-     */
-    public function setUpLayout($layout = null)
-    {
-        if ($layout === false) {
-            $this->layout = false;
-            return true;
-        }
-        $this->layout = (!empty($layout)) ? $layout : $this->layout;
-        $module = \Yii::$app->getModule('layout');
-        if (empty($module)) {
-            if (strpos($this->layout, '@') === false) {
-                $this->layout = '@vendor/lispa/amos-core/views/layouts/'.(!empty($layout) ? $layout : $this->layout);
-            }
-            return true;
-        }
-        return true;
+        return $this->redirect(['/documenti/documenti-categorie/index']);
     }
 }

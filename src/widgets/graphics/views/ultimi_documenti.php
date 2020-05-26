@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\widgets\graphics\views
+ * @package    open20\amos\documenti\widgets\graphics\views
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\WidgetGraphicsActions;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\assets\ModuleDocumentiAsset;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
+use open20\amos\core\forms\WidgetGraphicsActions;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\assets\ModuleDocumentiAsset;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
 use yii\data\ActiveDataProvider;
-use yii\helpers\Html;
 use yii\web\View;
 use yii\widgets\Pjax;
 
@@ -57,7 +57,8 @@ $documents = $listaDocumenti->getModels();
                     <?php if (count($documents) == 0): ?>
                         <?php
                         $textReadAll = AmosDocumenti::t('amosdocumenti', '#addDocument');
-                        $linkReadAll = ['/documenti/documenti/create'];
+                        $linkReadAll = '/documenti/documenti/create';
+                        $checkPermNew = true;
                         ?>
                         <div class="list-items list-empty">
                             <h2 class="box-widget-subtitle"><?= AmosDocumenti::tHtml('amosdocumenti', 'Nessun documento'); ?></h2>
@@ -66,6 +67,7 @@ $documents = $listaDocumenti->getModels();
                         <?php
                         $textReadAll = AmosDocumenti::t('amosdocumenti', 'Visualizza Tutti');
                         $linkReadAll = $widget->linkReadAll;
+                        $checkPermNew = false;
                         ?>
                         <div class="list-items">
                             <?php foreach ($documents as $document): ?>
@@ -115,6 +117,6 @@ $documents = $listaDocumenti->getModels();
             </div>
             <?php Pjax::end(); ?>
         </section>
-        <div class="col-xs-12 read-all"><?= Html::a($textReadAll, $linkReadAll, ['class' => '']); ?></div>
+        <div class="col-xs-12 read-all"><?= Html::a($textReadAll, $linkReadAll, ['class' => ''], $checkPermNew); ?></div>
     </div>
 </div>

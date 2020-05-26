@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\i18n\it-IT
+ * @package    open20\amos\documenti\i18n\it-IT
  * @category   CategoryName
  */
 
@@ -25,6 +25,7 @@ return [
     'Allegati documento' => 'Allegati documento',
     'Amministra documenti' => 'Amministra documenti',
     'Annulla' => 'Annulla',
+    'Apri' => 'Apri',
     'Apri il profilo di {nome_profilo}' => 'Apri il profilo di {nome_profilo}',
     '#article_indefinite' => 'un',
     '#article_plural' => 'i',
@@ -92,6 +93,7 @@ return [
     '#DAVALIDARE_labelFolder' => 'La cartella è in fase di approvazione per la pubblicazione e non può essere modificata',
     '#DAVALIDARE_label' => 'Il documento è in fase di approvazione per la pubblicazione e non può essere modificato',
     'Decrescente' => 'Decrescente',
+    '#delete_category_not_possible' => 'Non è possibile cancellare la categoria perché associata ad almeno un documento.',
     'Descrizione breve' => 'Descrizione breve',
     'Descrizione' => 'Descrizione',
     '#DETAILS' => 'Dettagli',
@@ -145,6 +147,7 @@ return [
     '#documents_wizard_page_title' => 'Nuovo documento',
     'Document uploaded' => 'Documento caricato',
     'Document validated!' => 'Documento validato!',
+    '#download_document_for_view' => 'Scarica il documento',
     'Download file' => 'Scarica file',
     'Elemento cancellato correttamente.' => 'Elemento cancellato correttamente.',
     'Elemento non trovato.' => 'Elemento non trovato.',
@@ -296,8 +299,8 @@ return [
     'Ultimi documenti' => 'Ultimi documenti',
     '#updated_at' => 'Caricato il',
     '#updated_by' => 'Caricato da',
-    '#uploaded_at' => 'Caricato il',
-    '#uploaded_by' => 'Caricato da',
+    '#uploaded_at' => 'Aggiornato il',
+    '#uploaded_by' => 'Aggiornato da',
     'Utente Cancellato' => 'Utente Cancellato',
     'Utenti' => 'Utenti',
     '#VALIDATE_DOCUMENT_MODAL_TEXT' => 'Vuoi pubblicare questo documento?',
@@ -353,4 +356,20 @@ return [
     '#link_document_field_placeholder' => 'Inserisci il link al documento esterno',
     '#link_document_field' => 'Link ad un documento esterno',
     '#link_document_field_hint' => 'Limite max: 255 caratteri',
+    '#main_document_required' => 'Caricare un documento oppure specificare un link ad un documento esterno negli appositi campi',
+    
+    'Import Workspace' => 'Importa area di lavoro',
+    'Upload files of great size' => 'Carica file di grandi dimensioni',
+    '#choose_nodes_title' => "Nome dell'Area di lavoro",
+    '#choose_nodes_description' => "Questo è il nome dell'Area di lavoro che stai importando, recuperato dall'importazione del file .ZIP. Se desideri puoi cambiare il nome.<br>Nel passaggio successivo potrai scegliere le Stanze da importare.",
+    '#choose_nodes_name_label' => "Nome dell'Area",
+    '#choose_nodes_title_2' => 'Scelta delle Stanze',
+    '#choose_nodes_description_2' => "Seleziona le Stanze di lavoro dall'elenco che desideri importare.<br><br>Nota: le voci non selezionate diventeranno automaticamente delle Cartelle",
+    '#choose_nodes_tree' => 'Seleziona Stanze',
+    
+    'DocumentiWorkflow/BOZZA' => 'Bozza',
+    'DocumentiWorkflow/VALIDATO' => 'Validato',
+    'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
+    'DocumentiWorkflow/NONVALIDATO' => 'Non Validato',
+    'Open file' => 'Apri file',
 ];

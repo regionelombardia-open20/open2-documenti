@@ -1,26 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\models\search
+ * @package    open20\amos\documenti\models\search
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\models\search;
+namespace open20\amos\documenti\models\search;
 
-use lispa\amos\documenti\models\DocumentiCategorie;
+use open20\amos\documenti\models\DocumentiCategorie;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
 /**
- * DocumentiCategorieSearch represents the model behind the search form about `lispa\amos\documenti\models\DocumentiCategorie`.
+ * DocumentiCategorieSearch represents the model behind the search form about `open20\amos\documenti\models\DocumentiCategorie`.
  */
 class DocumentiCategorieSearch extends DocumentiCategorie
 {
     /**
+     * @see    \yii\base\Model::rules()    for more info.
      */
     public function rules()
     {
@@ -31,6 +32,7 @@ class DocumentiCategorieSearch extends DocumentiCategorie
     }
 
     /**
+     * @see    \yii\base\Model::scenarios()    for more info.
      */
     public function scenarios()
     {
@@ -46,7 +48,9 @@ class DocumentiCategorieSearch extends DocumentiCategorie
      */
     public function search($params)
     {
-        $query = DocumentiCategorie::find();
+        /** @var DocumentiCategorie $documentiCategorieModel */
+        $documentiCategorieModel = $this->documentsModule->createModel('DocumentiCategorie');
+        $query = $documentiCategorieModel::find();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

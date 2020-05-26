@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-/** @var \lispa\amos\dashboard\models\AmosUserDashboards $currentDashboard * */
+/** @var \open20\amos\dashboard\models\AmosUserDashboards $currentDashboard * */
 
 /** @var \yii\web\View $this * */
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\dashboard\assets\ModuleDashboardAsset;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\dashboard\assets\ModuleDashboardAsset;
 use yii\helpers\Html;
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\AmosDocumenti;
 
-\lispa\amos\core\views\assets\AmosCoreAsset::register($this);
+\open20\amos\core\views\assets\AmosCoreAsset::register($this);
 ModuleDashboardAsset::register($this);
 AmosIcons::map($this);
 

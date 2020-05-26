@@ -1,60 +1,64 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\views\documenti
+ * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\AttachmentsInput;
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\core\forms\AccordionWidget;
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CreatedUpdatedWidget;
-use lispa\amos\core\forms\RequiredFieldsTipWidget;
-use lispa\amos\core\forms\TextEditorWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\documenti\AmosDocumenti;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\models\DocumentiCategorie;
-use lispa\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
+use open20\amos\admin\models\search\UserProfileSearch;
+use open20\amos\attachments\components\AttachmentsInput;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\core\forms\AccordionWidget;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CreatedUpdatedWidget;
+use open20\amos\core\forms\RequiredFieldsTipWidget;
+use open20\amos\core\forms\TextEditorWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
 use kartik\datecontrol\DateControl;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\documenti\models\Documenti $model
+ * @var open20\amos\documenti\models\Documenti $model
  * @var yii\widgets\ActiveForm $form
+ * @var array $scope
  */
 
-/** @var \lispa\amos\documenti\controllers\DocumentiController $appController */
+/** @var \open20\amos\documenti\controllers\DocumentiController $appController */
 $appController = Yii::$app->controller;
 $isFolder = $appController->documentIsFolder($model);
 $enableCategories = AmosDocumenti::instance()->enableCategories;
 $enableVersioning = $appController->documentsModule->enableDocumentVersioning;
 $isNewVersion = !empty(\Yii::$app->request->get('isNewVersion')) ? \Yii::$app->request->get('isNewVersion') : false;
 
+$disableStandardWorkflow = $appController->documentsModule->disableStandardWorkflow;
+
 $moduleGroups = Yii::$app->getModule('groups');
 $moduleCommunity = Yii::$app->getModule('community');
 $moduleCwh = Yii::$app->getModule('cwh');
+$moduleNotify  = \Yii::$app->getModule('notify');
 
 
 $enableGroupNotification = AmosDocumenti::instance()->enableGroupNotification;
 $primoPiano = '';
 $inEvidenza = '';
-
 $enableComments = '';
-/** @var \lispa\amos\comments\AmosComments $commentsModule */
+
+/** @var \open20\amos\comments\AmosComments $commentsModule */
 $commentsModule = Yii::$app->getModule('comments');
 
 if ($enableGroupNotification) {
 
-    $modelSearchProfile = new \lispa\amos\admin\models\search\UserProfileSearch();
+    $modelSearchProfile = new UserProfileSearch();
     $dataProviderProfiles = $modelSearchProfile->search(\Yii::$app->request->get());
     $dataProviderProfiles->setSort([
         'defaultOrder' => [
@@ -155,38 +159,32 @@ if ($enableGroupNotification) {
 JS;
 
     $this->registerJs($js);
-
 }
 
-/** @var \lispa\amos\report\AmosReport $reportModule */
+/** @var \open20\amos\report\AmosReport $reportModule */
 $reportModule = Yii::$app->getModule('report');
-$viewReportWidgets =  (!is_null($reportModule) && in_array($model->className(), $reportModule->modelsEnabled));
+$viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $reportModule->modelsEnabled));
 
 $reportFlagWidget = '';
 if ($viewReportWidgets) {
-    $reportFlagWidget = \lispa\amos\report\widgets\ReportFlagWidget::widget([
+    $reportFlagWidget = \open20\amos\report\widgets\ReportFlagWidget::widget([
         'model' => $model,
     ]);
 }
 
-?>
-
-<?php
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
     'id' => 'doc-form'
 ]);
-$customView = Yii::$app->getViewPath() . '/imageField.php';
-?>
 
-
-<?= WorkflowTransitionStateDescriptorWidget::widget([
+echo WorkflowTransitionStateDescriptorWidget::widget([
     'form' => $form,
     'model' => $model,
     'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
     'classDivMessage' => 'message',
     'viewWidgetOnNewRecord' => false
-]); ?>
+]);
+?>
 
 <div class="documenti-form col-xs-12">
 
@@ -197,6 +195,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 $reportFlagWidget, ['class' => 'subtitle-form']) ?>
         </div>
         <div class="col-md-8 col-xs-12">
+            <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
             <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
             <?php if (!$isFolder): ?>
                 <?= $form->field($model, 'sottotitolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_hint')) ?>
@@ -213,18 +212,20 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'documenti_categorie_id')->widget(Select2::className(), [
                         'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => FALSE],
-                        'data' => ArrayHelper::map(\lispa\amos\documenti\utility\DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo')
+                        'data' => ArrayHelper::map(\open20\amos\documenti\utility\DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo')
                     ]); ?>
                 </div>
                 <div class="col-md-6 col-xs-12">
                     <?= ($model->version) ? $form->field($model, 'version')->textInput(['disabled' => true]) : ''; ?>
                 </div>
             <?php endif; ?>
+            <?= $this->render('boxes/box_custom_fields_end', ['form' => $form, 'model' => $model]); ?>
 
             <div class="clearfix"></div>
 
         </div>
         <div class="col-md-4 col-xs-12">
+            <?= $this->render('boxes/box_custom_uploads_begin', ['form' => $form, 'model' => $model]); ?>
             <?php if (!$isFolder): ?>
                 <div class="col-xs-12 nop">
                     <?= $form->field($model,
@@ -244,11 +245,13 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                     ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))->hint(AmosDocumenti::t('amosdocumenti', '#image_field_hint')) ?>
 
                     <?= $form->field($model, 'link_document')->textInput([
-                        'maxlength' => true, 
-                        'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder')])
-                    ->hint(AmosDocumenti::t('amosdocumenti', '#link_document_field_hint')) 
+                        'maxlength' => true,
+                        'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder'),
+                        'id' => 'link-document-id'
+                    ])
+                        ->hint(AmosDocumenti::t('amosdocumenti', '#link_document_field_hint'))
                     ?>
-                    
+
                     <?php if (!empty($documento)): ?>
                         <?= $documento->filename ?>
                         <?= Html::a(AmosIcons::show('download', ['class' => 'btn btn-tools-secondary']), ['/documenti/documenti/download-documento-principale', 'id' => $model->id], [
@@ -284,6 +287,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 </div>
             <?php endif; ?>
 
+            <?= $this->render('boxes/box_custom_uploads_end', ['form' => $form, 'model' => $model]); ?>
         </div>
 
     </div>
@@ -304,9 +308,10 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
                 <div class="col-xs-12 receiver-section">
                     <?=
-                    \lispa\amos\cwh\widgets\DestinatariPlusTagWidget::widget([
+                    \open20\amos\cwh\widgets\DestinatariPlusTagWidget::widget([
                         'model' => $model,
-                        'moduleCwh' => $moduleCwh
+                        'moduleCwh' => $moduleCwh,
+                        'scope' => $scope
                     ]);
                     ?>
                 </div>
@@ -320,32 +325,32 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
 
     <div class="row">
         <div class="col-xs-12">
-            <?php 
-                if (\Yii::$app->user->can('EVENTS_PUBLISHER_FRONTEND')) :
-                    if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
+            <?php
+            if (\Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')) :
+                if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
 
-                <?php
-                $primoPiano = '';
-                $primoPiano = Html::tag('div',
-                    $form->field($model, 'primo_piano')->dropDownList([
-                        '0' => 'No',
-                        '1' => 'Si'
-                    ], [
-                        'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
-                        'disabled' => false,
-                        'onchange' => '
+                    <?php
+                    $primoPiano = '';
+                    $primoPiano = Html::tag('div',
+                        $form->field($model, 'primo_piano')->dropDownList([
+                            '0' => 'No',
+                            '1' => 'Si'
+                        ], [
+                            'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
+                            'disabled' => false,
+                            'onchange' => '
                         if($(this).val() == 1) $(\'#documenti-in_evidenza\').prop(\'disabled\', false);
                         if($(this).val() == 0) { 
                             $(\'#documenti-in_evidenza\').prop(\'disabled\', true);
                             $(\'#documenti-in_evidenza\').val(0);
                         }
                         '
-                    ]),
-                    ['class' => 'col-md-6 col-xs-12']);
-                ?>
-            <?php endif; ?>
+                        ]),
+                        ['class' => 'col-md-6 col-xs-12']);
+                    ?>
+                <?php endif; ?>
 
-            <?php if (Yii::$app->getModule('documenti')->params['site_featured_enabled']): ?>
+                <?php if (Yii::$app->getModule('documenti')->params['site_featured_enabled']): ?>
                 <?php
                 $inEvidenza = '';
                 $inEvidenza = Html::tag('div',
@@ -359,7 +364,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                     ['class' => 'col-md-6 col-xs-12']);
                 ?>
             <?php endif; ?>
-        <?php endif; ?>
+            <?php endif; ?>
             <?php
             $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
             $publicationDate = '';
@@ -395,12 +400,17 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                 }
             }
             ?>
+            <?php if ($moduleNotify && !empty($moduleNotify->enableNotificationContentLanguage) && $moduleNotify->enableNotificationContentLanguage) { ?>
+                <?php
+                $contentLanguage = "<div class=\"col-xs-6 nop\">" . \open20\amos\notificationmanager\widgets\NotifyContentLanguageWidget::widget(['model' => $model]) . "</div>"
+                ?>
+            <?php } ?>
 
             <?= AccordionWidget::widget([
                 'items' => [
                     [
                         'header' => AmosDocumenti::t('amosdocumenti', '#settings_optional'),
-                        'content' => $publicationDate . $enableComments . '<div class="clearfix"></div>' . $primoPiano . $inEvidenza,
+                        'content' => $publicationDate . $enableComments . '<div class="clearfix"></div>' . $primoPiano . $inEvidenza .$contentLanguage,
                     ]
                 ],
                 'headerOptions' => ['tag' => 'h2'],
@@ -422,13 +432,13 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                     'items' => [
                         [
                             'header' => AmosDocumenti::t('amosdocumenti', '#settings_seo_title'),
-                            'content' => \lispa\amos\seo\widgets\SeoWidget::widget([
+                            'content' => \open20\amos\seo\widgets\SeoWidget::widget([
                                 'contentModel' => $model,
                             ]),
                         ]
                     ],
                     'headerOptions' => ['tag' => 'h2'],
-                    'options' =>  Yii::$app->user->can('ADMIN') ? [] : ['style' => 'display:none;'],
+                    'options' => Yii::$app->user->can('ADMIN') ? [] : ['style' => 'display:none;'],
                     'clientOptions' => [
                         'collapsible' => true,
                         'active' => 'false',
@@ -457,16 +467,16 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
 
                     if (isset($moduleCommunity)) {
                         $dataProvider = new \yii\data\ActiveDataProvider([
-                            'query' => \lispa\amos\groups\models\Groups::getGroupsByParent()
+                            'query' => \open20\amos\groups\models\Groups::getGroupsByParent()
                         ]);
                     } else {
                         $dataProvider = new \yii\data\ActiveDataProvider([
-                            'query' => \lispa\amos\groups\models\Groups::find()->andWhere(0)
+                            'query' => \open20\amos\groups\models\Groups::find()->andWhere(0)
                         ]);
                     }
 
                     \yii\widgets\Pjax::begin(['id' => 'pjax-container', 'timeout' => 2000, 'clientOptions' => ['data-pjax-container' => 'grid-members']]);
-                    $pjaxContent = \lispa\amos\core\views\AmosGridView::widget([
+                    $pjaxContent = \open20\amos\core\views\AmosGridView::widget([
                         'dataProvider' => $dataProviderProfiles,
                         'id' => 'grid-members',
                         'columns' => [
@@ -497,7 +507,7 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
                         Html::tag('div',
                             Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Gruppi'), ['class' => 'subtitle-form']),
                             ['class' => 'col-xs-12']) .
-                        \lispa\amos\core\views\AmosGridView::widget([
+                        \open20\amos\core\views\AmosGridView::widget([
                             'dataProvider' => $dataProvider,
                             'columns' => [
                                 'name',
@@ -537,19 +547,40 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
             ]);*/
             ?>
         </div>
-        <?php $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion) ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION') : AmosDocumenti::t('amosdocumenti', 'Annulla'); ?>
         <?php
+        $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
+            ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
+            : AmosDocumenti::t('amosdocumenti', 'Annulla');
+
         $statusToRenderToHide = $model->getStatusToRenderToHide();
 
+        $daValidareDescription = $model->is_folder
+            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"')
+            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"');
 
-        $daValidareDescription = ($model->is_folder ?
-            AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"') :
-            AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"'));
-        $validatoDescription = ($model->is_folder ?
-            AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"') :
-            AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"'));
-        ?>
-        <?= \lispa\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
+        $validatoDescription = $model->is_folder
+            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"')
+            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"');
+
+        $draftButtons = [];
+        if ($disableStandardWorkflow == false) {
+            $draftButtons = [
+                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
+                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
+                    'description' => $daValidareDescription,
+                ],
+                Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
+                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
+                    'description' => $validatoDescription,
+                ],
+                'default' => [
+                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-workflow']),
+                    'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
+                ]
+            ];
+        }
+
+        echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
 
             // parametri ereditati da verioni precedenti del widget WorkflowTransition
             'form' => $form,
@@ -567,21 +598,9 @@ $customView = Yii::$app->getViewPath() . '/imageField.php';
             'statusToRender' => $statusToRenderToHide['statusToRender'],
             'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
 
-            'draftButtons' => [
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
-                    'description' => $daValidareDescription,
-                ],
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
-                    'description' => $validatoDescription,
-                ],
-                'default' => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-workflow']),
-                    'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
-                ]
-            ]
-        ]); ?>
+            'draftButtons' => $draftButtons
+        ]);
+        ?>
     </div>
 
 

@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationWidgets;
+use open20\amos\core\migration\AmosMigrationWidgets;
 
 /**
  * Class m180202_124001_change_widget_UltimiDocumenti_dashboard_visible
@@ -25,7 +25,7 @@ class m180202_124001_change_widget_UltimiDocumenti_dashboard_visible extends Amo
     {
         $this->widgets = [
             [
-                'classname' => lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
+                'classname' => open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
                 'dashboard_visible' => 1,
                 'update' => true
             ]

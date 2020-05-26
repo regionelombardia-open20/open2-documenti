@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 
 /**
  * Class m170914_135007_add_validatore_news_to_validator_role
@@ -23,10 +23,10 @@ class m180522_172207_delete_community_manager_rule extends AmosMigrationPermissi
     {
         return [
             [
-                'name' => \lispa\amos\documenti\rules\DeleteCommunityManagerDocumentiRule::className(),
+                'name' => \open20\amos\documenti\rules\DeleteCommunityManagerDocumentiRule::className(),
                 'type' => \yii\rbac\Permission::TYPE_PERMISSION,
                 'description' => 'Regola per cancellare un documento se sei CM',
-                'ruleName' => \lispa\amos\documenti\rules\DeleteCommunityManagerDocumentiRule::className(),
+                'ruleName' => \open20\amos\documenti\rules\DeleteCommunityManagerDocumentiRule::className(),
                 'parent' => ['CREATORE_DOCUMENTI'],
                 'children' => ['DOCUMENTI_DELETE']
             ]

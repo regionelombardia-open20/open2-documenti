@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-namespace lispa\amos\documenti\rules;
+namespace open20\amos\documenti\rules;
 
-use lispa\amos\core\rules\DefaultOwnContentRule;
-use lispa\amos\documenti\models\Documenti;
+use open20\amos\core\rules\DefaultOwnContentRule;
+use open20\amos\documenti\models\Documenti;
 
 class UpdateOwnDocumentiRule extends DefaultOwnContentRule
 {

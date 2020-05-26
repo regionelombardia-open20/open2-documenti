@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti\migrations
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
-use lispa\amos\documenti\models\Documenti;
-use lispa\amos\documenti\rules\DeleteFacilitatorOwnDocumentiRule;
-use lispa\amos\documenti\rules\DeleteOwnDocumentiRule;
-use lispa\amos\documenti\rules\UpdateFacilitatorOwnDocumentiRule;
-use lispa\amos\documenti\rules\UpdateOwnDocumentiRule;
+use open20\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\rules\DeleteFacilitatorOwnDocumentiRule;
+use open20\amos\documenti\rules\DeleteOwnDocumentiRule;
+use open20\amos\documenti\rules\UpdateFacilitatorOwnDocumentiRule;
+use open20\amos\documenti\rules\UpdateOwnDocumentiRule;
 use yii\rbac\Permission;
 
 /**
@@ -213,49 +213,49 @@ class m161130_104913_add_documenti_all_permissions extends AmosMigrationPermissi
                 'parent' => ['VALIDATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetIconDocumentiDashboard',
                 'ruleName' => null,
                 'parent' => ['AMMINISTRATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetIconDocumenti',
                 'ruleName' => null,
                 'parent' => ['LETTORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
+                'name' => open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetGraphicsUltimiDocumenti',
                 'ruleName' => null,
                 'parent' => ['LETTORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetIconDocumentiCategorie',
                 'ruleName' => null,
                 'parent' => ['AMMINISTRATORE_CATEGORIE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetIconDocumentiCreatedBy',
                 'ruleName' => null,
                 'parent' => ['CREATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => lispa\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
+                'name' => open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permesso per il widget WidgetIconDocumentiDaValidare',
                 'ruleName' => null,
                 'parent' => ['VALIDATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
             ],
             [
-                'name' => \lispa\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
+                'name' => \open20\amos\documenti\widgets\icons\WidgetIconAllDocumenti::className(),
                 'type' => Permission::TYPE_PERMISSION,
                 'description' => 'Permission description',
                 'ruleName' => null,

@@ -1,14 +1,14 @@
 <?php
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\documenti
+ * @package    open20\amos\documenti
  * @category   CategoryName
  */
 
-use lispa\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\AmosDocumenti;
 ?>
 
 <?= AmosDocumenti::t('amosdocumenti', '#documents_description') ?>
