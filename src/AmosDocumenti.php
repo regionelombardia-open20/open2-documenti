@@ -169,7 +169,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     }
     
     public static function getModelSearchClassName() {
-        return __NAMESPACE__.'\models\search\DocumentiSearch';
+        return AmosDocumenti::instance()->model('DocumentiSearch');
     }
     
     public static function getModuleIconName() {
@@ -250,6 +250,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
 
     public static function getModelClassName()
     {
-        return __NAMESPACE__ . '\\' . 'models\Documenti';
+        return AmosDocumenti::instance()->model('Documenti');
     }
 }

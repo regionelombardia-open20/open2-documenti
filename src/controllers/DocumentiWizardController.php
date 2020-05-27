@@ -39,10 +39,16 @@ class DocumentiWizardController extends CrudController
     public $layout = 'progress_wizard';
 
     /**
+     * @var AmosDocumenti $documentsModule
+     */
+    public $documentsModule = null;
+    
+    /**
      * @inheritdoc
      */
     public function init()
     {
+        $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
         $this->setModelObj($this->documentsModule->createModel('Documenti'));
         $this->setModelSearch($this->documentsModule->createModel('DocumentiSearch'));
         $this->setAvailableViews([]);

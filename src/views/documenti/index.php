@@ -14,6 +14,7 @@ use open20\amos\core\utilities\ModalUtility;
 use open20\amos\core\views\DataProviderView;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\DocumentsOwlCarouselWidget;
 
@@ -251,12 +252,13 @@ if ($controller->documentsModule->enableDocumentVersioning && !$model->is_folder
         'contentOptions' => [
             'class' => 'text-center',
         ],
-        'value' => function ($model, $key, $index, $column) {
+        'value' => function ($model, $key, $index, $column) use ($controller) {
             $queryParams = \Yii::$app->request->getQueryParams();
             $queryParams['parent_id'] = $model->id;
 
+            /** @var DocumentiSearch $modelSearch */
+            $modelSearch = $controller->documentsModule->createModel('DocumentiSearch');
             /** @var  $dataProvider \yii\data\ActiveDataProvider */
-            $modelSearch = new \open20\amos\documenti\models\search\DocumentiSearch();
             $dataProvider = $modelSearch->searchVersions($queryParams);
 
             if (!$model->is_folder && $dataProvider->count > 0) {

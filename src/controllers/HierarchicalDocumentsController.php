@@ -38,12 +38,18 @@ class HierarchicalDocumentsController extends CrudController
      * @var string $layout
      */
     public $layout = 'list';
+    
+    /**
+     * @var AmosDocumenti $documentsModule
+     */
+    public $documentsModule = null;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
+        $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
         $this->setModelObj($this->documentsModule->createModel('Documenti'));
         $this->setModelSearch($this->documentsModule->createModel('DocumentiSearch'));
 

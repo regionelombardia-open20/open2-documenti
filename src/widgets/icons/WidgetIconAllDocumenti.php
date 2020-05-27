@@ -56,7 +56,8 @@ class WidgetIconAllDocumenti extends WidgetIcon
         );
 
         if ($this->disableBulletCounters == false) {
-            $search = new DocumentiSearch();
+            /** @var DocumentiSearch $search */
+            $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
             $this->setBulletCount(
                 $this->makeBulletCounter(
                     Yii::$app->getUser()->getId(),

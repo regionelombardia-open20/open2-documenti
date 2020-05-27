@@ -82,7 +82,8 @@ class WidgetGraphicsUltimiDocumenti extends WidgetGraphic
      */
     protected function getDataProvider()
     {
-        $search = new DocumentiSearch();
+        /** @var DocumentiSearch $search */
+        $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
         $search->setNotifier(new NotifyWidgetDoNothing());
         $listaDocumenti = $search->lastDocuments($_GET, 3);
         if (!empty($this->filterDocumentCategoryId)) {
