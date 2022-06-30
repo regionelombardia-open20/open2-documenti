@@ -18,6 +18,7 @@ use open20\amos\dashboard\controllers\TabDashboardControllerTrait;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\DocumentiCategoryCommunityMm;
 use open20\amos\documenti\models\DocumentiCategoryRolesMm;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
 use Yii;
 use yii\helpers\Url;
 
@@ -78,6 +79,7 @@ class DocumentiCategorieController extends CrudController
      */
     public function setTitleAndBreadcrumbs($pageTitle)
     {
+        $this->child_of = WidgetIconDocumentiDashboard::className();
         Yii::$app->view->title = $pageTitle;
         Yii::$app->view->params['breadcrumbs'] = [
             ['label' => $pageTitle]

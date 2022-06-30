@@ -172,7 +172,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //overwrite default order in case  foldering is enabled
         if (empty($params['DocumentiSearch']['orderAttribute'])) {
-            if (AmosDocumenti::instance()->enableFolders) {
+            if ($this->documentsModule->enableFolders) {
                 $dataProvider->setSort([
                     'defaultOrder' => [
                         'is_folder' => SORT_DESC,
@@ -187,6 +187,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 ]);
             }
         }
+        
         //if you don't use the seach form, the recursive search is not active
         if (!($this->load($params) && $this->validate())) {
             //if you come from widget grphic LastDocuments Show also documents that are inside the folders
@@ -197,14 +198,17 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             }
             return $dataProvider;
         }
-
-        // recursive search
+    
         if (!empty($this->parentId)) {
-            /** @var Documenti $documentiModel */
-            $documentiModel = $this->documentsModule->createModel('Documenti');
-            $currentFolder  = $documentiModel::findOne($this->parentId);
-            $listChildrenId = $currentFolder->getAllChildrens();
-            $query->andWhere([self::tableName().'.parent_id' => $listChildrenId]);
+            $idsToSearch = $this->parentId;
+            if (!$this->documentsModule->disableAdminListRecursion) {
+                // recursive search
+                /** @var Documenti $documentiModel */
+                $documentiModel = $this->documentsModule->createModel('Documenti');
+                $currentFolder  = $documentiModel::findOne($this->parentId);
+                $idsToSearch = $currentFolder->getAllChildrens();
+            }
+            $query->andWhere([self::tableName().'.parent_id' => $idsToSearch]);
         }
 
         //if parentid empty the search is without (parent_id IS NULL)
@@ -253,13 +257,19 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //check params to get orders value
         $this->setOrderVars($params);
-
+        
+        /** @var Documenti $documentModel */
+        $documentModel = $this->documentsModule->createModel('Documenti');
+    
         /** @var \yii\db\ActiveQuery $baseQuery */
-        $documentModel = $this->documentsModule->model('Documenti');
-        $baseQuery     = $documentModel::find()->distinct();
-
+        $baseQuery = $documentModel::find()->distinct();
+    
         if ($this->documentsModule->enableDocumentVersioning) {
-            $baseQuery->andWhere(['version_parent_id' => null]);
+            $baseQuery->andWhere([$documentModel::tableName() . '.version_parent_id' => null]);
+        }
+    
+        if ($this->documentsModule->enableAclDocuments) {
+            $baseQuery->andWhere([$documentModel::tableName() . '.is_acl' => self::IS_NOT_ACL]);
         }
 
         return $baseQuery;

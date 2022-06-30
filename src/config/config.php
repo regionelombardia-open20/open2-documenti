@@ -17,7 +17,13 @@ return [
         //active the search
         'searchParams' => [
             'documenti' => [
-                'enable' => true,
+                'enable' => true
+            ],
+            'documenti-acl' => [
+                'enable' => true
+            ],
+            'documenti-acl-groups' => [
+                'enable' => true
             ]
         ],
         //active the order

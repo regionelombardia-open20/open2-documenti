@@ -92,6 +92,10 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     const IS_FOLDER = 1;
     const IS_DOCUMENT = 0;
     
+    // Is ACL constants
+    const IS_ACL = 1;
+    const IS_NOT_ACL = 0;
+    
     /**
      * @var string $regola_pubblicazione Regola di pubblicazione
      */
@@ -360,6 +364,24 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public function isDocument()
     {
         return ($this->is_folder == static::IS_DOCUMENT);
+    }
+    
+    /**
+     * The method returns true if this object is a document/folder ACL
+     * @return bool
+     */
+    public function isAcl()
+    {
+        return ($this->is_acl == static::IS_ACL);
+    }
+    
+    /**
+     * The method returns true if this object is a document/folder not ACL
+     * @return bool
+     */
+    public function isNotAcl()
+    {
+        return ($this->is_acl == static::IS_NOT_ACL);
     }
     
     /**
@@ -1244,6 +1266,27 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                 
             }
         }
+    }
+    
+    /**
+     * @param int $id
+     * @param AmosDocumenti|null $documentiModule
+     * @return false|string|null
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function checkIsAclById(int $id, $documentiModule = null)
+    {
+        if (is_null($documentiModule)) {
+            $documentiModule = AmosDocumenti::instance();
+        }
+        /** @var Documenti $documentiModel */
+        $documentiModel = $documentiModule->createModel('Documenti');
+        /** @var ActiveQuery $query */
+        $query = $documentiModel::find();
+        $query->select(['is_acl'])->from($documentiModel::tableName());
+        $query->andWhere(['id' => $id]);
+        $isAcl = $query->scalar();
+        return (($isAcl !== false) && ($isAcl == 1));
     }
     
     /**

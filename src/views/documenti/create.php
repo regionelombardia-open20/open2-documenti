@@ -14,6 +14,7 @@ use open20\amos\documenti\AmosDocumenti;
 /**
  * @var yii\web\View $this
  * @var open20\amos\documenti\models\Documenti $model
+ * @var bool $isAcl
  */
 
 /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
@@ -31,5 +32,6 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="documenti-create">
     <?= $this->render('_form', [
         'model' => $model,
+        'isAcl' => $isAcl,
     ]) ?>
 </div>

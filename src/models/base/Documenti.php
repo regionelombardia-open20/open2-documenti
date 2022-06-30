@@ -39,6 +39,7 @@ use yii\helpers\ArrayHelper;
  * @property integer $comments_enabled
  * @property integer $parent_id
  * @property integer $is_folder
+ * @property integer $is_acl
  * @property integer $version
  * @property integer $version_parent_id
  * @property string $link_document
@@ -122,6 +123,7 @@ abstract class Documenti extends ContentModel
                 'comments_enabled',
                 'parent_id',
                 'is_folder',
+                'is_acl',
                 'version',
                 'version_parent_id'
             ], 'integer'],
@@ -136,7 +138,7 @@ abstract class Documenti extends ContentModel
                 'drive_file_id',
                 'drive_file_modified_at'
             ], 'safe'],
-            [ $required, 'required'],
+            [$required, 'required'],
         ];
     }
 
@@ -172,6 +174,7 @@ abstract class Documenti extends ContentModel
             'comments_enabled' => AmosDocumenti::t('amosdocumenti', '#comments_enabled'),
             'parent_id' => AmosDocumenti::t('amosdocumenti', 'Parent ID'),
             'is_folder' => AmosDocumenti::t('amosdocumenti', 'Is Folder'),
+            'is_acl' => AmosDocumenti::t('amosdocumenti', '#is_acl'),
             'version' => AmosDocumenti::t('amosdocumenti', 'Version'),
             'version_parent_id' => AmosDocumenti::t('amosdocumenti', 'Version Parent ID'),
             'link_document' => AmosDocumenti::t('amosdocumenti', '#link_document_field'),

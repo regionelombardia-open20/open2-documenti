@@ -14,11 +14,11 @@ use open20\amos\attachments\components\AttachmentsInput;
 use open20\amos\attachments\components\AttachmentsList;
 use open20\amos\core\forms\AccordionWidget;
 use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
 use open20\amos\core\forms\CreatedUpdatedWidget;
 use open20\amos\core\forms\RequiredFieldsTipWidget;
 use open20\amos\core\forms\TextEditorWidget;
 use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
@@ -31,6 +31,7 @@ use yii\helpers\ArrayHelper;
  * @var open20\amos\documenti\models\Documenti $model
  * @var yii\widgets\ActiveForm $form
  * @var array $scope
+ * @var bool $isAcl
  */
 
 /** @var AmosDocumenti $documentsModule */
@@ -59,7 +60,6 @@ $enableComments = '';
 $commentsModule = Yii::$app->getModule('comments');
 
 if ($enableGroupNotification) {
-
     $modelSearchProfile = new UserProfileSearch();
     $dataProviderProfiles = $modelSearchProfile->search(\Yii::$app->request->get());
     $dataProviderProfiles->setSort([
@@ -160,7 +160,7 @@ if ($enableGroupNotification) {
     });
 
 JS;
-
+    
     $this->registerJs($js);
 }
 
@@ -175,40 +175,6 @@ if ($viewReportWidgets) {
         'model' => $model,
     ]);
 }
-
-//$_SESSION['upload_token'] = $_GET['oauthToken'];
-//$GoogleDriveManager = new open20\amos\documenti\utility\GoogleDriveDocument(['model' => $model]);
-
-
-//$adapter = $GoogleDriveManager->prepareAdapter();
-//if(!empty($adapter)){
-//    pr($adapter->listContents());
-//}
-
-//if ($_SERVER['REQUEST_METHOD'] == 'POST' && $GoogleDriveManager->client->getAccessToken()) {
-//// We'll setup an empty 1MB file to upload.
-//    DEFINE("TESTFILE", 'testfile-small.txt');
-//    if (!file_exists(TESTFILE)) {
-//        $fh = fopen(TESTFILE, 'w');
-//        fseek($fh, 1024 * 1024);
-//        fwrite($fh, "!", 1);
-//        fclose($fh);
-//    }
-//// This is uploading a file directly, with no metadata associated.
-//    $file = new Google_Service_Drive_DriveFile();
-//    $result = $service->files->create(
-//        $file,
-//        array(
-//            'data' => file_get_contents(TESTFILE),
-//            'mimeType' => 'application/octet-stream',
-//            'uploadType' => 'media'
-//        )
-//    );
-//}
-
-
-//$GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $model, 'useServiceAccount' => true]);
-//pr($GoogleDriveManager->getList('', true));
 
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
@@ -233,12 +199,14 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 $reportFlagWidget, ['class' => 'subtitle-form']) ?>
         </div>
         <div class="col-md-8 col-xs-12">
-            <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
+            <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model, 'isAcl' => $isAcl]); ?>
             <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
-
+            
             <?php if (!$isFolder): ?>
                 <?= $form->field($model, 'sottotitolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_hint')) ?>
                 <?= $form->field($model, 'descrizione_breve')->textarea(['maxlength' => true, 'rows' => 3, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_hint')) ?>
+            <?php endif; ?>
+            <?php if (!$isFolder || ($isFolder && $documentsModule->enableFoldersDescription)): ?>
                 <?= $form->field($model, 'descrizione')->widget(TextEditorWidget::className(), [
                     'clientOptions' => [
                         'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_description_field_placeholder'),
@@ -246,11 +214,11 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                     ]
                 ]) ?>
             <?php endif; ?>
-
+            
             <?php if (!$isFolder && $enableCategories): ?>
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'documenti_categorie_id')->widget(Select2::className(), [
-                        'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => FALSE],
+                        'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => false],
                         'data' => ArrayHelper::map(\open20\amos\documenti\utility\DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo')
                     ]); ?>
                 </div>
@@ -258,23 +226,20 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                     <?= ($model->version) ? $form->field($model, 'version')->textInput(['disabled' => true]) : ''; ?>
                 </div>
             <?php endif; ?>
-            <?= $this->render('boxes/box_custom_fields_end', ['form' => $form, 'model' => $model]); ?>
+            <?= $this->render('boxes/box_custom_fields_end', ['form' => $form, 'model' => $model, 'isAcl' => $isAcl]); ?>
 
             <div class="clearfix"></div>
 
         </div>
         <div class="col-md-4 col-xs-12">
-            <?= $this->render('boxes/box_custom_uploads_begin', [
-                'form' => $form,
-                'model' => $model,
-            ]); ?>
-
+            <?= $this->render('boxes/box_custom_uploads_begin', ['form' => $form, 'model' => $model, 'isAcl' => $isAcl]); ?>
+            
             <?= \open20\amos\documenti\widgets\DocumentMainFileInputWidget::widget([
                 'model' => $model,
                 'form' => $form,
                 'isFolder' => $isFolder
             ]); ?>
-
+            
             <?php if (!$isFolder): ?>
                 <div class="col-xs-12 attachment-section nop">
                     <div class="col-xs-12">
@@ -288,7 +253,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                 'showPreview' => false
                             ]
                         ])->label(AmosDocumenti::t('amosdocumenti', '#attachments_field'))->hint(AmosDocumenti::t('amosdocumenti', '#attachments_field_hint')) ?>
-
+                        
                         <?= AttachmentsList::widget([
                             'model' => $model,
                             'attribute' => 'documentAttachments',
@@ -298,8 +263,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                     </div>
                 </div>
             <?php endif; ?>
-
-            <?= $this->render('boxes/box_custom_uploads_end', ['form' => $form, 'model' => $model]); ?>
+            
+            <?= $this->render('boxes/box_custom_uploads_end', ['form' => $form, 'model' => $model, 'isAcl' => $isAcl]); ?>
         </div>
 
     </div>
@@ -307,16 +272,16 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
     <div class="row">
         <?php
         $showReceiverSection = false;
-
+        
         $moduleCwh = \Yii::$app->getModule('cwh');
         isset($moduleCwh) ? $showReceiverSection = true : null;
-
+        
         $moduleTag = \Yii::$app->getModule('tag');
         isset($moduleTag) ? $showReceiverSection = true : null;
         ?>
         <?php if ($showReceiverSection): ?>
 
-            <div class="col-xs-12">
+            <div class="col-xs-12<?= ($isAcl ? ' hidden' : ''); ?>">
                 <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
                 <div class="col-xs-12 receiver-section">
                     <?=
@@ -328,19 +293,32 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                     ?>
                 </div>
             </div>
-
+        
         <?php endif; ?>
-
+        
         <?= RequiredFieldsTipWidget::widget(['containerClasses' => 'col-xs-12 note_asterisk']) ?>
 
     </div>
+    
+    <?php if ($documentsModule->enableAclDocuments && $isFolder): ?>
+        <div class="row">
+            <div class="col-xs-12">
+                <?= $this->render('_sharing_acl', [
+                    'documentsModule' => $documentsModule,
+                    'form' => $form,
+                    'model' => $model,
+                    'isUpdate' => true,
+                ]) ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <div class="row">
         <div class="col-xs-12">
             <?php
             if (\Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')) :
                 if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
-
+                    
                     <?php
                     $primoPiano = '';
                     $primoPiano = Html::tag('div',
@@ -361,7 +339,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                         ['class' => 'col-md-6 col-xs-12']);
                     ?>
                 <?php endif; ?>
-
+                
                 <?php if (Yii::$app->getModule('documenti')->params['site_featured_enabled']): ?>
                 <?php
                 $inEvidenza = '';
@@ -395,7 +373,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                         ['class' => 'col-md-4 col-xs-12']);
             }
             ?>
-
+            
             <?php if (!$isFolder) {
                 $model->comments_enabled = '1'; //default enable comment
                 if (!is_null($commentsModule) && in_array($model->className(), $commentsModule->modelsEnabled)) {
@@ -404,7 +382,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                             [
                                 '1' => AmosDocumenti::t('amosdocumenti', '#comments_ok'),
                                 '0' => AmosDocumenti::t('amosdocumenti', '#comments_no')
-
+                            
                             ],
                             ['class' => 'comment-choice'])
                         , ['class' => 'col-md-4 col-xs-12']);
@@ -418,7 +396,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 $contentLanguage = "<div class=\"col-xs-6 nop\">" . \open20\amos\notificationmanager\widgets\NotifyContentLanguageWidget::widget(['model' => $model]) . "</div>"
                 ?>
             <?php } ?>
-
+            
             <?= AccordionWidget::widget([
                 'items' => [
                     [
@@ -437,7 +415,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 ],
             ]);
             ?>
-
+            
             <?php
             $moduleSeo = \Yii::$app->getModule('seo');
             if (isset($moduleSeo)) : ?>
@@ -473,11 +451,11 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 $emailNotify = '';
                 $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text1'));
                 $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text2'));
-
+                
                 if (!empty($moduleGroups) && !empty($moduleCommunity) && !empty($moduleCwh)) {
                     $entityId = null;
                     $this->params['idUserprofileCommunity'] = [];
-
+                    
                     if (isset($moduleCommunity)) {
                         $dataProvider = new \yii\data\ActiveDataProvider([
                             'query' => \open20\amos\groups\models\Groups::getGroupsByParent()
@@ -487,7 +465,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                             'query' => \open20\amos\groups\models\Groups::find()->andWhere(0)
                         ]);
                     }
-
+                    
                     \yii\widgets\Pjax::begin(['id' => 'pjax-container', 'timeout' => 2000, 'clientOptions' => ['data-pjax-container' => 'grid-members']]);
                     $pjaxContent = \open20\amos\core\views\AmosGridView::widget([
                         'dataProvider' => $dataProviderProfiles,
@@ -506,16 +484,16 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 //                            }
                             ],
                         ]
-
+                    
                     ]);
                     \yii\widgets\Pjax::end();
-
+                    
                     $emailNotify .= Html::tag('div',
                         Html::tag('div',
                             Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Utenti'), ['class' => 'subtitle-form']),
                             ['class' => 'col-xs-12']) . $pjaxContent,
                         ['class' => 'col-xs-12 col-lg-6']);
-
+                    
                     $emailNotify .= Html::tag('div',
                         Html::tag('div',
                             Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Gruppi'), ['class' => 'subtitle-form']),
@@ -536,7 +514,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                     // you may configure additional properties here
                                 ],
                             ]
-
+                        
                         ]),
                         ['class' => 'col-xs-12 col-lg-6']);
                 }
@@ -561,63 +539,70 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
             ?>
         </div>
         <?php
-        $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
-            ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
-            : AmosDocumenti::t('amosdocumenti', 'Annulla');
-
-        $statusToRenderToHide = $model->getStatusToRenderToHide();
-
-        $daValidareDescription = $model->is_folder
-            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"')
-            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"');
-
-        $validatoDescription = $model->is_folder
-            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"')
-            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"');
-
-        $draftButtons = [];
-        if ($disableStandardWorkflow == false) {
-            $draftButtons = [
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
-                    'description' => $daValidareDescription,
-                ],
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
-                    'description' => $validatoDescription,
-                ],
-                'default' => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-workflow']),
-                    'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
-                ]
-            ];
+        if (!$isAcl) {
+            $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
+                ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
+                : AmosDocumenti::t('amosdocumenti', 'Annulla');
+            
+            $statusToRenderToHide = $model->getStatusToRenderToHide();
+            
+            $daValidareDescription = $model->is_folder
+                ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"')
+                : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"');
+            
+            $validatoDescription = $model->is_folder
+                ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"')
+                : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"');
+            
+            $draftButtons = [];
+            if ($disableStandardWorkflow == false) {
+                $draftButtons = [
+                    Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
+                        'description' => $daValidareDescription,
+                    ],
+                    Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-workflow']),
+                        'description' => $validatoDescription,
+                    ],
+                    'default' => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-workflow']),
+                        'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
+                    ]
+                ];
+            }
+            
+            echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
+                
+                // parametri ereditati da verioni precedenti del widget WorkflowTransition
+                'form' => $form,
+                'model' => $model,
+                'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
+                'viewWidgetOnNewRecord' => true,
+                
+                'closeButton' => Html::a($closeButtonText, $appController->getFormCloseUrl($model), ['class' => 'btn btn-secondary']),
+                
+                // fisso lo stato iniziale per generazione pulsanti e comportamenti
+                // "fake" in fase di creazione (il record non e' ancora inserito nel db)
+                'initialStatusName' => "BOZZA",
+                'initialStatus' => $model->getWorkflowSource()->getWorkflow(Documenti::DOCUMENTI_WORKFLOW)->getInitialStatusId(),
+                
+                'statusToRender' => $statusToRenderToHide['statusToRender'],
+                'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
+                
+                'draftButtons' => $draftButtons
+            ]);
+        } else {
+            $btnWidget = CloseSaveButtonWidget::widget([
+                'model' => $model,
+                'buttonClassSave' => 'btn btn-navigation-primary saveBtn',
+                'urlClose' => $appController->getFormCloseUrl($model)
+            ]);
+            echo Html::tag('div', $btnWidget, ['class' => 'workflow-transition-button-widget col-xs-12']);
         }
-
-        echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
-
-            // parametri ereditati da verioni precedenti del widget WorkflowTransition
-            'form' => $form,
-            'model' => $model,
-            'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
-            'viewWidgetOnNewRecord' => true,
-
-            'closeButton' => Html::a($closeButtonText, $appController->getFormCloseUrl($model), ['class' => 'btn btn-secondary']),
-
-            // fisso lo stato iniziale per generazione pulsanti e comportamenti
-            // "fake" in fase di creazione (il record non e' ancora inserito nel db)
-            'initialStatusName' => "BOZZA",
-            'initialStatus' => $model->getWorkflowSource()->getWorkflow(Documenti::DOCUMENTI_WORKFLOW)->getInitialStatusId(),
-
-            'statusToRender' => $statusToRenderToHide['statusToRender'],
-            'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
-
-            'draftButtons' => $draftButtons
-        ]);
         ?>
     </div>
-
 
 </div>
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);?>
 <?php ActiveForm::end(); ?>
-

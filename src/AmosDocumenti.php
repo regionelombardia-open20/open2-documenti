@@ -53,6 +53,16 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableFolders = false;
 
     /**
+     * @var bool $enableFoldersDescription
+     */
+    public $enableFoldersDescription = false;
+    
+    /**
+     * @var bool $disableAdminListRecursion
+     */
+    public $disableAdminListRecursion = false;
+
+    /**
      * @var bool|true if document categories are enabled or not
      */
     public $enableCategories = true;
@@ -206,6 +216,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enablePublicationDateAsDatetime = false;
 
     /**
+     * @var bool $enableAclDocuments If true enable the ACL documents.
+     */
+    public $enableAclDocuments = false;
+
+    /**
      * @inheritdoc
      */
     public static function getModuleName()
@@ -238,6 +253,15 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         if (!is_array($this->defaultListViews)) {
             throw new AmosException(self::t('amosdocumenti', '#exception_msg_defaultlistviews_not_array'));
         }
+    }
+    
+    /**
+     * Same as calling AmosDocumenti::t('amosdocumenti', ...$args)
+     * @return string
+     */
+    public static function txt($txt, ...$args)
+    {
+        return self::t('amosdocumenti', $txt, ...$args);
     }
 
     /**
@@ -275,6 +299,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         return [
             'Documenti' => __NAMESPACE__ . '\\' . 'models\Documenti',
             'DocumentiSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiSearch',
+            'DocumentiAcl' => __NAMESPACE__ . '\\' . 'models\DocumentiAcl',
+            'DocumentiAclGroups' => __NAMESPACE__ . '\\' . 'models\DocumentiAclGroups',
+            'DocumentiAclGroupsSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiAclGroupsSearch',
+            'DocumentiAclGroupsUserMm' => __NAMESPACE__ . '\\' . 'models\DocumentiAclGroupsUserMm',
+            'DocumentiAclSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiAclSearch',
             'DocumentiCategorie' => __NAMESPACE__ . '\\' . 'models\DocumentiCategorie',
             'DocumentiCategorieSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiCategorieSearch',
             'DocumentiCategoryCommunityMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryCommunityMm',

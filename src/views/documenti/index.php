@@ -390,7 +390,7 @@ $actionColumns = [
             }
             return $btn;
         },
-        'update' => function ($url, $model) use ($enableVersioning) {
+        'update' => function ($url, $model) {
             /** @var Documenti $model */
             $btn = '';
             if (Yii::$app->user->can('DOCUMENTI_UPDATE', ['model' => $model])) {
