@@ -130,3 +130,68 @@ You can setup the default view for module between
 
 * **$documentsOnlyText** - boolean, default = false  
 If true the main document file and the external document link are not required at all.
+
+* **enableContentDuplication** - boolean, default = false  
+If true enable the content duplication on each row in table view.
+
+* **enableCatImgInDocView** - boolean, default = false  
+If true replace the document icon with the category image in the document view and lists.
+
+
+# Install drive
+Insert the following configuration in the module
+```
+ 'documenti' => [
+    'enableGoogleDrive' => true,
+    'googleDriveConf' => [
+         'developerKey' => '<developer_key>',
+         'clientId' => "<client_id>",
+         'clientSecret' => "<client_secret>",
+         'appId' => "<app_id>",
+         'relativeRedirectUrl' => '/documenti/documenti/own-interest-documents',
+         'relativePathCredential' => '/web/credenziali.json',
+ 
+         'emailServiceAccount' => 'account@example_name.iam.gserviceaccount.com',
+         'relativePathCredentialServiceAccount' => '/web/credenziali_service_account.json'
+     ]
+  ];
+```
+
+
+### Obtain google drive the credential
+ 1. Go to google drive developer console <https://console.developers.google.com/apis/api/drive>
+ 2. Create a project
+ 3. Click on "Credenziali" on the left and next 
+ 4. Click on "create credential" to generate:
+    - Chiave API  (developerKey)
+    - ID client OAuth 2.0  (cliendId)
+    - Chiavi accound di servizio
+   
+### Enable Google Drive API and Google Picker API
+ 1. Go to google drive developer console <https://console.developers.google.com/apis/api/library> 
+ 2. Select the project
+ 3. Search Google Drive API/ Google Picker API and enable both
+   
+ #### Configure Service Account
+ 5. After generate the service account and his key you can find the:
+    - Service account email
+ 6. Generate the JSON KEY for the service account that you will upload to your server (relativePathCredentialServiceAccount)
+ #### Configure client
+ 7. After generate the ID client OAuth 2.0
+ 8. Compile the Origin javascript autorizzate URI (site url)
+ 9. Compile the URI DI REINDIRIZZAMENTO
+    - https://developers.google.com/oauthplayground
+    - http://poi.devel.open20.it/documenti/documenti/own-interest-documents
+ 10. You can find the clientId and the clientSecret
+ 11. Generate the JSON to upload on the server, and configure its path on 'relativePathCredential' 
+ ### App id
+ You can find the app id on the main page (è evidenzioata in verde)
+ 
+ ###Verify app
+ if you click on the left on "Schermata consenso OAuth" anc next on "modifica" you can configure it for
+  ***development*** or ***verify the app***
+  
+  ###Example images of configuration 
+  You can find them in the ***/docs/*** folder
+  
+  

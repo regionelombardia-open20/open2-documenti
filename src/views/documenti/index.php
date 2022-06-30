@@ -8,6 +8,7 @@
  * @package    open20\amos\documenti\views\documenti
  * @category   CategoryName
  */
+
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\utilities\ModalUtility;
@@ -29,22 +30,11 @@ if ($currentView['name'] == 'expl') {
  * @var open20\amos\documenti\models\search\DocumentiSearch $model
  * @var \open20\amos\dashboard\models\AmosUserDashboards $currentDashboard
  */
+
 /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
 $controller = Yii::$app->controller;
-
-$actionColumnDefault = '{view}{update}{delete}';
-$actionColumnToValidate = '{validate}{reject}';
-$actionColumn = $actionColumnDefault;
-
 $actionId = $controller->action->id;
-if ($actionId == 'to-validate-documents') {
-    $actionColumn = $actionColumnToValidate . $actionColumnDefault;
-}
-
-$enableVersioning = $controller->documentsModule->enableDocumentVersioning;
-if ($enableVersioning) {
-    $actionColumn = '{view}{newDocVersion}{update}{delete}';
-}
+$actionColumnsTemplate = $controller->getGridViewActionColumnsTemplate($actionId);
 
 $foldersEnabled = $controller->documentsModule->enableFolders;
 $enableCategories = $controller->documentsModule->enableCategories;
@@ -57,6 +47,7 @@ if ($foldersEnabled) {
         'label' => AmosDocumenti::t('amosdocumenti', '#type'),
         'format' => 'html',
         'value' => function ($model) {
+            /** @var Documenti $model */
             $title = AmosDocumenti::t('amosdocumenti', 'Documenti');
             if ($model->is_folder) {
                 $title = AmosDocumenti::t('amosdocumenti', '#folder');
@@ -68,8 +59,11 @@ if ($foldersEnabled) {
             }
 
             $icon = DocumentsUtility::getDocumentIcon($model, true);
-
-            return AmosIcons::show($icon, ['title' => $title], 'dash');
+            if ($model->drive_file_id) {
+                return AmosIcons::show($icon, ['title' => $title], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
+            } else {
+                return AmosIcons::show($icon, ['title' => $title], 'dash');
+            }
         }
     ];
     $columns['titolo'] = [
@@ -94,12 +88,14 @@ if ($foldersEnabled) {
                 }
             }
             return Html::a(
-                    $title,
-                    $url,
-                    [
-                        'title' => AmosDocumenti::t('amosdocumenti',
-                            'Scarica il documento') . '"' . $model->titolo . '"'
-                    ]
+                $title,
+                $url,
+                [
+                    'title' => AmosDocumenti::t(
+                            'amosdocumenti',
+                            'Scarica il documento'
+                        ) . '"' . $model->titolo . '"'
+                ]
             );
         }
     ];
@@ -107,6 +103,7 @@ if ($foldersEnabled) {
     $columns['downloads'] = [
         'label' => AmosDocumenti::t('amosdocumenti', '#num_downloads'),
         'value' => function ($model) {
+            /** @var Documenti $model */
             if ($model->is_folder) {
                 return '';
             } else {
@@ -125,6 +122,7 @@ if ($foldersEnabled) {
             'attribute' => 'updatedUserProfile',
             'label' => AmosDocumenti::t('amosdocumenti', '#updated_by'),
             'value' => function ($model) {
+                /** @var Documenti $model */
                 $profile = \open20\amos\admin\models\UserProfile::find()->andWhere(['user_id' => $model->updated_by])->one();
                 if (empty($profile)) {
                     return '';
@@ -134,11 +132,12 @@ if ($foldersEnabled) {
                     return $profile->nomeCognome;
                 }
 
-                return Html::a($profile->nomeCognome,
-                        $profile->getFullViewUrl(),
-                        [
-                            'title' => AmosDocumenti::t('amosdocumenti', 'Apri il profilo di {nome_profilo}', ['nome_profilo' => $profile->nomeCognome])
-                        ]
+                return Html::a(
+                    $profile->nomeCognome,
+                    $profile->getFullViewUrl(),
+                    [
+                        'title' => AmosDocumenti::t('amosdocumenti', 'Apri il profilo di {nome_profilo}', ['nome_profilo' => $profile->nomeCognome])
+                    ]
                 );
             },
             'format' => 'html'
@@ -148,6 +147,7 @@ if ($foldersEnabled) {
     $columns[] = [
         'label' => AmosDocumenti::t('amosdocumenti', 'Documents'),
         'value' => function ($model) use ($showCountDocumentRecursive) {
+            /** @var Documenti $model */
             if ($model->is_folder) {
                 if ($showCountDocumentRecursive) {
                     return count($model->allDocumentChildrens);
@@ -178,6 +178,7 @@ if ($foldersEnabled) {
 $columns['status'] = [
     'label' => AmosDocumenti::t('amosdocumenti', 'Stato'),
     'value' => function ($model) {
+        /** @var Documenti $model */
         return AmosDocumenti::t('amosdocumenti', $model->status);
     },
     'attribute' => 'status'
@@ -231,6 +232,7 @@ if ($controller->documentsModule->enableDocumentVersioning) {
 $exportColumns = $columns;
 $exportColumns['type'] = [
     'value' => function ($model) {
+        /** @var Documenti $model */
         if ($model->is_folder) {
             $return = AmosDocumenti::t('amosdocumenti', '#folder');
         } else {
@@ -253,6 +255,7 @@ if ($controller->documentsModule->enableDocumentVersioning && !$model->is_folder
             'class' => 'text-center',
         ],
         'value' => function ($model, $key, $index, $column) use ($controller) {
+            /** @var Documenti $model */
             $queryParams = \Yii::$app->request->getQueryParams();
             $queryParams['parent_id'] = $model->id;
 
@@ -266,10 +269,14 @@ if ($controller->documentsModule->enableDocumentVersioning && !$model->is_folder
             } else
                 return '';
         },
-        'expandIcon' => AmosIcons::show('caret-down',
-            ['title' => AmosDocumenti::t('amosdocumenti', '#expand_title')]),
-        'collapseIcon' => AmosIcons::show('caret-up',
-            ['title' => AmosDocumenti::t('amosdocumenti', '#collapse_title')]),
+        'expandIcon' => AmosIcons::show(
+            'caret-down',
+            ['title' => AmosDocumenti::t('amosdocumenti', '#expand_title')]
+        ),
+        'collapseIcon' => AmosIcons::show(
+            'caret-up',
+            ['title' => AmosDocumenti::t('amosdocumenti', '#collapse_title')]
+        ),
         'expandTitle' => AmosDocumenti::t('amosdocumenti', ''),
         'collapseTitle' => AmosDocumenti::t('amosdocumenti', ''),
         'detailUrl' => \yii\helpers\Url::to(['/documenti/documenti/list-only'])
@@ -289,13 +296,22 @@ $deleteOptions['data-confirm'] = function ($model) {
 
 $actionColumns = [
     'class' => 'open20\amos\core\views\grid\ActionColumn',
-    'template' => $actionColumn,
+    'template' => $actionColumnsTemplate,
     'deleteOptions' => $deleteOptions,
     'buttons' => [
+        'duplicateBtn' => function ($url, $model) use ($controller) {
+            /** @var Documenti $model */
+            return $this->render('_duplicate_btn', [
+                'model' => $model,
+                'isInIndex' => true
+            ]);
+        },
         'view' => function ($url, $model) {
             /** @var Documenti $model */
+            $btn = '';
             if (!$model->is_folder && Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model])) {
-                return Html::a(AmosIcons::show('file'),
+                $btn = Html::a(
+                    AmosIcons::show('file'),
                     ['view', 'id' => $model->id],
                     [
                         'class' => 'btn btn-tools-secondary',
@@ -303,18 +319,20 @@ $actionColumns = [
                     ]
                 );
             }
+            return $btn;
         },
-        'newDocVersion' => function ($url, $model) {
+        'newDocVersion' => function ($url, $model) use ($controller) {
             /** @var Documenti $model */
-            /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
-            $controller = Yii::$app->controller;
-            if ($model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO && Yii::$app->getUser()->can('DOCUMENTI_UPDATE',
+            $btn = '';
+            if ($model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO && Yii::$app->getUser()->can(
+                    'DOCUMENTI_UPDATE',
                     [
                         'model' => $model,
                         'newVersion' => $controller->documentsModule->enableDocumentVersioning
-                ])) {
+                    ]
+                )) {
                 if ($controller->documentsModule->enableDocumentVersioning && !$model->is_folder && (is_null($model->version_parent_id))) {
-                    return ModalUtility::addConfirmRejectWithModal([
+                    $btn = ModalUtility::addConfirmRejectWithModal([
                         'modalId' => 'new-document-version-modal-id-' . $model->id,
                         'modalDescriptionText' => AmosDocumenti::t('amosdocumenti', '#NEW_DOCUMENT_VERSION_MODAL_TEXT'),
                         'btnText' => AmosIcons::show('plus', ['class' => '']),
@@ -323,17 +341,21 @@ $actionColumns = [
                             'id' => $model['id']
                         ]),
                         'btnOptions' => [
-                            'title' => AmosDocumenti::t('amosdocumenti',
-                            'New document version'), 'class' => 'btn btn-tools-secondary'
+                            'title' => AmosDocumenti::t(
+                                'amosdocumenti',
+                                'New document version'
+                            ), 'class' => 'btn btn-tools-secondary'
                         ]
                     ]);
                 }
             }
+            return $btn;
         },
         'validate' => function ($url, $model) {
             /** @var Documenti $model */
+            $btn = '';
             if (Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) {
-                return ModalUtility::addConfirmRejectWithModal([
+                $btn = ModalUtility::addConfirmRejectWithModal([
                     'modalId' => 'validate-document-modal-id-' . $model->id,
                     'modalDescriptionText' => AmosDocumenti::t('amosdocumenti', '#VALIDATE_DOCUMENT_MODAL_TEXT'),
                     'btnText' => AmosIcons::show('check-circle', ['class' => '']),
@@ -342,16 +364,20 @@ $actionColumns = [
                         'id' => $model->id
                     ]),
                     'btnOptions' => [
-                        'title' => AmosDocumenti::t('amosdocumenti',
-                        'Publish'), 'class' => 'btn btn-tools-secondary'
+                        'title' => AmosDocumenti::t(
+                            'amosdocumenti',
+                            'Publish'
+                        ), 'class' => 'btn btn-tools-secondary'
                     ]
                 ]);
             }
+            return $btn;
         },
         'reject' => function ($url, $model) {
             /** @var Documenti $model */
+            $btn = '';
             if (Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) {
-                return ModalUtility::addConfirmRejectWithModal([
+                $btn = ModalUtility::addConfirmRejectWithModal([
                     'modalId' => 'reject-document-modal-id-' . $model->id,
                     'modalDescriptionText' => AmosDocumenti::t('amosdocumenti', '#REJECT_DOCUMENT_MODAL_TEXT'),
                     'btnText' => AmosIcons::show('minus-circle', ['class' => '']),
@@ -362,14 +388,16 @@ $actionColumns = [
                     'btnOptions' => ['title' => AmosDocumenti::t('amosdocumenti', 'Reject'), 'class' => 'btn btn-tools-secondary']
                 ]);
             }
+            return $btn;
         },
         'update' => function ($url, $model) use ($enableVersioning) {
             /** @var Documenti $model */
+            $btn = '';
             if (Yii::$app->user->can('DOCUMENTI_UPDATE', ['model' => $model])) {
                 $action = '/documenti/documenti/update?id=' . $model->id;
                 $options = ModalUtility::getBackToEditPopup(
                     $model,
-                    'DocumentValidate', 
+                    'DocumentValidate',
                     $action,
                     [
                         'class' => 'btn btn-tools-secondary',
@@ -377,35 +405,24 @@ $actionColumns = [
                         'data-pjax' => '0'
                     ]
                 );
-                
-                return Html::a(\open20\amos\core\icons\AmosIcons::show('edit'), $action, $options);
+                $btn = Html::a(\open20\amos\core\icons\AmosIcons::show('edit'), $action, $options);
             }
+            return $btn;
         }
     ]
 ];
 $columns[] = $actionColumns;
 ?>
 <div class="documents-index">
-<?php
-echo $this->render(
-    '_search',
-    [
-        'model' => $model,
-        'originAction' => Yii::$app->controller->action->id
-]);
+    <?php
+    echo $this->render('_search', ['model' => $model, 'originAction' => Yii::$app->controller->action->id]);
+    echo $this->render('_order', ['model' => $model]);
 
-echo $this->render(
-    '_order',
-    [
-        'model' => $model,
-    ]
-);
-
-echo DocumentsOwlCarouselWidget::widget([
-    'owlCarouselId' => 'documentOwlCarousel',
-    'owlCarouselClass' => 'document-owl-carousel',
-    'singleItemView' => '@vendor/open20/amos-documenti/src/views/documenti/amos_owl_carousel_widget_item',
-    'owlCarouselJSOptions' => "{
+    echo DocumentsOwlCarouselWidget::widget([
+        'owlCarouselId' => 'documentOwlCarousel',
+        'owlCarouselClass' => 'document-owl-carousel',
+        'singleItemView' => '@vendor/open20/amos-documenti/src/views/documenti/amos_owl_carousel_widget_item',
+        'owlCarouselJSOptions' => "{
         margin: 10,
         nav: true,
         loop: false,
@@ -438,26 +455,26 @@ echo DocumentsOwlCarouselWidget::widget([
             }
         }
     }"
-]);
+    ]);
 
-echo DataProviderView::widget([
-    'dataProvider' => $dataProvider,
-    'currentView' => $currentView,
-    'gridView' => [
-        'rowOptions' => function ($model) {
-            return ['class' => 'kv-disable-click'];
-        },
-        'columns' => $columns,
-        'enableExport' => true
-    ],
-    'listView' => [
-        'itemView' => '_item',
-        'showItemToolbar' => false,
-    ],
-    'exportConfig' => [
-        'exportEnabled' => true,
-        'exportColumns' => $exportColumns
-    ]
-]);
-?>
+    echo DataProviderView::widget([
+        'dataProvider' => $dataProvider,
+        'currentView' => $currentView,
+        'gridView' => [
+            'rowOptions' => function ($model) {
+                return ['class' => 'kv-disable-click'];
+            },
+            'columns' => $columns,
+            'enableExport' => true
+        ],
+        'listView' => [
+            'itemView' => '_item',
+            'showItemToolbar' => false,
+        ],
+        'exportConfig' => [
+            'exportEnabled' => true,
+            'exportColumns' => $exportColumns
+        ]
+    ]);
+    ?>
 </div>

@@ -86,13 +86,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var array $defaultListViews This set the default order for the views in lists
      */
     public $defaultListViews = ['list', 'grid', 'expl'];
-    
-    
+
+
     /**
      * @var string $defaultView Set the default view for module
      */
     public $defaultView = 'list';
-    
+
     /**
      * @var array
      */
@@ -139,7 +139,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool disableStandardWorkflow Disable standard worflow, direct publish
      */
     public $disableStandardWorkflow = false;
-    
+
     /**
      * @var bool $alwaysLinkToViewWidgetGraphicLastDocs
      */
@@ -151,7 +151,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $viewExpl;
 
     /**
-     * @var int used by uploader 
+     * @var int used by uploader
      */
     public $timeout;
 
@@ -159,7 +159,34 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $documentsOnlyText If true the main document file and the external document link are not required at all.
      */
     public $documentsOnlyText = false;
-    
+
+    /**
+     * @var bool
+     */
+    public $enableGoogleDrive = false;
+
+    public $googleDriveConf = [
+        'developerKey' => '',
+        'clientId' => "",
+        'clientSecret' => "",
+        'appId' => "",
+        'relativeRedirectUrl' => '',
+        'relativePathCredential' => '',
+
+        'emailServiceAccount' => '',
+        'relativePathCredentialServiceAccount' => ''
+    ];
+
+    /**
+     * @var bool $enableContentDuplication If true enable the content duplication on each row in table view
+     */
+    public $enableContentDuplication = false;
+
+    /**
+     * @var bool $enableCatImgInDocView If true replace the document icon with the category image in the document view and lists.
+     */
+    public $enableCatImgInDocView = false;
+
     /**
      * @inheritdoc
      */
@@ -167,12 +194,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     {
         return "documenti";
     }
-    
+
     public static function getModelSearchClassName() {
         return AmosDocumenti::instance()->model('DocumentiSearch');
     }
-    
-    public static function getModuleIconName() {
+
+    public static function getModuleIconName()
+    {
         return 'file-text-o';
     }
 

@@ -167,7 +167,9 @@ class DocumentiController extends CrudController
                                 'new-document-version',
                                 'delete-new-document-version',
                                 'list-only',
-                                'increment-count-download-link'
+                                'increment-count-download-link',
+                                'sync-doc-file',
+                                'is-google-drive-document-modified'
                             ],
                             'roles' => [
                                 'LETTORE_DOCUMENTI',
@@ -325,6 +327,7 @@ class DocumentiController extends CrudController
         $parentId = Yii::$app->request->getQueryParam('parentId');
 
         return $this->redirect(['/documenti/documenti/all-documents', 'parentId' => $parentId]);
+        return $this->redirect(['/documenti/documenti/all-documents', 'parentId' => $parentId]);
     }
 
     /**
@@ -463,6 +466,29 @@ class DocumentiController extends CrudController
     }
 
     /**
+     * This method calculate the template of the grid view action columns
+     * @param string $actionId
+     * @return string
+     */
+    public function getGridViewActionColumnsTemplate($actionId)
+    {
+        $actionColumnDefault = '{view}{update}{delete}';
+        $actionColumnToValidate = '{validate}{reject}';
+        $actionColumn = $actionColumnDefault;
+        if ($actionId == 'to-validate-documents') {
+            $actionColumn = $actionColumnToValidate . $actionColumnDefault;
+        }
+        $enableVersioning = $this->documentsModule->enableDocumentVersioning;
+        if ($enableVersioning) {
+            $actionColumn = '{view}{newDocVersion}{update}{delete}';
+        }
+        if ($this->documentsModule->enableContentDuplication) {
+            $actionColumn = '{duplicateBtn}' . $actionColumn;
+        }
+        return $actionColumn;
+    }
+
+    /**
      *
      */
     public function setNetworkDashboardBreadcrumb()
@@ -493,6 +519,8 @@ class DocumentiController extends CrudController
     {
 //        $hideWidard = $this->documentsModule->hideWizard;
         $parentId = null;
+        $btnNewFolder = '';
+        $isDriveFolder = false;
 
         if (!is_null(Yii::$app->request->getQueryParam('parentId'))) {
             $parentId = Yii::$app->request->getQueryParam('parentId');
@@ -520,19 +548,27 @@ class DocumentiController extends CrudController
                 if (!is_null($parent)) {
                     $url = [$this->action->id, 'parentId' => $parent->parent_id];
                     $btnBack = Html::a(AmosDocumenti::tHtml('amosdocumenti', '#btn_back_prev_folder'), $url, ['class' => 'btn btn-secondary']);
+                    if ($parent->drive_file_id) {
+                        $isDriveFolder = true;
+                    }
                 }
             }
+
             $btnNewFolder = CreateNewButtonWidget::widget([
                 'createNewBtnLabel' => AmosDocumenti::t('amosdocumenti', '#btn_new_folder'),
                 'urlCreateNew' => ['/documenti/documenti/create', 'isFolder' => true, 'parentId' => $parentId],
                 'otherOptions' => ['title' => AmosDocumenti::t('amosdocumenti', '#btn_new_folder')]
             ]);
+
             if (!Yii::$app->user->can('DOCUMENTI_CREATE')) {
 
                 $this->view->params['forceCreateNewButtonWidget'] = true;
                 $layout = $btnBack;
             } else {
-                $layout = $btnBack . "{buttonCreateNew}" . $btnNewFolder;
+                $layout = $btnBack;
+                if (!$isDriveFolder) {
+                    $layout .= "{buttonCreateNew}" . $btnNewFolder;
+                }
             }
 
             $createNewBtnParams = ArrayHelper::merge(
@@ -640,6 +676,12 @@ class DocumentiController extends CrudController
         }
 
         if ($this->model->load(Yii::$app->request->post())) {
+            $fileId = \Yii::$app->request->post('fileid');
+            $GoogleDriveManager = null;
+            if (!empty($fileId)) {
+                $GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model]);
+            }
+
             if ($this->model->validate()) {
                 $validateOnSave = true;
                 if ($this->model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE) {
@@ -670,7 +712,15 @@ class DocumentiController extends CrudController
                     $validateOnSave = false;
                 }
 
+
                 if ($this->model->save($validateOnSave)) {
+                    if (!empty($GoogleDriveManager)) {
+                        $GoogleDriveManager->shareWithUser($fileId);
+                        $GoogleDriveManager->getResourcesAndSave($fileId);
+                        if ($this->model->drive_file_id) {
+                            $this->model->changeStatusFolderRecursive($this->model->status);
+                        }
+                    }
                     if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
                         Yii::$app->getSession()->addFlash(
                             'success',
@@ -769,8 +819,8 @@ class DocumentiController extends CrudController
         $moduleGroups = \Yii::$app->getModule('groups');
         $enableGroupNotification = $this->documentsModule->enableGroupNotification;
 
-        $this->setUpLayout('form');
 
+        $this->setUpLayout('form');
         $this->model = $this->findModel($id);
 
         if ($this->documentIsFolder($this->model)) {
@@ -782,14 +832,22 @@ class DocumentiController extends CrudController
         if (Yii::$app->request->post()) {
             $previousStatus = $this->model->status;
             if ($this->model->load(Yii::$app->request->post())) {
+                $GoogleDriveManager = null;
+                $fileId = \Yii::$app->request->post('fileid');
+                if (!empty($fileId)) {
+                    $GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model]);
+                }
                 if ($this->model->validate()) {
                     if ($this->model->save()) {
+                        if (!empty($GoogleDriveManager)) {
+                            $GoogleDriveManager->shareWithUser($fileId);
+                            $GoogleDriveManager->getResourcesAndSave($fileId);
+                        }
 
                         if (!(empty($this->model->documentMainFile))) {
                             $this->model->link_document = '';
                             $this->model->save();
                         }
-
                         Yii::$app->getSession()->addFlash('success', AmosDocumenti::tHtml('amosdocumenti', 'Documento aggiornato con successo.'));
 
                         if (!$this->model->is_folder) {
@@ -1761,4 +1819,45 @@ class DocumentiController extends CrudController
         return true;
     }
 
+    /**
+     * @param $id
+     * @return Response
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionSyncDocFile($id)
+    {
+        $this->model = $this->findModel($id);
+        $googleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model, 'useServiceAccount' => true]);
+        $googleDriveManager->getFileAndSave($this->model->drive_file_id);
+        if (\Yii::$app->request->referrer) {
+            return $this->redirect(\Yii::$app->request->referrer);
+        }
+        return $this->redirect(['update', 'id' => $this->model->id]);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function actionIsGoogleDriveDocumentModified($id)
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        $this->model = $this->findModel($id);
+        $googleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model, 'useServiceAccount' => true]);
+        return $googleDriveManager->isDocumentUpdated();
+
+    }
+
+    /**
+     * Write here the operations before duplicate the content.
+     * @return bool
+     */
+    protected function beforeDuplicateContent()
+    {
+        $isDocument = $this->model->isDocument();
+        if (!$isDocument) {
+            Yii::$app->getSession()->addFlash('danger', AmosDocumenti::t('amosdocumenti', '#duplicate_content_document_before_duplicate_error_is_folder'));
+        }
+        return $isDocument;
+    }
 }

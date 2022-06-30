@@ -42,6 +42,7 @@ use yii\helpers\ArrayHelper;
  * @property integer $version
  * @property integer $version_parent_id
  * @property string $link_document
+ * @property integer $drive_file_id
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -132,6 +133,8 @@ abstract class Documenti extends ContentModel
                 'deleted_at',
                 'status',
                 'comments_enabled',
+                'drive_file_id',
+                'drive_file_modified_at'
             ], 'safe'],
             [ $required, 'required'],
         ];

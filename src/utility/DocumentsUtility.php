@@ -41,6 +41,9 @@ class DocumentsUtility extends BaseObject
             if ($onlyIconName) {
                 return $folderIconName;
             }
+            if ($model->drive_file_id) {
+                return AmosIcons::show($folderIconName, ['class' => 'icon_widget_graph'], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
+            }
             return AmosIcons::show($folderIconName, ['class' => 'icon_widget_graph'], 'dash');
         }
         
@@ -76,8 +79,13 @@ class DocumentsUtility extends BaseObject
         if ($onlyIconName) {
             return $iconName;
         }
-        
-        return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash');
+
+        if ($model->drive_file_id) {
+            return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
+        }
+        else {
+            return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash');
+        }
     }
 
     /**

@@ -27,7 +27,14 @@ $modelViewUrl = [Yii::$app->controller->action->id, 'parentId' => $model->id];
     <div class="post-horizontal">
         <div class="post-content col-xs-12 nop">
             <div class="post-title col-xs-12">
-                <?= AmosIcons::show('folder-open', [], 'dash'); ?>
+
+            <?php
+            if($model->drive_file_id) {
+                 echo AmosIcons::show('folder-open', [], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
+            } else {
+                echo AmosIcons::show('folder-open', [], 'dash');
+            }
+            ?>
                 <?= Html::a(Html::tag('h2', htmlspecialchars($model->titolo)), $modelViewUrl, ['title' => $model->titolo]) ?>
             </div>
             <?= NewsWidget::widget([

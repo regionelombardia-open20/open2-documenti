@@ -16,6 +16,9 @@ use open20\amos\core\widget\WidgetIcon;
 use open20\amos\dashboard\models\AmosWidgets;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
+
+use open20\amos\utility\models\BulletCounters;
+
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -55,17 +58,34 @@ class WidgetIconDocumenti extends WidgetIcon
             )
         );
 
+        // Read and reset counter from bullet_counters table, bacthed calculated!
         if ($this->disableBulletCounters == false) {
-            /** @var DocumentiSearch $search */
-            $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
             $this->setBulletCount(
-                $this->makeBulletCounter(
-                    Yii::$app->getUser()->getId(),
-                    AmosDocumenti::instance()->model('Documenti'),
-                    $search->searchOwnInterestsQuery([], 'own-interest')
+                BulletCounters::getAmosWidgetIconCounter(
+                    Yii::$app->getUser()->getId(), 
+                    AmosDocumenti::getModuleName(),
+                    $this->getNamespace(),
+                    $this->resetBulletCount()
                 )
             );
         }
+        
+//        if ($this->disableBulletCounters == false) {
+//            $search = new DocumentiSearch();
+//            $search->setEventAfterCounter();
+//            $query = $search->searchOwnInterestsQuery([]);
+//            
+//            $this->setBulletCount(
+//                $this->makeBulletCounter(
+//                    Yii::$app->getUser()->getId(),
+//                    Documenti::className(),
+//                    $query
+//                )
+//            );
+//            
+//            \Yii::$app->session->set('_offQuery', $query);
+//            $this->trigger(self::EVENT_AFTER_COUNT);
+//        }
     }
 
     /**

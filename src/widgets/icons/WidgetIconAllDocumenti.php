@@ -14,7 +14,11 @@ namespace open20\amos\documenti\widgets\icons;
 use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
+
+use open20\amos\utility\models\BulletCounters;
+
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -24,7 +28,7 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconAllDocumenti extends WidgetIcon
 {
-
+    
     /**
      * @inheritdoc
      */
@@ -55,17 +59,35 @@ class WidgetIconAllDocumenti extends WidgetIcon
             )
         );
 
+        // Read and reset counter from bullet_counters table, bacthed calculated!
         if ($this->disableBulletCounters == false) {
-            /** @var DocumentiSearch $search */
-            $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
             $this->setBulletCount(
-                $this->makeBulletCounter(
-                    Yii::$app->getUser()->getId(),
-                    AmosDocumenti::instance()->model('Documenti'),
-                    $search->searchAllQuery([])
+                BulletCounters::getAmosWidgetIconCounter(
+                    Yii::$app->getUser()->getId(), 
+                    AmosDocumenti::getModuleName(),
+                    $this->getNamespace(),
+                    $this->resetBulletCount()
                 )
             );
         }
+        
+//        if ($this->disableBulletCounters == false) {
+//            $search = new DocumentiSearch();
+//            $search->setEventAfterCounter();
+//            
+//            $query = $search->searchAllQuery([]);
+//            
+//            $this->setBulletCount(
+//                $this->makeBulletCounter(
+//                    Yii::$app->getUser()->getId(),
+//                    Documenti::className(),
+//                    $query
+//                )
+//            );
+//            
+//            \Yii::$app->session->set('_offQuery', $query);
+//            $this->trigger(self::EVENT_AFTER_COUNT);
+//        }
     }
 
     /**

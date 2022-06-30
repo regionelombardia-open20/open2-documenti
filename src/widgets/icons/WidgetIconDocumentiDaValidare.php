@@ -31,6 +31,7 @@ class WidgetIconDocumentiDaValidare extends WidgetIcon
      */
     public function init()
     {
+        
         parent::init();
 
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_to_validate'));

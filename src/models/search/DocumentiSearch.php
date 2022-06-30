@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -30,7 +29,6 @@ use yii\db\ActiveQuery;
 class DocumentiSearch extends Documenti implements SearchModelInterface, ContentModelSearchInterface, CmsModelInterface
 {
     private $container;
-
     public $parentId;
 
     /**
@@ -39,7 +37,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function __construct(array $config = [])
     {
-        $this->isSearch = true;
+        $this->isSearch       = true;
         parent::__construct($config);
         $this->modelClassName = $this->documentsModule->model('Documenti');
     }
@@ -52,7 +50,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         parent::init();
 
         $this->data_pubblicazione = null;
-        $this->data_rimozione = null;
+        $this->data_rimozione     = null;
     }
 
     /**
@@ -61,12 +59,14 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function rules()
     {
         $integer = ['id', 'primo_piano', 'hits', 'abilita_pubblicazione', 'updated_by', 'deleted_by', 'parent_id'];
-        if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
+        if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
+            === false)) {
             $integer[] = 'created_by';
         }
         return [
             [$integer, 'integer'],
-            [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione',
+                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
     }
 
@@ -87,7 +87,8 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             'deleted_by',
             'documenti_categorie_id',
         ];
-        if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
+        if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
+            === false)) {
             $fields[] = 'created_by';
         }
         return $fields;
@@ -133,7 +134,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         /** @var AmosDocumenti $documentModule */
         $documentModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
-        
+
         if (isset($documentModule)) {
             if ($documentModule->hidePubblicationDate == false) {
                 $query->andFilterWhere([
@@ -147,8 +148,12 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     /**
      * @inheritdoc
      */
-    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $pageSize = NULL)
+    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false)
     {
+        $getParentId = \Yii::$app->request->get('parentId');
+        if($getParentId){
+            $params['DocumentiSearch']['parentId'] = $getParentId;
+        }
         $query = $this
             ->buildQuery($params, $queryType)
             ->limit($limit);
@@ -166,30 +171,38 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $dataProvider = $this->searchDefaultOrder($dataProvider);
 
         //overwrite default order in case  foldering is enabled
-        if (AmosDocumenti::instance()->enableFolders) {
-            $dataProvider->setSort([
-                'defaultOrder' => [
-                    'is_folder' => SORT_DESC,
-                ]
-            ]);
+        if (empty($params['DocumentiSearch']['orderAttribute'])) {
+            if (AmosDocumenti::instance()->enableFolders) {
+                $dataProvider->setSort([
+                    'defaultOrder' => [
+                        'is_folder' => SORT_DESC,
+                        'data_pubblicazione' => SORT_DESC,
+                    ]
+                ]);
+            } else {
+                $dataProvider->setSort([
+                    'defaultOrder' => [
+                        'data_pubblicazione' => SORT_DESC,
+                    ]
+                ]);
+            }
         }
-
         //if you don't use the seach form, the recursive search is not active
         if (!($this->load($params) && $this->validate())) {
             //if you come from widget grphic LastDocuments Show also documents that are inside the folders
             if (($queryType != 'to-validate') && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
-                $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
+                $query->andWhere([self::tableName().'.parent_id' => $this->parentId]);
             }
             return $dataProvider;
         }
-        
+
         // recursive search
         if (!empty($this->parentId)) {
             /** @var Documenti $documentiModel */
             $documentiModel = $this->documentsModule->createModel('Documenti');
-            $currentFolder = $documentiModel::findOne($this->parentId);
+            $currentFolder  = $documentiModel::findOne($this->parentId);
             $listChildrenId = $currentFolder->getAllChildrens();
-            $query->andWhere([self::tableName() . '.parent_id' => $listChildrenId]);
+            $query->andWhere([self::tableName().'.parent_id' => $listChildrenId]);
         }
 
         //if parentid empty the search is without (parent_id IS NULL)
@@ -199,16 +212,16 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             $this->setTagValues($tagValues);
             if (is_array($tagValues) && !empty($tagValues)) {
                 $orQueries = null;
-                $i = 0;
+                $i         = 0;
                 foreach ($tagValues as $rootId => $tagId) {
                     if (!empty($tagId)) {
                         if ($i == 0) {
                             $query->innerJoin('entitys_tags_mm entities_tag',
-                                "entities_tag.classname = '" . addslashes($this->modelClassName) . "' AND entities_tag.record_id=" . static::tableName() . ".id");
+                                "entities_tag.classname = '".addslashes($this->modelClassName)."' AND entities_tag.record_id=".static::tableName().".id");
                             $orQueries[] = 'or';
                         }
-                        $tags = explode(',', $tagId);
-                        $tags = array_unique($tags);
+                        $tags        = explode(',', $tagId);
+                        $tags        = array_unique($tags);
                         $orQueries[] = ['and', ["entities_tag.tag_id" => $tags], ['entities_tag.root_id' => $rootId], ['entities_tag.deleted_at' => null]];
                         $i++;
                     }
@@ -241,7 +254,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         /** @var \yii\db\ActiveQuery $baseQuery */
         $documentModel = $this->documentsModule->model('Documenti');
-        $baseQuery = $documentModel::find()->distinct();
+        $baseQuery     = $documentModel::find()->distinct();
 
         if ($this->documentsModule->enableDocumentVersioning) {
             $baseQuery->andWhere(['version_parent_id' => null]);
@@ -283,9 +296,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function lastDocuments($params, $limit = null)
     {
-        $params = Yii::$app->request->getQueryParams();
+        $params                      = Yii::$app->request->getQueryParams();
         $params['fromWidgetGraphic'] = true;
-        $dataProvider = $this->searchAll($params, $limit);
+        $dataProvider                = $this->searchAll($params, $limit);
 
         return $dataProvider;
     }
@@ -371,13 +384,13 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function highlightedAndHomepageDocumentiQuery($params)
     {
         return $this
-            ->baseSearch($params)
-            ->andWhere([
-                self::tableName() . '.deleted_at' => null,
-                self::tableName() . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
-                self::tableName() . '.in_evidenza' => 1,
-                self::tableName() . '.primo_piano' => 1,
-            ]);
+                ->baseSearch($params)
+                ->andWhere([
+                    self::tableName().'.deleted_at' => null,
+                    self::tableName().'.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
+                    self::tableName().'.in_evidenza' => 1,
+                    self::tableName().'.primo_piano' => 1,
+        ]);
     }
 
     /**
@@ -387,12 +400,12 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function homepageDocumentsQuery($params)
     {
         return $this
-            ->baseSearch($params)
-            ->where([
-                self::tableName() . '.deleted_at' => null,
-                self::tableName() . '.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
-                self::tableName() . '.primo_piano' => 1,
-            ]);
+                ->baseSearch($params)
+                ->where([
+                    self::tableName().'.deleted_at' => null,
+                    self::tableName().'.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
+                    self::tableName().'.primo_piano' => 1,
+        ]);
     }
 
     /**
@@ -403,7 +416,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
-        $currentDoc = $documentiModel::find()
+        $currentDoc     = $documentiModel::find()
             ->select('max(version), id')
             ->andWhere([
                 'OR',
@@ -440,13 +453,13 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         $searchResult = new SearchResult();
 
-        $searchResult->url = $model->getFullViewUrl();
-        $searchResult->box_type = "file";
-        $searchResult->id = $model->id;
-        $searchResult->titolo = $model->titolo;
+        $searchResult->url                = $model->getFullViewUrl();
+        $searchResult->box_type           = "file";
+        $searchResult->id                 = $model->id;
+        $searchResult->titolo             = $model->titolo;
         $searchResult->data_pubblicazione = $model->data_pubblicazione;
-        $searchResult->documento = $model->getDocumentMainFile();
-        $searchResult->abstract = $model->descrizione_breve;
+        $searchResult->documento          = $model->getDocumentMainFile();
+        $searchResult->abstract           = $model->descrizione_breve;
 
         return $searchResult;
     }
@@ -485,7 +498,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         $params = array_merge($params, Yii::$app->request->get());
         $this->load($params);
-        $query = $this->homepageDocumentsQuery($params);
+        $query  = $this->homepageDocumentsQuery($params);
         $this->applySearchFilters($query);
 
         $dataProvider = new ActiveDataProvider([
@@ -505,7 +518,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         if (!empty($params["conditionSearch"])) {
             $commands = explode(";", $params["conditionSearch"]);
             foreach ($commands as $command) {
-                $query->andWhere(eval("return " . $command . ";"));
+                $query->andWhere(eval("return ".$command.";"));
             }
         }
         return $dataProvider;

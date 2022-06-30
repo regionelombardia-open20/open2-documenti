@@ -79,6 +79,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                 <?php foreach ($documents as $document): ?>
                     <?php
                     /** @var Documenti $document */
+                    $documentViewUrl = '';
                     $icon = DocumentsUtility::getDocumentIcon($document, true);
                     $documentInfo = $document->getDocumentMainFile();
                     $documentInfoIsFile = ($documentInfo instanceof File);
@@ -104,7 +105,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                         }
                     }
 
-                    $documentTitle = $document->titolo;
+                    $documentTitle = htmlspecialchars($document->titolo);
                     if (strlen($documentTitle) > 150) {
                         $stringCut = substr($documentTitle, 0, 150);
                         $documentTitle = substr($stringCut, 0, strrpos($stringCut, ' ')) . '... ';

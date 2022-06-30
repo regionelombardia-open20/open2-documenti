@@ -34,6 +34,12 @@ class DeleteOwnDocumentiRule extends DefaultOwnContentRule
                 }
             }
 
+            if(!empty($model->parent_id)){
+                $folder = Documenti::findOne($model->parent_id);
+                if($folder && !empty($folder->drive_file_id)){
+                    return false;
+                }
+            }
             if (!empty($model->getWorkflowStatus())) {
                 if (($model->getWorkflowStatus()->getId() == Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA || \Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) && $model->created_by == $user) {
                     return true;

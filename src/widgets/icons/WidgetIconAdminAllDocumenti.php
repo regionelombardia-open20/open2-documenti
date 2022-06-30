@@ -32,6 +32,7 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
      */
     public function init()
     {
+        
         parent::init();
 
         $paramsClassSpan = [
@@ -67,6 +68,8 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
 //                    $search->buildQuery([], 'admin-all')
 //                )
 //            );
+//                        $this->trigger(self::EVENT_AFTER_COUNT);
+
 //        }
     }
 

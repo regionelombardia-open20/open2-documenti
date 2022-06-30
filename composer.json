@@ -14,10 +14,10 @@
     "require": {
         "php": ">=5.4.0",
         "cornernote/yii2-workflow-manager": "*",
-        "open20/amos-admin":">=1.8",
-        "open20/amos-attachments": "^1.1.6",
+        "open20/amos-admin":"^2.2.0",
+        "open20/amos-attachments": "^1.2.0",
         "open20/amos-comments":"^1.1",
-        "open20/amos-core":"^1.9.60",
+        "open20/amos-core":"^1.14.0",
         "open20/amos-dashboard":"^1.8",
         "open20/amos-notify":"^1.4",
         "open20/amos-workflow": "^1.0",
@@ -25,7 +25,8 @@
         "kartik-v/yii2-widget-fileinput": "*",
         "raoul2000/yii2-workflow": "*",
         "raoul2000/yii2-workflow-view": "*",
-        "yiidoc/yii2-redactor": "*"
+        "yiidoc/yii2-redactor": "*",
+        "la-haute-societe/yii2-flysystem-google-drive" : "~1.0.0"
     },
     "config": {
         "process-timeout": 1800,

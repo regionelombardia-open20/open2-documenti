@@ -45,8 +45,7 @@ $disableStandardWorkflow = $appController->documentsModule->disableStandardWorkf
 $moduleGroups = Yii::$app->getModule('groups');
 $moduleCommunity = Yii::$app->getModule('community');
 $moduleCwh = Yii::$app->getModule('cwh');
-$moduleNotify  = \Yii::$app->getModule('notify');
-
+$moduleNotify = \Yii::$app->getModule('notify');
 
 $enableGroupNotification = AmosDocumenti::instance()->enableGroupNotification;
 $primoPiano = '';
@@ -156,10 +155,12 @@ if ($enableGroupNotification) {
         }
          
     });
+
 JS;
 
     $this->registerJs($js);
 }
+
 
 /** @var \open20\amos\report\AmosReport $reportModule */
 $reportModule = Yii::$app->getModule('report');
@@ -171,6 +172,40 @@ if ($viewReportWidgets) {
         'model' => $model,
     ]);
 }
+
+//$_SESSION['upload_token'] = $_GET['oauthToken'];
+//$GoogleDriveManager = new open20\amos\documenti\utility\GoogleDriveDocument(['model' => $model]);
+
+
+//$adapter = $GoogleDriveManager->prepareAdapter();
+//if(!empty($adapter)){
+//    pr($adapter->listContents());
+//}
+
+//if ($_SERVER['REQUEST_METHOD'] == 'POST' && $GoogleDriveManager->client->getAccessToken()) {
+//// We'll setup an empty 1MB file to upload.
+//    DEFINE("TESTFILE", 'testfile-small.txt');
+//    if (!file_exists(TESTFILE)) {
+//        $fh = fopen(TESTFILE, 'w');
+//        fseek($fh, 1024 * 1024);
+//        fwrite($fh, "!", 1);
+//        fclose($fh);
+//    }
+//// This is uploading a file directly, with no metadata associated.
+//    $file = new Google_Service_Drive_DriveFile();
+//    $result = $service->files->create(
+//        $file,
+//        array(
+//            'data' => file_get_contents(TESTFILE),
+//            'mimeType' => 'application/octet-stream',
+//            'uploadType' => 'media'
+//        )
+//    );
+//}
+
+
+//$GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $model, 'useServiceAccount' => true]);
+//pr($GoogleDriveManager->getList('', true));
 
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
@@ -197,6 +232,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
         <div class="col-md-8 col-xs-12">
             <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
             <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
+
             <?php if (!$isFolder): ?>
                 <?= $form->field($model, 'sottotitolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_hint')) ?>
                 <?= $form->field($model, 'descrizione_breve')->textarea(['maxlength' => true, 'rows' => 3, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_hint')) ?>
@@ -225,43 +261,16 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
         </div>
         <div class="col-md-4 col-xs-12">
-            <?= $this->render('boxes/box_custom_uploads_begin', ['form' => $form, 'model' => $model]); ?>
-            <?php if (!$isFolder): ?>
-                <div class="col-xs-12 nop">
-                    <?= $form->field($model,
-                        'documentMainFile')->widget(AttachmentsInput::classname(), [
-                        'options' => [
-                            'multiple' => FALSE,
-                        ],
-                        'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
-                            'maxFileCount' => 1,
-                            'showRemove' => false,
-                            'indicatorNew' => false,
-                            'allowedPreviewTypes' => false,
-                            'previewFileIconSettings' => false,
-                            'overwriteInitial' => false,
-                            'layoutTemplates' => false,
-                        ]
-                    ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))->hint(AmosDocumenti::t('amosdocumenti', '#image_field_hint')) ?>
+            <?= $this->render('boxes/box_custom_uploads_begin', [
+                'form' => $form,
+                'model' => $model,
+            ]); ?>
 
-                    <?= $form->field($model, 'link_document')->textInput([
-                        'maxlength' => true,
-                        'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder'),
-                        'id' => 'link-document-id'
-                    ])
-                        ->hint(AmosDocumenti::t('amosdocumenti', '#link_document_field_hint'))
-                    ?>
-
-                    <?php if (!empty($documento)): ?>
-                        <?= $documento->filename ?>
-                        <?= Html::a(AmosIcons::show('download', ['class' => 'btn btn-tools-secondary']), ['/documenti/documenti/download-documento-principale', 'id' => $model->id], [
-                            'title' => 'Download file',
-                            'class' => 'bk-btnImport'
-                        ]); ?>
-                    <?php endif; ?>
-
-                </div>
-            <?php endif; ?>
+            <?= \open20\amos\documenti\widgets\DocumentMainFileInputWidget::widget([
+                'model' => $model,
+                'form' => $form,
+                'isFolder' => $isFolder
+            ]); ?>
 
             <?php if (!$isFolder): ?>
                 <div class="col-xs-12 attachment-section nop">
@@ -410,7 +419,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 'items' => [
                     [
                         'header' => AmosDocumenti::t('amosdocumenti', '#settings_optional'),
-                        'content' => $publicationDate . $enableComments . '<div class="clearfix"></div>' . $primoPiano . $inEvidenza .$contentLanguage,
+                        'content' => $publicationDate . $enableComments . '<div class="clearfix"></div>' . $primoPiano . $inEvidenza . $contentLanguage,
                     ]
                 ],
                 'headerOptions' => ['tag' => 'h2'],
@@ -607,3 +616,4 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 </div>
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);?>
 <?php ActiveForm::end(); ?>
+

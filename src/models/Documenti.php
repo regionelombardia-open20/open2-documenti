@@ -19,8 +19,10 @@ use open20\amos\core\interfaces\ModelDocumentInterface;
 use open20\amos\core\interfaces\ModelImageInterface;
 use open20\amos\core\interfaces\ViewModelInterface;
 use open20\amos\core\interfaces\WorkflowMetadataInterface;
+use open20\amos\core\utilities\DuplicateContentUtility;
 use open20\amos\core\views\toolbars\StatsToolbarPanels;
 use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\behaviors\GoogleDriveBehavior;
 use open20\amos\documenti\i18n\grammar\DocumentsGrammar;
 use open20\amos\documenti\i18n\grammar\FoldersGrammar;
 use open20\amos\documenti\utility\DocumentsUtility;
@@ -29,6 +31,7 @@ use open20\amos\notificationmanager\behaviors\NotifyBehavior;
 use open20\amos\seo\behaviors\SeoContentBehavior;
 use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
 use raoul2000\workflow\base\SimpleWorkflowBehavior;
+use raoul2000\workflow\base\WorkflowException;
 use Yii;
 use yii\base\Exception;
 use yii\db\ActiveQuery;
@@ -178,10 +181,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['documentMainFile'], 
                 'required', 
                 'when' => function($model) {
-                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == ''));
+//            pr($model->drive_file_id);die;
+                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == '' && empty($model->drive_file_id)));
                 },
                 'whenClient' => "function(attribute, value) {
-                    return (" . (!$this->documentsModule->documentsOnlyText ? "true" : "false") . " && ($('#documenti-link_document').val() == ''));
+                    return (" . (!$this->documentsModule->documentsOnlyText ? "true" : "false") . " && ($('#documenti-link_document').val() == '') && $('#drive-file-id').val() == '');
                 }",
                 'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
             ],
@@ -274,6 +278,8 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             'titolo',
             'data_pubblicazione',
             //'data_rimozione',
+            'drive_file_id',
+            'drive_file_mofified_at',
             'status'
         ];
 
@@ -319,7 +325,10 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                 'class' => SeoContentBehavior::className(),
                 'imageAttribute' => null,
                 'defaultOgType' => 'article',
-            ]
+            ],
+//            'googleDrive' => [
+//                'class' => GoogleDriveBehavior::className()
+//            ],
 
         ]);
     }
@@ -1158,10 +1167,39 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     }
 
     /**
+     * @param $status
+     */
+    public function changeStatusFolderRecursive($status){
+        $children = $this->getAllChildrens();
+        foreach ($children as $documentId){
+            $document = Documenti::findOne($documentId);
+            if($document->status != $status){
+                try {
+                    $document->status = $status;
+                    $document->save(false);
+                }catch (WorkflowException $e){
+
+                }
+
+            }
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function getViewUrl() {
         return 'documenti/documenti/view';
     }
 
+    /**
+     * @return array
+     */
+    public function getDuplicateContentAttachmentsAttributes()
+    {
+        return [
+            'documentMainFile' => DuplicateContentUtility::ATTACHMENT_SINGLE,
+            'documentAttachments' => DuplicateContentUtility::ATTACHMENT_MULTI
+        ];
+    }
 }

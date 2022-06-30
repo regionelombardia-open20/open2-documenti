@@ -15,6 +15,11 @@ use open20\amos\core\widget\WidgetIcon;
 use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\dashboard\models\AmosUserDashboards;
 use open20\amos\documenti\AmosDocumenti;
+//use open20\amos\documenti\models\Documenti;
+//use open20\amos\documenti\models\search\DocumentiSearch;
+
+use open20\amos\utility\models\BulletCounters;
+
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\Application as Web;
@@ -56,13 +61,32 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
             )
         );
 
+        // Read and reset counter from bullet_counters table, bacthed calculated!
         if ($this->disableBulletCounters == false) {
-            if (Yii::$app instanceof Web) {
-                $this->setBulletCount(
-                    $this->makeBulletCounter(Yii::$app->user->getId())
-                );
-            }
+            $widgetAll = \Yii::createObject(WidgetIconAllDocumenti::className());
+
+            $this->setBulletCount(
+                $widgetAll->getBulletCount()
+            );
         }
+        
+//        if ($this->disableBulletCounters == false) {
+//            $search = new DocumentiSearch();
+////            $search->setEventAfterCounter();
+//            
+//            $query = $search->searchAllQuery([]);
+//            
+//            $this->setBulletCount(
+//                $this->makeBulletCounter(
+//                    Yii::$app->getUser()->getId(),
+//                    Documenti::className(),
+//                    $query
+//                )
+//            );
+//            
+////            \Yii::$app->session->set('_offQuery', $query);
+////            $this->trigger(self::EVENT_AFTER_COUNT);
+//        }
     }
 
     /**
@@ -72,12 +96,12 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
      * @param type $externalQuery
      * @return type
      */
-    public function makeBulletCounter($userId = null, $className = null, $externalQuery = null)
-    {
-        $widgetAll = \Yii::createObject(WidgetIconAllDocumenti::className());
-        
-        return $widgetAll->getBulletCount();
-    }
+//    public function makeBulletCounter($userId = null, $className = null, $externalQuery = null)
+//    {
+//        $widgetAll = \Yii::createObject(WidgetIconAllDocumenti::className());
+//        
+//        return $widgetAll->getBulletCount();
+//    }
 
     /**
      * Aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo

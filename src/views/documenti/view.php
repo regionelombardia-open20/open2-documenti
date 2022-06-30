@@ -47,15 +47,7 @@ $idTabCard = 'tab-card';
 $idClassifications = 'tab-classifications';
 $idTabAttachments = 'tab-attachments';
 
-$select2Id = 'all-document-versions-id';
 
-$js = "
-$('#" . $select2Id . "').on('change', function(e) {
-    e.preventDefault();
-    var selectedValue = $(this).val();
-    window.location.href = '/documenti/documenti/view?id=' + selectedValue;
-});
-";
 $this->registerJs($js, View::POS_READY);
 
 $jsCount = <<<JS
@@ -71,11 +63,6 @@ $jsCount = <<<JS
 JS;
 
 $this->registerJs($jsCount);
-
-
-$hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
-$documentMainFile = $model->getDocumentMainFile();
-$documentLinkPresent = (!empty($model->link_document));
 
 $primoPiano = '';
 $inEvidenza = '';
@@ -148,97 +135,14 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                 <h3 class="subtitle-text"><?= $model->sottotitolo ?></h3>
             </div>
         </div>
-        <div class="col-xs-12 download-file nop">
-            <?php if (!$isFolder && $controller->documentsModule->enableDocumentVersioning): ?>
-                <div class="col-xs-12">
-                    <?= Select2::widget([
-                        'model' => $model,
-                        'attribute' => 'version',
-                        'data' => ArrayHelper::map($model->allDocumentVersions, 'id', 'versionInfo'),
-                        'options' => [
-                            'placeholder' => AmosDocumenti::t('amosdocumenti', 'Cambia versione'),
-                            'id' => $select2Id,
-                            'lang' => substr(Yii::$app->language, 0, 2),
-                            'multiple' => false,
-                            'value' => $model->id
-                        ],
-                        //                'addon' => [
-                        //                    'prepend' => $model->getAttributeLabel('version')
-                        //                ]
-                    ]) ?>
-                </div>
-            <?php endif; ?>
-            <div class="col-xs-12 action-document">
-                <div>
-                    <div>
-                        <?= DocumentsUtility::getDocumentIcon($model); ?>
-                    </div>
-                    <div>
-                        <?php
-                        if (!is_null($documentMainFile)) {
-                            echo Html::tag(
-                                'p',
-                                (
-                                (strlen($documentMainFile->name) > 80)
-                                    ? substr($documentMainFile->name, 0, 75) . '[...]'
-                                    : $documentMainFile->name
-                                ) . '.' . $documentMainFile->type,
-                                ['class' => 'filename']
-                            );
-                        } else {
-                            if ($documentLinkPresent) {
-                                echo Html::a(
-                                    (strlen($model->link_document) > 80)
-                                        ? AmosDocumenti::t('amosdocumenti', '#download_document_for_view')
-                                        : $model->link_document,
-                                    $model->link_document, [
-                                    'target' => '_blank',
-                                    'class' => 'btn btn-navigation-primary',
-                                     'id' => 'link-document-id'
-                                ]);
-                            }
-                        }
-                        ?>
-                    </div>
-                </div>
-                <div>
-                    <?php
-                    if (!is_null($documentMainFile)) {
-                        echo Html::a(/*AmosDocumenti::tHtml('amosdocumenti', 'Scarica file') . */
-                            AmosIcons::show('download'),
-                            [
-                                '/attachments/file/download/', 'id' => $documentMainFile->id,
-                                'hash' => $documentMainFile->hash
-                            ],
-                            [
-                                'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
-                                'class' => 'bk-btnImport pull-right btn btn-icon',
-                            ]
-                        );
-                    }
 
-                    if (!$isFolder && $controller->documentsModule->enableDocumentVersioning) {
-                        if (Yii::$app->user->can('DOCUMENTI_UPDATE', ['model' => $model, 'newVersion' => true])) {
-                            echo \open20\amos\core\utilities\ModalUtility::addConfirmRejectWithModal([
-                                'modalId' => 'new-document-version-modal-id-' . $model->id,
-                                'modalDescriptionText' => AmosDocumenti::t('amosdocumenti', '#NEW_DOCUMENT_VERSION_MODAL_TEXT'),
-                                'btnText' => AmosDocumenti::t('amosdocumenti', 'New document version'),
-                                'btnLink' => Yii::$app->urlManager->createUrl([
-                                    '/documenti/documenti/new-document-version',
-                                    'id' => $model['id']
-                                ]),
-                                'btnOptions' => [
-                                    'title' => AmosDocumenti::t('amosdocumenti', 'New document version'),
-                                    'class' => 'bk-btnImport pull-right btn btn-secondary m-r-5'],
+        <?php echo $this->render('_download_box', [
+            'model' => $model,
+            'isFolder' => $isFolder,
+            'controller' => \Yii::$app->controller,
+            'showNewVersionButton' => true
+        ])?>
 
-                            ]);
-                        }
-                    }
-                    ?>
-                </div>
-            </div>
-
-        </div>
         <div class="text-content col-xs-12 nop">
             <?= $model->descrizione; ?>
         </div>

@@ -14,8 +14,10 @@ use open20\amos\core\forms\ItemAndCardHeaderWidget;
 use open20\amos\core\forms\PublishedByWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\utilities\StringUtils;
 use open20\amos\core\views\toolbars\StatsToolbar;
 use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\controllers\DocumentiController;
 use open20\amos\notificationmanager\forms\NewsWidget;
 
 /**
@@ -23,12 +25,20 @@ use open20\amos\notificationmanager\forms\NewsWidget;
  * @var open20\amos\documenti\models\Documenti $model
  */
 
+/** @var DocumentiController $appController */
+$appController = Yii::$app->controller;
+
+/** @var AmosDocumenti $documentsModule */
+$documentsModule = $appController->documentsModule;
+
 $modelViewUrl = $model->getFullViewUrl();
 $document = $model->getDocumentMainFile();
 $documentPresent = ($document != null);
 $documentLinkPresent = (!empty($model->link_document));
 $visible = isset($statsToolbar) ? $statsToolbar : false;
-
+$enableContentDuplication = $documentsModule->enableContentDuplication;
+$enableCatImgInDocView = $documentsModule->enableCatImgInDocView;
+$documentCategory = $model->documentiCategorie;
 
 $jsCount = <<<JS
     $('.link-document-id').click(function() {
@@ -60,7 +70,7 @@ $this->registerJs($jsCount);
         <div class="col-sm-7 col-xs-12 nop">
             <div class="post-content col-xs-12 nop">
                 <div class="post-title col-xs-10">
-                    <?= Html::a(Html::tag('h2', $model->titolo), $modelViewUrl) ?>
+                    <?= Html::a(Html::tag('h2', htmlspecialchars($model->titolo)), $modelViewUrl) ?>
                 </div>
                 <?php
                 echo NewsWidget::widget([
@@ -88,24 +98,48 @@ $this->registerJs($jsCount);
 
         <div class="sidebar col-sm-5 col-xs-12">
             <div class="container-sidebar">
-                <?php if ($documentPresent): ?>
+                <?php if ($enableCatImgInDocView): ?>
+                    <?php
+                    $afterCatImgStr = '';
+                    if ($documentPresent) {
+                        $afterCatImgStr .= Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
+                    }
+                    if ($documentLinkPresent) {
+                        $afterCatImgStr .= Html::tag('p', StringUtils::shortText($model->titolo, 80), ['class' => 'title']) .
+                            Html::tag('p', StringUtils::shortText($model->link_document, 50), ['class' => 'title']);
+                    }
+                    ?>
                     <div class="box">
-                        <?php
-                        echo AmosIcons::show('download-general', ['class' => 'am-4'], 'dash') . Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
-                        ?>
+                        <div class="sidebar-documents-category-new-rl">
+                            <?= Html::img($documentCategory->getAvatarUrl('square_small'), [
+                                'class' => 'gridview-image',
+                                'alt' => AmosDocumenti::t('amosdocumenti', 'Immagine della categoria')
+                            ]); ?>
+                            <p><?= $documentCategory->titolo ?></p>
+                            
+                        </div>
+                        <?= $afterCatImgStr ?>
                     </div>
-                <?php endif; ?>
-                <?php if ($documentLinkPresent): ?>
-                    <div class="box">
-                       <?php
-                        echo AmosIcons::show('doc-www', ['class' => 'am-4'], 'dash') . Html::tag('p', \open20\amos\core\utilities\StringUtils::shortText($model->titolo, 80) , ['class' => 'title']);
-                        ?>
-
-                        <?php
-                        echo  Html::tag('p', \open20\amos\core\utilities\StringUtils::shortText($model->link_document, 50) , ['class' => 'title']);
-                        ?>
-                        
-                    </div>
+                <?php else: ?>
+                    <?php if ($documentPresent) : ?>
+                        <div class="box">
+                            <?php
+                            if ($model->drive_file_id) {
+                                echo AmosIcons::show('download-general', ['class' => 'am-4'], 'dash') .
+                                    AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am') .
+                                    Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
+                            } else {
+                                echo AmosIcons::show('download-general', ['class' => 'am-4'], 'dash') . Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
+                            }
+                            ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($documentLinkPresent) : ?>
+                        <div class="box">
+                            <?= AmosIcons::show('doc-www', ['class' => 'am-4'], 'dash') . Html::tag('p', StringUtils::shortText($model->titolo, 80), ['class' => 'title']); ?>
+                            <?= Html::tag('p', StringUtils::shortText($model->link_document, 50), ['class' => 'title']); ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
                 <div class="box post-info">
                     <?= PublishedByWidget::widget([
@@ -116,9 +150,14 @@ $this->registerJs($jsCount);
                         <strong><?= ($model->primo_piano) ? AmosDocumenti::tHtml('amosdocumenti', 'Pubblicato in prima pagina') : '' ?></strong>
                     </p>
                 </div>
-                <?php if ($documentPresent || $documentLinkPresent || $visible): ?>
+                <?php if ($documentPresent || $documentLinkPresent || $visible || $enableContentDuplication) : ?>
                     <div class="footer_sidebar col-xs-12 nop">
                         <?php
+                        echo $this->render('_duplicate_btn', [
+                            'model' => $model,
+                            'isInIndex' => false,
+                            'customClasses' => 'bk-btnImport pull-right btn btn-secondary m-l-10'
+                        ]);
                         if ($documentPresent) {
                             echo Html::a(
                                 AmosDocumenti::tHtml('amosdocumenti', 'Scarica file'),
