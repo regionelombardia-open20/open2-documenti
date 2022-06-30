@@ -638,7 +638,7 @@ class DocumentiController extends CrudController
             'urlSecondAction' => $urlSecondAction,
             'labelSecondAction' => $labelSecondAction,
             'titleSecondAction' => $titleSecondAction,
-            'hideSecondAction' => false
+            'hideSecondAction' => $this->documentsModule->enableFolders
         ];
 
         if (!parent::beforeAction($action)) {

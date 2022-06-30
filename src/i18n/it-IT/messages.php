@@ -52,7 +52,7 @@ return [
     '#BOZZA_VALIDATO_description' => 'riporta il documento in "bozza" e richiedi un intervento al redattore',
     '#btn_back_prev_folder' => 'Indietro',
     'Livello superiore' => 'Indietro',
-    '#btn_new_folder' => 'Crea una nuova Cartella',
+    '#btn_new_folder' => 'Crea cartella',
     'Cambia versione' => 'Change version',
     '#CANCEL' => 'Annulla',
     'Cancellato da' => 'Cancellato da',
@@ -435,4 +435,8 @@ return [
     "#beforeActionSubtitleSectionLogged" => "",
     'Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)?' => 'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?',
     'Versions' => 'Versioni',
+    'Non ci sono documenti di tuo interesse da visualizzare!' => 'Non ci sono documenti di tuo interesse da visualizzare!',
+    'Clicca e scopri tutti i documenti della piattaforma' => 'Clicca e scopri tutti i documenti della piattaforma',
+    'e scopri ora tutti i documenti di' => 'e scopri ora tutti i documenti di',
+    'Non sono presenti documenti' => 'Non sono presenti documenti'
     ];

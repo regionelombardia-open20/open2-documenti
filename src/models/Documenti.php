@@ -38,6 +38,7 @@ use yii\base\Exception;
 use yii\db\ActiveQuery;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Url;
 use yii\log\Logger;
 use open20\amos\seo\interfaces\SeoModelInterface;
 use yii\helpers\Inflector;
@@ -284,7 +285,10 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             //'data_rimozione',
             'drive_file_id',
             'drive_file_mofified_at',
-            'status'
+            'status',
+            'primo_piano',
+            'in_evidenza',
+            'status',
         ];
         
         $scenarios[self::SCENARIO_UPDATE] = $scenarios[self::SCENARIO_CREATE];
@@ -1198,13 +1202,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         }
     }
     
-    /**
-     * @inheritdoc
-     */
-    public function getViewUrl()
-    {
-        return 'documenti/documenti/view';
-    }
+
     
     /**
      * @return array
@@ -1606,6 +1604,31 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public function sendNotification()
     {
         return AmosDocumenti::instance()->documnetiModelsendNotification;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getViewUrl()
+    {
+        if (!empty($this->usePrettyUrl) && ($this->usePrettyUrl == true) && $this->hasMethod('getPrettyUrl')) {
+            return 'documenti/documenti';
+        }
+
+        return 'documenti/documenti/view';
+    }
+    /**
+     * @return string The url to view of this model
+     */
+    public function getFullViewUrl()
+    {
+        if (!empty($this->usePrettyUrl) && ($this->usePrettyUrl == true) && $this->hasMethod('getPrettyUrl')) {
+            return Url::toRoute(["/" . $this->getViewUrl() . "/" . $this->id . "/" . $this->getPrettyUrl()]);
+        } else if (!empty($this->useFrontendView) && ($this->useFrontendView == true) && $this->hasMethod('getBackendobjectsUrl')) {
+            return $this->getBackendobjectsUrl();
+        } else {
+            return Url::toRoute(["/" . $this->getViewUrl(), "id" => $this->id]);
+        }
     }
 
 }

@@ -436,4 +436,8 @@ return [
     "#beforeActionSubtitleSectionLogged" => "",
     "Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)" => "Do you want to show the document to all users (not registered included) ?",
     'Versions' => 'Versions',
+    'Non ci sono documenti di tuo interesse da visualizzare!' => 'There are no documents of your interest to view!',
+    'Clicca e scopri tutti i documenti della piattaforma' => 'Click and discover all documents of the platform',
+    'e scopri ora tutti i documenti di' => 'and discover now all documents of',
+    'Non sono presenti documenti' => 'There are no documents'
     ];

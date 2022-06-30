@@ -42,9 +42,6 @@ $colors = NotifyUtility::getColorNetwork($color);
                         <p style="font-size:11px; color:#4b4b4b; font-weight:bold;font-family: sans-serif;"><?= Yii::$app->formatter->asDate($model->data_pubblicazione) ?></p>
                         <p style="font-size:13px; color:#7d7d7d; padding:10px 0; font-family: sans-serif; font-weight:normal; margin:0; text-align: left;"><?= $model->getDescription(true) ?></p>
                     </td>
-                    <td width="35%" align="right" valign="top" style="padding-left:10px; text-align:right;">
-                        <img src="<?= $model->getModelImageUrlForSummaries() ?>" width="165" border="0" style="max-width:100%" alt="<?= $modelTitle ?>">
-                    </td>
                 </tr>
                 <tr>
                     <td colspan="2" style="padding:0 0 10px 0; border-bottom:1px solid #D8D8D8;">
