@@ -23,7 +23,6 @@ class m161130_070000_alter_workflow_tables_documenti extends AmosMigration
 
     /**
      * Use this instead of function up().
-     * @see \Yii\db\Migration::safeUp() for more info.
      */
     public function safeUp()
     {
@@ -56,7 +55,6 @@ class m161130_070000_alter_workflow_tables_documenti extends AmosMigration
 
     /**
      * Use this instead of function down().
-     * @see \Yii\db\Migration::safeDown() for more info.
      */
     public function safeDown()
     {

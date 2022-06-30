@@ -251,7 +251,6 @@ class DocumentiAjaxController extends Controller
      * in Community model beforeDelete is overwritten to allow deletion of related models
      * @param integer $id
      * @return array
-     * @see Community::beforeDelete()
      *
      */
     private function deleteCommunity($id)

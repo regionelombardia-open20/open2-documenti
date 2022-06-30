@@ -60,7 +60,7 @@ $this->registerJs($jsCount);
         <div class="col-sm-7 col-xs-12 nop">
             <div class="post-content col-xs-12 nop">
                 <div class="post-title col-xs-10">
-                    <?= Html::a(Html::tag('h2', htmlspecialchars($model->titolo)), $modelViewUrl) ?>
+                    <?= Html::a(Html::tag('h2', $model->titolo), $modelViewUrl) ?>
                 </div>
                 <?php
                 echo NewsWidget::widget([

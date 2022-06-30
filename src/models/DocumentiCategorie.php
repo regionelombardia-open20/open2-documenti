@@ -34,7 +34,6 @@ class DocumentiCategorie extends \open20\amos\documenti\models\base\DocumentiCat
     public $visibleToCommunityRole;
 
     /**
-     * @see    \yii\base\Model::rules()    for more info.
      */
     public function rules()
     {
@@ -60,7 +59,6 @@ class DocumentiCategorie extends \open20\amos\documenti\models\base\DocumentiCat
     }
 
     /**
-     * @see    \yii\base\Component::behaviors()    for more info.
      */
     public function behaviors()
     {

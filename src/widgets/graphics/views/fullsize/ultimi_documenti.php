@@ -104,7 +104,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                         }
                     }
 
-                    $documentTitle = htmlspecialchars($document->titolo);
+                    $documentTitle = $document->titolo;
                     if (strlen($documentTitle) > 150) {
                         $stringCut = substr($documentTitle, 0, 150);
                         $documentTitle = substr($stringCut, 0, strrpos($stringCut, ' ')) . '... ';

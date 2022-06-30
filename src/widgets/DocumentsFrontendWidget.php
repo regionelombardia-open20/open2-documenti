@@ -1,15 +1,10 @@
 <?php
 
 /**
- * Aria S.p.A.
- * OPEN 2.0
- *
- *
- * @package    Open20Package
- * @category   CategoryName
- */
-
-/**
+ * Created by PhpStorm.
+ * User: michele.lafrancesca
+ * Date: 15/11/2018
+ * Time: 16:06
  */
 
 namespace open20\amos\documenti\widgets;

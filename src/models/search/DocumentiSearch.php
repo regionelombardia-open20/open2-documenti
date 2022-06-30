@@ -147,7 +147,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     /**
      * @inheritdoc
      */
-    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false)
+    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $pageSize = NULL)
     {
         $query = $this
             ->buildQuery($params, $queryType)

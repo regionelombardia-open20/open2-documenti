@@ -42,7 +42,6 @@ class DocumentiCategorie extends Record
     protected $documentsModule = null;
 
     /**
-     * @see    \yii\db\ActiveRecord::tableName()    for more info.
      */
     public static function tableName()
     {
@@ -59,7 +58,6 @@ class DocumentiCategorie extends Record
     }
 
     /**
-     * @see    \yii\base\Model::rules()    for more info.
      */
     public function rules()
     {
@@ -73,7 +71,6 @@ class DocumentiCategorie extends Record
     }
 
     /**
-     * @see    Record::attributeLabels()    for more info.
      */
     public function attributeLabels()
     {

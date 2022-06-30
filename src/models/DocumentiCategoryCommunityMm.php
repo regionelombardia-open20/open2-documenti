@@ -1,14 +1,5 @@
 <?php
 
-/**
- * Aria S.p.A.
- * OPEN 2.0
- *
- *
- * @package    Open20Package
- * @category   CategoryName
- */
-
 namespace open20\amos\documenti\models;
 
 use yii\helpers\ArrayHelper;
@@ -35,7 +26,6 @@ class DocumentiCategoryCommunityMm extends \open20\amos\documenti\models\base\Do
      * Returns the text hint for the specified attribute.
      * @param string $attribute the attribute name
      * @return string the attribute hint
-     * @see attributeHints
      */
     public function getAttributeHint($attribute)
     {
