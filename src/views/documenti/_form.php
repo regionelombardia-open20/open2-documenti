@@ -276,8 +276,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 <div class="col-xs-12 attachment-section nop">
                     <div class="col-xs-12">
                         <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#attachments_title')) ?>
-                        <?= $form->field($model,
-                            'documentAttachments')->widget(AttachmentsInput::classname(), [
+                        <?= $form->field($model, 'documentAttachments')->widget(AttachmentsInput::classname(), [
                             'options' => [ // Options of the Kartik's FileInput widget
                                 'multiple' => true, // If you want to allow multiple upload, default to false
                             ],
@@ -289,7 +288,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
                         <?= AttachmentsList::widget([
                             'model' => $model,
-                            'attribute' => 'documentAttachments'
+                            'attribute' => 'documentAttachments',
+                            'enableSort' => true,
                         ]) ?>
 
                     </div>

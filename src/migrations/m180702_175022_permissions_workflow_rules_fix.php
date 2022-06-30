@@ -27,7 +27,7 @@ class m180702_175022_permissions_workflow_rules_fix extends AmosMigrationPermiss
                 'update' => true,
                 'newValues' => [
                     'removeParents' => [
-                        \open20\amos\news\rules\workflow\NewsToValidateWorkflowRule::className()
+                        'open20\amos\news\rules\workflow\NewsToValidateWorkflowRule'
                     ],
                     'addParents' => [
                         \open20\amos\documenti\rules\workflow\DocumentiToValidateWorkflowRule::className()
