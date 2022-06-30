@@ -37,8 +37,7 @@ $listaModels = $listaDocumenti->getModels();
 <?php
 $modelLabel = 'documenti';
 
-$titleSection = AmosDocumenti::t('amosdocumenti', 'Documenti');
-$urlLinkAll = AmosDocumenti::t('amosdocumenti', '/documenti/documenti/all-documents');
+$urlLinkAll = '/documenti/documenti/all-documents';
 $labelLinkAll = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');
 $titleLinkAll = AmosDocumenti::t('amosdocumenti', 'Visualizza la lista dei documenti');
 
@@ -46,7 +45,7 @@ $labelCreate = AmosDocumenti::t('amosdocumenti', 'Nuovo');
 $titleCreate = AmosDocumenti::t('amosdocumenti', 'Crea un nuovo documento');
 $labelManage = AmosDocumenti::t('amosdocumenti', 'Gestisci');
 $titleManage = AmosDocumenti::t('amosdocumenti', 'Gestisci i documenti');
-$urlCreate = AmosDocumenti::t('amosdocumenti', '/documenti/documenti/create');
+$urlCreate = '/documenti/documenti/create';
 
 $manageLinks = [];
 $controller = \open20\amos\documenti\controllers\DocumentiController::class;
@@ -70,8 +69,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                 'isGuest' => \Yii::$app->user->isGuest,
                 'isSetScope' => $isSetScope,
                 'modelLabel' => 'documenti',
-                'titleSection' => $titleSection,
-                'subTitleSection' => $subTitleSection,
+                'titleSection' => $widget->getLabel(),
                 'urlLinkAll' => $urlLinkAll,
                 'labelLinkAll' => $labelLinkAll,
                 'titleLinkAll' => $titleLinkAll,
@@ -79,6 +77,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                 'titleCreate' => $titleCreate,
                 'labelManage' => $labelManage,
                 'titleManage' => $titleManage,
+                'hideCreate' => $moduleDocumenti->hideNewButtonInWGCmsUltimiDocumenti,
                 'urlCreate' => $urlCreate,
                 'manageLinks' => $manageLinks,
             ]
@@ -88,7 +87,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
 
     <div class="list-view">
         <div>
-            <div class="" role="listbox" data-role="list-view">
+            <div class="" data-role="list-view">
                 <?php foreach ($listaModels as $singolodocumento) : ?>
                     <div>
                         <?php if($singolodocumento->is_folder){ ?>

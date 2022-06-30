@@ -58,7 +58,7 @@ $modelViewUrl = $model->getFullViewUrl();
         </div>
     </div>
    
-    <?= Html::a(Html::tag('h5', htmlspecialchars($model->titolo), ['class' => 'title-one-line']), $modelViewUrl, ['class' => 'link-list-title', 'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ').$model->titolo]) ?>
+    <?= Html::a(Html::tag('p', htmlspecialchars($model->titolo), ['class' => 'h5 title-one-line']), $modelViewUrl, ['class' => 'link-list-title', 'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ').$model->titolo]) ?>
                 
     <div class="small mb-2">
       

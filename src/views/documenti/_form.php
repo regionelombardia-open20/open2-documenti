@@ -19,6 +19,7 @@ use open20\amos\core\forms\TextEditorWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
 use kartik\datecontrol\DateControl;
 use kartik\select2\Select2;
@@ -43,6 +44,10 @@ $enableVersioning = $appController->documentsModule->enableDocumentVersioning;
 $isNewVersion = !empty(\Yii::$app->request->get('isNewVersion')) ? \Yii::$app->request->get('isNewVersion') : false;
 
 $disableStandardWorkflow = $appController->documentsModule->disableStandardWorkflow;
+
+
+$moduleSeo = \Yii::$app->getModule('seo');
+$hideSeoModuleClass = $documentsModule->hideSeoModule ? ' hidden' : '';
 
 $moduleGroups = Yii::$app->getModule('groups');
 $moduleCommunity = Yii::$app->getModule('community');
@@ -180,38 +185,6 @@ if ($viewReportWidgets) {
     ]);
 }
 
-//$_SESSION['upload_token'] = $_GET['oauthToken'];
-//$GoogleDriveManager = new open20\amos\documenti\utility\GoogleDriveDocument(['model' => $model]);
-
-//$adapter = $GoogleDriveManager->prepareAdapter();
-//if(!empty($adapter)){
-//    pr($adapter->listContents());
-//}
-
-//if ($_SERVER['REQUEST_METHOD'] == 'POST' && $GoogleDriveManager->client->getAccessToken()) {
-//// We'll setup an empty 1MB file to upload.
-//    DEFINE("TESTFILE", 'testfile-small.txt');
-//    if (!file_exists(TESTFILE)) {
-//        $fh = fopen(TESTFILE, 'w');
-//        fseek($fh, 1024 * 1024);
-//        fwrite($fh, "!", 1);
-//        fclose($fh);
-//    }
-//// This is uploading a file directly, with no metadata associated.
-//    $file = new Google_Service_Drive_DriveFile();
-//    $result = $service->files->create(
-//        $file,
-//        array(
-//            'data' => file_get_contents(TESTFILE),
-//            'mimeType' => 'application/octet-stream',
-//            'uploadType' => 'media'
-//        )
-//    );
-//}
-
-//$GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $model, 'useServiceAccount' => true]);
-//pr($GoogleDriveManager->getList('', true));
-
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
     'id' => 'doc-form',
@@ -225,77 +198,6 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
     'viewWidgetOnNewRecord' => false,
 ]);
 ?>
-
-
-<?php
-/** CONTENT PAGE SCRIPTS */
-
-$script = <<< JS
-
-	$(document).ready(function(){
-
-        $("#documenti_agid_content_type_id").ready(function(){
-
-            if( $("#documenti_agid_content_type_id").val().length != 0){
-
-                var url = "/documenti/documenti/get-documenti-agid-type-by-content-type";
-                var data = "documenti_agid_content_type_id=" + $("#documenti_agid_content_type_id").val() + "&documenti_agid_type_id=" + $("#documenti_agid_type_id").val();
-
-                ajaxPostCall(url, data, selectOptionDocumentiAgidType);
-
-            }
-        });
-
-        $("#documenti_agid_content_type_id").change(function(){
-
-            $("#documenti_agid_type_id option").remove();
-            $('#documenti_agid_type_id').append('<option value="">Seleziona ...</option>').trigger('change');
-            
-            var url = "/documenti/documenti/get-documenti-agid-type-by-content-type";
-            var data = "documenti_agid_content_type_id=" + $("#documenti_agid_content_type_id").val() + "&documenti_agid_type_id=" + $("#documenti_agid_type_id").val();
-
-            ajaxPostCall(url, data, selectOptionDocumentiAgidType);
-        });
-    });
-
-
-    function selectOptionDocumentiAgidType(data){
-
-        // remove old select options and set new select options
-        $('#documenti_agid_type_id option').remove();
-        $('#documenti_agid_type_id').append(JSON.parse(data));
-    }
-
-
-    function ajaxPostCall(url, data, functionExecute){
-
-        $.ajax({
-            type: "POST",
-            headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-            url: url,
-            data: data,
-            // contentType: "application/json; charset=utf-8",
-            // dataType: "json",
-            dataType: "html",
-            success: function (data, textStatus, jqXHR) {
-                functionExecute(data);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status + "/n" + thrownError + "/n" + xhr.responseText);
-                /**
-                * dettaglio errore 
-                * xhr.responseText
-                */
-                alert(xhr.status + " " + thrownError);
-                result = xhr.status + " " + thrownError;
-            }
-        });
-    }
-JS;
-
-$this->registerJs($script);
-?>
-
 
     <div class="documenti-form ">
         <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
@@ -415,9 +317,13 @@ $this->registerJs($script);
 
                     <?php if (!$isFolder && $enableCategories) : ?>
                         <div class="col-xs-12">
-                            <?= $form->field($model, 'documenti_categorie_id')->widget(Select2::className(), [
-                                'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => false],
-                                'data' => ArrayHelper::map(\open20\amos\documenti\utility\DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo'),
+                            <?= $form->field($model, 'documenti_categorie_id')->widget(Select::className(), [
+                                'options' => [
+                                    'placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'),
+                                    'id' => 'documenti_categorie_id-id',
+                                    'disabled' => false
+                                ],
+                                'data' => ArrayHelper::map(DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo'),
                             ]); ?>
                         </div>
                         <div class="col-xs-12 ">
@@ -776,6 +682,7 @@ $this->registerJs($script);
                                 'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : null,
                                 'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
                                 'disabled' => false,
+                                'tabindex' => 0,
                                 'onchange' => '
                                                 if($(this).val() == 1) $(\'#documenti-in_evidenza\').prop(\'disabled\', false);
                                                 if($(this).val() == 0) {
@@ -785,7 +692,7 @@ $this->registerJs($script);
                                                 ',
                             ]
                         ),
-                        ['class' => 'col-md-6 col-xs-12']
+                        ['class' => 'col-md-6 col-xs-12',]
                     );
                     ?>
                 <?php endif; ?>
@@ -799,6 +706,7 @@ $this->registerJs($script);
                         '0' => 'No',
                         '1' => 'Si',
                     ], [
+                        'tabindex' => 0,
                         'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : null,
                         'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
                         'disabled' => (isset($enableAgid) && true == $enableAgid) ? false : ($model->primo_piano == 1 ? false : true)
@@ -877,38 +785,38 @@ $this->registerJs($script);
             ]);
             ?>
 
-            <?php
-            $moduleSeo = \Yii::$app->getModule('seo');
-            if (isset($moduleSeo)) : ?>
-                <?= AccordionWidget::widget([
-                    'items' => [
-                        [
-                            'header' => AmosDocumenti::t('amosdocumenti', '#settings_seo_title'),
-                            'content' => \open20\amos\seo\widgets\SeoWidget::widget([
-                                'contentModel' => $model,
-                            ]),
-                        ],
+            <?php if (isset($moduleSeo)) : ?>
+            <div class="<?= $hideSeoModuleClass ?>">
+            <?= AccordionWidget::widget([
+                'items' => [
+                    [
+                        'header' => AmosDocumenti::t('amosdocumenti', '#settings_seo_title'),
+                        'content' => \open20\amos\seo\widgets\SeoWidget::widget([
+                            'contentModel' => $model,
+                        ]),
                     ],
-                    'headerOptions' => ['tag' => 'h2'],
-                    'options' => Yii::$app->user->can('ADMIN') ? [] : ['style' => 'display:none;'],
-                    'clientOptions' => [
-                        'collapsible' => true,
-                        'active' => 'false',
-                        'icons' => [
-                            'header' => 'ui-icon-amos am am-plus-square',
-                            'activeHeader' => 'ui-icon-amos am am-minus-square',
-                        ],
+                ],
+                'headerOptions' => ['tag' => 'h2'],
+                'options' => Yii::$app->user->can('ADMIN') ? [] : ['style' => 'display:none;'],
+                'clientOptions' => [
+                    'collapsible' => true,
+                    'active' => 'false',
+                    'icons' => [
+                        'header' => 'ui-icon-amos am am-plus-square',
+                        'activeHeader' => 'ui-icon-amos am am-minus-square',
                     ],
-                ]);
-                ?>
+                ],
+            ]);
+            ?>
+            </div>
             <?php endif; ?>
 
         </div>
+        
         <div class="col-xs-12">
-               
-               <?= RequiredFieldsTipWidget::widget(['containerClasses' => 'note_asterisk']) ?>
-           
+            <?= RequiredFieldsTipWidget::widget(['containerClasses' => 'note_asterisk']) ?>
        </div>
+        
         <div class="col-xs-12">
             <!-- MANCA EMAIL DI NOTIFICA TAB -->
             <?php
@@ -1072,3 +980,62 @@ $this->registerJs($script);
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);
 ?>
 <?php ActiveForm::end(); ?>
+
+<?php
+$script = <<< JS
+	$(document).ready(function(){
+        $("#documenti_agid_content_type_id").ready(function(){
+            if( $("#documenti_agid_content_type_id").val().length != 0){
+                var url = "/documenti/documenti/get-documenti-agid-type-by-content-type";
+                var data = "documenti_agid_content_type_id=" + $("#documenti_agid_content_type_id").val() + "&documenti_agid_type_id=" + $("#documenti_agid_type_id").val();
+
+                ajaxPostCall(url, data, selectOptionDocumentiAgidType);
+            }
+        });
+
+        $("#documenti_agid_content_type_id").change(function(){
+
+            $("#documenti_agid_type_id option").remove();
+            $('#documenti_agid_type_id').append('<option value="">Seleziona ...</option>').trigger('change');
+            
+            var url = "/documenti/documenti/get-documenti-agid-type-by-content-type";
+            var data = "documenti_agid_content_type_id=" + $("#documenti_agid_content_type_id").val() + "&documenti_agid_type_id=" + $("#documenti_agid_type_id").val();
+
+            ajaxPostCall(url, data, selectOptionDocumentiAgidType);
+        });
+    });
+
+
+    function selectOptionDocumentiAgidType(data){
+        // remove old select options and set new select options
+        $('#documenti_agid_type_id option').remove();
+        $('#documenti_agid_type_id').append(JSON.parse(data));
+    }
+
+    function ajaxPostCall(url, data, functionExecute){
+        $.ajax({
+            type: "POST",
+            headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
+            url: url,
+            data: data,
+            // contentType: "application/json; charset=utf-8",
+            // dataType: "json",
+            dataType: "html",
+            success: function (data, textStatus, jqXHR) {
+                functionExecute(data);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status + "/n" + thrownError + "/n" + xhr.responseText);
+                /**
+                * dettaglio errore 
+                * xhr.responseText
+                */
+                alert(xhr.status + " " + thrownError);
+                result = xhr.status + " " + thrownError;
+            }
+        });
+    }
+JS;
+
+$this->registerJs($script);
+

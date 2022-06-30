@@ -36,6 +36,9 @@ use open20\amos\core\interfaces\BreadcrumbInterface;
  */
 class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface
 {
+    /**
+     * 
+     */
     public static $CONFIG_FOLDER = 'config';
 
     /**
@@ -45,8 +48,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      */
     public $layout = 'main';
 
+    /**
+     * 
+     */
     public $name = 'Documenti';
 
+    /**
+     * 
+     */
     public $controllerNamespace = 'open20\amos\documenti\controllers';
 
     /**
@@ -60,6 +69,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableCategories = true;
 
     /**
+     * @var bool Show categories in document view
+     */
+    public $showCategoriesInView = false;
+
+    /**
      * @var array
      */
     public $whiteListRolesCategories = ['ADMIN', 'BASIC_USER'];
@@ -68,6 +82,15 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $enableDocumentVersioning If true enable the versioning of the documents. The folders aren't versioned.
      */
     public $enableDocumentVersioning = false;
+
+    /**
+     * @var array $defaultRequired - default required fields in document form
+     */
+    public $defaultRequired = [
+        'titolo',
+        'status',
+        'descrizione_breve',
+    ];
 
     /**
      * @var array $documentExtraRequiredFields - extra mandatory fields in document form
@@ -83,6 +106,16 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool|false $hidePubblicationDate
      */
     public $hidePubblicationDate = false;
+
+    /**
+     * @var bool|false $hideSearchPubblicationDates
+     */
+    public $hideSearchPubblicationDates = false;
+
+    /**
+     * @var bool|false $hideSearchPubblicationFromTo
+     */
+    public $hideSearchPubblicationFromTo = true;
 
     /**
      * @var array $defaultListViews This set the default order for the views in lists
@@ -187,6 +220,9 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      */
     public $enableGoogleDrive = false;
 
+    /**
+     * 
+     */
     public $googleDriveConf = [
         'developerKey' => '',
         'clientId' => "",
@@ -244,6 +280,54 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $documentiModelsendNotification
      */
     public $documnetiModelsendNotification = true;
+
+    /**
+     * hide block on _form relative to seo module even if it is present
+     * @var type
+     */
+    public $hideSeoModule = false;
+
+    /**
+     * If enabled the routes "/documenti/documenti/own-interest-documents" and "/documenti/documenti/all-documents"
+     * will be disabled and redirected to "/documenti/documenti/explore-documents"
+     * @var bool $enableExploreDocumentsInIndex
+     */
+    public $enableExploreDocumentsInIndex = false;
+
+    /**
+     * This parameter hide new button in widget graphics WidgetGraphicsCmsUltimiDocumenti
+     * @var bool
+     */
+    public $hideNewButtonInWGCmsUltimiDocumenti = false;
+
+    /**
+     * This parameter exclude folders in widget graphics WidgetGraphicsCmsUltimiDocumenti
+     * @var bool
+     */
+    public $excludeFoldersInWGCmsUltimiDocumenti = false;
+
+    /**
+     * hide create butto on explore documents action
+     * @var bool
+     */
+    public $hideCreateOnExploreDocuments = false;
+
+    /**
+     * hide second action butto on explore documents action
+     * @var bool
+     */
+    public $hideSecondActionOnExploreDocuments = false;
+    
+    /**
+     * The ID of the default category pre-selected for the new News
+     * @var integer
+     */
+    public $defaultCategory;
+    
+    /**
+     * @var int $explorerLastDocsToShow The number of documents to show in the documents explorer.
+     */
+    public $explorerLastDocsToShow = 3;
 
     /**
      * @inheritdoc

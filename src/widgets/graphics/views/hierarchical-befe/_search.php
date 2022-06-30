@@ -38,9 +38,7 @@ $documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
 /** @var DocumentiController $controller */
 $controller = Yii::$app->controller;
 
-$hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
-$hideSearchPubblicationDates = $controller->documentsModule->hideSearchPubblicationDates;
-$hideSearchPubblicationFromTo = $controller->documentsModule->hideSearchPubblicationFromTo;
+$hidePubblicationDate = $documentsModule->hidePubblicationDate;
 
 $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPanel']) || \Yii::$app->params['enableAutoOpenSearchPanel'] === true;
 ?>
@@ -74,49 +72,27 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
         <?= $form->field($model, 'descrizione') ?>
     </div>
     <?php if (!$hidePubblicationDate) { ?>
-        <?php if (!$hideSearchPubblicationDates) { ?>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
                 'type' => DateControl::FORMAT_DATE
-            ])->label(AmosDocumenti::t('amosdocumenti', "Data inizio pubblicazione dal")) ?>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'dataPubblicazioneAl')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
-            ])->label(AmosDocumenti::t('amosdocumenti', "al")) ?>
-        </div>
-        <?php } ?>
-    <?php } ?>
-    <?php if (!$hideSearchPubblicationFromTo) { ?>
-        <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'data_pubblicazione_from')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
             ]) ?>
         </div>
         <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'data_pubblicazione_to')->widget(DateControl::className(), [
+            <?= $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
                 'type' => DateControl::FORMAT_DATE
             ]) ?>
         </div>
     <?php } ?>
-    <?php if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)):
-
-        $creator = '';
-        $userProfileCreator = $model->createdUserProfile;
-        if (!empty($userProfileCreator)) {
-            $creator = $userProfileCreator->getNomeCognome();
-        }
-
-        ?>
+    <?php if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)): ?>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'created_by')->widget(Select2::className(), [
-                    'data' => (!empty($model->created_by) ? [$model->created_by => $creator] : []),
+                    'data' => (!empty($model->created_by) ? [$model->created_by => \open20\amos\admin\models\UserProfile::findOne($model->created_by)->getNomeCognome()] : []),
                     'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Cerca ...')],
                     'pluginOptions' => [
                         'allowClear' => true,
                         'minimumInputLength' => 3,
                         'ajax' => [
-                            'url' => \yii\helpers\Url::to(['/' . \open20\amos\admin\AmosAdmin::getModuleName() . '/user-profile-ajax/ajax-user-list']),
+                            'url' => \yii\helpers\Url::to(['/admin/user-profile-ajax/ajax-user-list']),
                             'dataType' => 'json',
                             'data' => new \yii\web\JsExpression('function(params) { return {q:params.term}; }')
                         ],
@@ -125,7 +101,7 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
             ); ?>
         </div>
     <?php endif; ?>
-    <?php if ($controller->documentsModule->enableCategories): ?>
+    <?php if ($documentsModule->enableCategories): ?>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'documenti_categorie_id')->widget(Select::className(), [
                 'data' => ArrayHelper::map($documentiCategorieModel::find()->all(), 'id', 'titolo'),

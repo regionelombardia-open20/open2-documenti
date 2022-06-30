@@ -142,6 +142,8 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     private $documentAttachments;
     
     private static $categories;
+
+    public $titolodate;
     
     /**
      * @inheritdoc
@@ -172,6 +174,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                 if ($countCategories == 1) {
                     $this->documenti_categorie_id = self::$categories[0]['id'];
                 }
+            }
+            if ($this->documentsModule->enableCategories && !empty($this->documentsModule->defaultCategory)) {
+                $this->documenti_categorie_id = $this->documentsModule->defaultCategory;
             }
         }
     }
@@ -722,6 +727,31 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             $childrenList = ArrayHelper::merge($childrenList, $documento->getAllChildrens());
         }
         
+        $childrenList [] = $this->id;
+        return $childrenList;
+    }
+
+
+    /**
+     * Search all children recursively
+     * @param array $children
+     * @return array
+     */
+    public function getAllChildrenFolder($children = [])
+    {
+        $currentModel = $this;
+        $childrenList = $children;
+
+        if (count($currentModel->childrenFolder) == 0) {
+            return [];
+        }
+
+        /** @var  $documento  Documenti */
+        foreach ($currentModel->childrenFolder as $documento) {
+            $childrenList[] = $documento->id;
+            $childrenList = ArrayHelper::merge($childrenList, $documento->getAllChildrenFolder());
+        }
+
         $childrenList [] = $this->id;
         return $childrenList;
     }

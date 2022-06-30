@@ -10,20 +10,15 @@
  */
 
 use open20\amos\attachments\components\AttachmentsList;
-use open20\amos\attachments\models\File;
 use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\forms\editors\likeWidget\LikeWidget;
+use open20\amos\core\forms\editors\socialShareWidget\SocialShareWidget;
 use open20\amos\core\forms\ItemAndCardHeaderWidget;
-use open20\amos\core\forms\PublishedByWidget;
+use open20\amos\core\forms\ListTagsWidget;
 use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
-use open20\amos\core\utilities\SortModelsUtility;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\utility\DocumentsUtility;
-use kartik\select2\Select2;
-use yii\helpers\ArrayHelper;
 use yii\web\View;
-use open20\amos\attachments\utility\SortAttachmentsUtility;
 
 /**
  * @var yii\web\View $this
@@ -35,28 +30,42 @@ $ruolo = Yii::$app->authManager->getRolesByUser(Yii::$app->getUser()->getId());
 if (isset($ruolo['ADMIN'])) {
     $url = ['index'];
 }
-$idDoc =  $model->id;
+
+/** @var AmosDocumenti $documentsModule */
+$documentsModule = AmosDocumenti::instance();
 
 /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
 $controller = Yii::$app->controller;
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
-$isFolder = $controller->documentIsFolder($model);
+
+if (\Yii::$app->user->can('ADMIN')) {
+    $layoutPublishedByWidget = $documentsModule->layoutPublishedByWidget['layoutAdmin'];
+} else {
+    $layoutPublishedByWidget = $documentsModule->layoutPublishedByWidget['layout'];
+}
+
 $controller->setNetworkDashboardBreadcrumb();
-$this->params['breadcrumbs'][] = ['label' => AmosDocumenti::t('amosdocumenti', Yii::$app->session->get('previousTitle')), 'url' => Yii::$app->session->get('previousUrl')];
+$this->params['breadcrumbs'][] = [
+    'label' => AmosDocumenti::t('amosdocumenti',
+        Yii::$app->session->get('previousTitle')),
+    'url' => Yii::$app->session->get('previousUrl')
+];
 $this->params['breadcrumbs'][] = $this->title;
 
 // Tab ids
 $idTabCard = 'tab-card';
 $idClassifications = 'tab-classifications';
 $idTabAttachments = 'tab-attachments';
+
 $document = $model->getDocumentMainFile();
+$documentCategory = $model->documentiCategorie;
 
 $this->registerJs($js, View::POS_READY);
 
 $jsCount = <<<JS
     $('#link-document-id').click(function() {
         $.ajax({
-           url: 'increment-count-download-link?id=$idDoc',
+           url: 'increment-count-download-link?id=$model->id',
            type: 'get',
            success: function (data) {
            }
@@ -81,20 +90,20 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
 
 /** @var \open20\amos\report\AmosReport $reportModule */
 $reportModule = Yii::$app->getModule('report');
-$viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $reportModule->modelsEnabled));
-
+$viewReportWidgets = (
+    !is_null($reportModule)
+    && in_array($model->className(), $reportModule->modelsEnabled)
+);
 ?>
 
 <div class="documents-view">
     <div class="row">
         <div class="col-xs-12 header-widget">
-            <?= ItemAndCardHeaderWidget::widget(
-                [
-                    'model' => $model,
-                    'publicationDateField' => 'data_pubblicazione',
-                    'showPrevalentPartnershipAndTargets' => true,
-                ]
-            ) ?>
+            <?= ItemAndCardHeaderWidget::widget([
+                'model' => $model,
+                'publicationDateField' => 'data_pubblicazione',
+                'showPrevalentPartnershipAndTargets' => true,
+            ]) ?>
             <div class="more-info-content">
                 <?php if ($viewReportWidgets) : ?>
                     <?= \open20\amos\report\widgets\ReportDropdownWidget::widget([
@@ -102,34 +111,21 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                     ]); ?>
                 <?php endif; ?>
                 <div class="m-l-10">
-                    
                     <?php
                     $contextMenuWidgetConf = [
                         'model' => $model,
                         'actionModify' => '/documenti/documenti/update?id=' . $model->id,
                         'actionDelete' => '/documenti/documenti/delete?id=' . $model->id,
                         'modelValidatePermission' => 'DocumentValidate',
-                        //'labelModify' => AmosDocumenti::t('amosdocumenti', "New document version"),
-                        //'actionModify' => $controller->documentsModule->enableDocumentVersioning ? "/documenti/documenti/new-document-version?id=" . $model->id : "/documenti/documenti/update?id=" . $model->id,
-                        //'checkModifyPermission' => $controller->documentsModule->enableDocumentVersioning ? !(\Yii::$app->user->can('DOCUMENTI_UPDATE')) : true,
-                        //'confirmModify' => AmosDocumenti::t('amosdocumenti', '#NEW_DOCUMENT_VERSION_MODAL_TEXT')
                     ];
-                    if ($model->is_folder) {
+                    
+                    if ($isFolder) {
                         $contextMenuWidgetConf['labelDeleteConfirm'] = AmosDocumenti::t('amosdocumenti', '#confirm_delete_folder');
                     }
-
+                    
+                    echo ContextMenuWidget::widget($contextMenuWidgetConf);
                     ?>
-					<?= ContextMenuWidget::widget($contextMenuWidgetConf) ?>
-					
                 </div>
-                <?php
-            $moduleDocumenti = \Yii::$app->getModule(AmosDocumenti::getModuleName());
-            if (\Yii::$app->user->can('ADMIN')) {
-                $layoutPublishedByWidget = $moduleDocumenti->layoutPublishedByWidget['layoutAdmin'];
-            } else {
-                $layoutPublishedByWidget = $moduleDocumenti->layoutPublishedByWidget['layout'];
-            }
-            ?>
             </div>
         </div>
     </div>
@@ -146,54 +142,73 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                             <p><?= $documentCategory->titolo ?></p>
                         </div>
                     <?php else : ?>
-
-                        <?php if ((in_array(strtolower($document['type']), ['jpg', 'png', 'jpeg', 'svg']))) : ?>
+                        <div class="col-xs-12 nop">
+                            <?php if ($documentsModule->showCategoriesInView) : ?>
+                                <?= $model->getAttributeLabel('documenti_categorie_id') . ': ' . '<span class="badge-document badge badge-pill">' . $documentCategory->titolo .'</span>' ?>
+                            <?php endif; ?>
+                        </div>
+                        <?php
+                        $docType = strtolower($document['type']);
+                        if ((in_array($docType, ['jpg', 'png', 'jpeg', 'svg']))) : ?>
                             <span class="icon icon-image icon-sm mdi mdi-file-image"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['pdf']))) : ?>
+                        <?php elseif ((in_array($docType, ['pdf']))) : ?>
                             <span class="icon icon-pdf icon-sm mdi mdi-file-pdf"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['doc', 'docx']))) : ?>
+                        <?php elseif ((in_array($docType, ['doc', 'docx']))) : ?>
                             <span class="icon icon-word icon-sm mdi mdi-file-word"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['xls', 'xlsx']))) : ?>
+                        <?php elseif ((in_array($docType, ['xls', 'xlsx']))) : ?>
                             <span class="icon icon-excel icon-sm mdi mdi-file-excel"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['csv']))) : ?>
+                        <?php elseif ((in_array($docType, ['csv']))) : ?>
                             <span class="icon icon-black icon-sm mdi mdi-file-delimited"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['pptx']))) : ?>
+                        <?php elseif ((in_array($docType, ['pptx']))) : ?>
                             <span class="icon icon-powerpoint icon-sm mdi mdi-file-powerpoint"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['txt', 'rtf']))) : ?>
+                        <?php elseif ((in_array($docType, ['txt', 'rtf']))) : ?>
                             <span class="icon icon-black icon-sm mdi mdi-file-document"></span>
-                        <?php elseif ((in_array(strtolower($document['type']), ['zip', 'rar']))) : ?>
+                        <?php elseif ((in_array($docType, ['zip', 'rar']))) : ?>
                             <span class="icon icon-link icon-sm mdi mdi-folder-zip"></span>
                         <?php else : ?>
                             <span class="icon icon-link icon-sm mdi mdi-file-link"></span>
                         <?php endif; ?>
-
-
                     <?php endif; ?>
                     <div>
                         <?php
-                        if ($model->getDocumentMainFile()->name) {
-                            $name = (strlen($model->getDocumentMainFile()->name) > 80) ? substr($model->getDocumentMainFile()->name, 0, 75) . '[...]' : $model->getDocumentMainFile()->name . '.' . $model->getDocumentMainFile()->type;
-                        } else {
-                            $name = $model->titolo;
-                        }
-
-                        if (!is_null($model->getDocumentMainFile())) {
+                        if (!is_null($document)) {
+                            $docName = $document->name;
+                            if ($docName) {
+                                $name = (strlen($docName) > 80)
+                                    ? substr($docName, 0, 75) . '[...]'
+                                    : $docName . '.' . $document->type;
+                            } else {
+                                $name = $model->titolo;
+                            }
                             echo Html::a(
                                 $name,
                                 [
-                                    '/attachments/file/download/', 'id' =>  $model->getDocumentMainFile()->id,
-                                    'hash' =>  $model->getDocumentMainFile()->hash
+                                    '/attachments/file/download/', 'id' => $document->id,
+                                    'hash' => $document->hash
                                 ],
                                 ['class' => 'filename ', 'data-toggle' => 'tooltip', 'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file')]
                             );
-                            echo Html::tag('span', (' (' . $model->documentMainFile->size % 1024) . ' Kb)', ['class' => 'text-muted small']);
-
+                            echo Html::tag(
+                                'span',
+                                (' ('
+                                    . $document->size % 1024) . ' Kb)',
+                                [
+                                    'class' => 'text-muted small'
+                                ]
+                            );
+                            
                             if ($model->drive_file_id) {
-                                echo Html::tag('em', AmosDocumenti::t('amosdocumenti', 'Questo è un file presente su Google Drive'));
+                                echo Html::tag(
+                                    'em',
+                                    AmosDocumenti::t('amosdocumenti', '#google_drive_file')
+                                );
                                 if (!empty($model->drive_file_modified_at)) {
                                     echo Html::tag(
                                         'em',
-                                        ' - ' . AmosDocumenti::t('amosdocumenti', 'aggiornato') . ' ' . \Yii::$app->formatter->asDatetime($model->drive_file_modified_at),
+                                        ' - '
+                                        . AmosDocumenti::t('amosdocumenti', 'aggiornato')
+                                        . ' '
+                                        . \Yii::$app->formatter->asDatetime($model->drive_file_modified_at),
                                         [
                                             'id' => 'drive-file-modified-at-id',
                                             'style' => 'display:none'
@@ -202,9 +217,11 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                                 }
                             }
                         } else if ($model->is_folder && $model->drive_file_id) {
-                            echo Html::tag('em', AmosDocumenti::t('amosdocumenti', 'Questa è una cartella sincronizzata con Google Drive'));
+                            echo Html::tag(
+                                'em',
+                                AmosDocumenti::t('amosdocumenti', '#sync_google_drive_folder')
+                            );
                         } else {
-
                             if ($documentLinkPresent) {
                                 echo Html::a(
                                     (strlen($model->link_document) > 80)
@@ -218,8 +235,6 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                                     ]
                                 );
                             } else {
-
-
                                 echo Html::a(
                                     AmosDocumenti::tHtml('amosdocumenti', 'Apri link esterno'),
                                     $model->link_document,
@@ -237,7 +252,7 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="download-box">
+                <div class="download-box m-t-30">
                     <?php echo $this->render('_download_box', [
                         'model' => $model,
                         'isFolder' => $isFolder,
@@ -247,7 +262,13 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                 </div>
             </div>
         </div>
+
         <div class="document-description m-t-20">
+            <p class="text-uppercase"><strong><?= AmosDocumenti::t('amosdocumenti', 'descrizione_breve'); ?></strong></p>
+            <?= $model->descrizione_breve; ?>
+        </div>
+        <div class="document-description m-t-20">
+            <p class="text-uppercase"><strong><?= $model->getAttributeLabel('descrizione'); ?></strong></p>
             <?= $model->descrizione; ?>
         </div>
 
@@ -264,42 +285,35 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
             ]) ?>
         </div>
     </div>
-
+    
     <?php if (!empty(\Yii::$app->getModule('tag'))) { ?>
         <div class="section-tags m-t-30" id="section-tags">
-
-
-            <?= \open20\amos\core\forms\ListTagsWidget::widget([
+            <?= ListTagsWidget::widget([
                 'userProfile' => $model->id,
                 'className' => $model->className(),
                 'viewFilesCounter' => true,
             ]);
             ?>
-
         </div>
     <?php } ?>
 
     <div class="footer-content">
-
         <div class="social-share-wrapper">
-            <?= \open20\amos\core\forms\editors\socialShareWidget\SocialShareWidget::widget([
-                'mode' => \open20\amos\core\forms\editors\socialShareWidget\SocialShareWidget::MODE_NORMAL,
+            <?= SocialShareWidget::widget([
+                'mode' => SocialShareWidget::MODE_NORMAL,
                 'configuratorId' => 'socialShare',
                 'model' => $model,
                 'url' => \yii\helpers\Url::to($baseUrl . '/documenti/documenti/public?id=' . $model->id, true),
                 'title' => $model->title,
                 'description' => $model->descrizione_breve,
-
             ]); ?>
-
         </div>
 
         <div class="widget-body-content">
-            <?php echo \open20\amos\core\forms\editors\likeWidget\LikeWidget::widget([
+            <?= LikeWidget::widget([
                 'model' => $model,
             ]);
             ?>
         </div>
-
     </div>
 </div>

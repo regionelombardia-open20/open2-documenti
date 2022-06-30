@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -24,6 +23,7 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
+use yii\helpers\VarDumper;
 
 /**
  * Class HierarchicalDocumentsController
@@ -38,7 +38,7 @@ class HierarchicalDocumentsController extends CrudController
      * @var string $layout
      */
     public $layout = 'list';
-    
+
     /**
      * @var AmosDocumenti $documentsModule
      */
@@ -58,17 +58,18 @@ class HierarchicalDocumentsController extends CrudController
         $this->setAvailableViews([
             'expl' => [
                 'name' => 'expl',
-                'label' => AmosIcons::show('grid') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icone')),
+                'label' => AmosIcons::show('grid').Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icone')),
                 'url' => '?currentView=expl'
             ],
             'icon' => [
                 'name' => 'icon',
-                'label' => AmosIcons::show('grid') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icon')),
+                'label' => AmosIcons::show('grid').Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Icon')),
                 'url' => '?currentView=icon'
             ],
             'grid' => [
                 'name' => 'grid',
-                'label' => AmosIcons::show('view-list-alt') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Table')),
+                'label' => AmosIcons::show('view-list-alt').Html::tag('p',
+                    AmosDocumenti::tHtml('amosdocumenti', 'Table')),
                 'url' => '?currentView=grid'
             ],
         ]);
@@ -82,31 +83,35 @@ class HierarchicalDocumentsController extends CrudController
      */
     public function behaviors()
     {
-        $behaviors = ArrayHelper::merge(parent::behaviors(), [
-            'access' => [
-                'class' => AccessControl::className(),
-                'rules' => [
-                    [
-                        'allow' => true,
-                        'actions' => [
-                            'render-hierarchical-documents-widget',
-                        ],
-                        'roles' => [
-                            'LETTORE_DOCUMENTI',
-                            'AMMINISTRATORE_DOCUMENTI',
-                            'CREATORE_DOCUMENTI',
-                            'FACILITATORE_DOCUMENTI',
-                            'VALIDATORE_DOCUMENTI'
+        $behaviors = ArrayHelper::merge(parent::behaviors(),
+                [
+                'access' => [
+                    'class' => AccessControl::className(),
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'actions' => [
+                                'render-hierarchical-documents-widget',
+                                'render-hierarchical-documents-widget-befe',
+                                'render-hierarchical-documents-widget-befe-by-date',
+                                'render-hierarchical-documents-widget-befe-community',
+                            ],
+                            'roles' => [
+                                'LETTORE_DOCUMENTI',
+                                'AMMINISTRATORE_DOCUMENTI',
+                                'CREATORE_DOCUMENTI',
+                                'FACILITATORE_DOCUMENTI',
+                                'VALIDATORE_DOCUMENTI'
+                            ]
                         ]
                     ]
+                ],
+                'verbs' => [
+                    'class' => VerbFilter::className(),
+                    'actions' => [
+                        'delete' => ['post', 'get'],
+                    ]
                 ]
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['post', 'get'],
-                ]
-            ]
         ]);
         return $behaviors;
     }
@@ -132,5 +137,38 @@ class HierarchicalDocumentsController extends CrudController
         Url::remember();
         $this->layout = false;
         return WidgetGraphicsHierarchicalDocuments::widget();
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function actionRenderHierarchicalDocumentsWidgetBefe()
+    {
+        Url::remember();
+        $this->layout = false;
+        return \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefe::widget();
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function actionRenderHierarchicalDocumentsWidgetBefeCommunity()
+    {
+        Url::remember();
+        $this->layout = false;
+        return \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::widget();
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function actionRenderHierarchicalDocumentsWidgetBefeByDate()
+    {
+        Url::remember();
+        $this->layout = false;
+        return \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeByDate::widget();
     }
 }

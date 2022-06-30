@@ -176,7 +176,8 @@ class DocumentiController extends CrudController
                                 'list-only',
                                 'increment-count-download-link',
                                 'sync-doc-file',
-                                'is-google-drive-document-modified'
+                                'is-google-drive-document-modified',
+                                'explore-documents',
                             ],
                             'roles' => [
                                 'LETTORE_DOCUMENTI',
@@ -787,10 +788,20 @@ class DocumentiController extends CrudController
     public function actionView($id)
     {
         $this->model = $this->findModel($id);
-        if ($this->model->isFolder()) {
+        $isFolder    = $this->model->isFolder();
+
+        if ($isFolder) {
+            if ($this->documentsModule->enableExploreDocumentsInIndex == true && $this->scope) {
+                return $this->redirect(['admin-all-documents', 'parentId' => $this->model->id]);
+            }
             return $this->redirect(['all-documents', 'parentId' => $this->model->id]);
         }
-        return $this->render('view', ['model' => $this->model]);
+
+        return $this->render('view',
+                [
+                'model' => $this->model,
+                'isFolder' => $isFolder
+        ]);
     }
 
     /**
@@ -803,7 +814,7 @@ class DocumentiController extends CrudController
         $isAjaxRequest = null,
         $regolaPubblicazione = null,
         $parentId = null,
-        $from = null
+        $to = null
     ) {
         $this->setUpLayout('form');
         $this->model = $this->documentsModule->createModel('Documenti');
@@ -903,7 +914,9 @@ class DocumentiController extends CrudController
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
                     }
-
+                    if (!empty($to)) {
+                        return $this->redirect($to);
+                    }
                     $this->redirectOnCreate($this->model);
                 } else {
                     if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
@@ -1262,6 +1275,10 @@ class DocumentiController extends CrudController
      */
     public function actionOwnInterestDocuments($currentView = null, $parentId = null)
     {
+        if($this->documentsModule->enableExploreDocumentsInIndex == true && $this->scope){
+            return $this->redirect(['/documenti/documenti/explore-documents']);
+        }
+
         Url::remember();
 
         Yii::$app->session->set('stanzePath', []);
@@ -1386,35 +1403,28 @@ class DocumentiController extends CrudController
      */
     public function actionAllDocuments($currentView = null, $parentId = null)
     {
+        if($this->documentsModule->enableExploreDocumentsInIndex == true && $this->scope){
+            return $this->redirect(['/documenti/documenti/explore-documents']);
+        }
         Url::remember();
 
         Yii::$app->session->set('stanzePath', []);
         Yii::$app->session->set('foldersPath', []);
-        if (!is_null($parentId)) { //set parent Id to filter documents within a folder
-
-            /* $moduleCwh = \Yii::$app->getModule('cwh');
-              $moduleCommunity = \Yii::$app->getModule('community');
-              if (isset($moduleCwh) && isset($moduleCommunity)) {
-              $folder = Documenti::findOne($parentId);
-              if($folder) {
-              pr($folder->validatori);
-              //                    $moduleCwh->setCwhScopeInSession([
-              //                        'community' => $id,
-              //                    ]);
-              }
-              } */
-
+        if (!is_null($parentId)) {
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);
         }
 
-        $dataProvider = $this->getModelSearch()->searchAll(Yii::$app->request->getQueryParams());
+        $dataProvider = $this->getModelSearch()->searchAll(
+            Yii::$app->request->getQueryParams()
+        );
+
         if(\Yii::$app->user->isGuest) {
             $dataProvider->query->andWhere(['primo_piano' => 1]);
         }
-        $this->setDataProvider($dataProvider);
 
+        $this->setDataProvider($dataProvider);
 
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_all'));
         $this->setCurrentView($this->getAvailableView($this->myCurrentView));
@@ -1447,6 +1457,44 @@ class DocumentiController extends CrudController
                 'parametro' => ($this->parametro) ? $this->parametro : null
             ]
         );
+    }
+
+    public static function getCwhScopeActive()
+    {
+        $cwh = \Yii::$app->getModule("cwh");
+
+        if (!empty($cwh)) {
+            $scope = $cwh->getCwhScope();
+            if (!empty($scope)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public function actionExploreDocuments()
+    {
+        if($this->documentsModule->enableExploreDocumentsInIndex != true || !$this->scope){
+            return $this->redirect(['/documenti/documenti/all-documents']);
+        }
+
+
+        Url::remember();
+
+        $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Documenti'));
+        $this->setListViewsParams();
+
+        $this->setUpLayout('list');
+
+        $this->view->params['titleSection'] = AmosDocumenti::t('amosdocumenti', 'Esplora i Documenti');
+        $this->view->params['labelLinkAll'] = '';
+        $this->view->params['urlLinkAll']   = '';
+        $this->view->params['titleLinkAll'] = '';
+        $this->view->params['hideCreate'] = $this->documentsModule->hideCreateOnExploreDocuments;
+        $this->view->params['hideSecondAction'] = $this->documentsModule->hideSecondActionOnExploreDocuments;
+
+        return $this->render('explorer_befe');
     }
 
     /**
@@ -1719,7 +1767,7 @@ class DocumentiController extends CrudController
         if (Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) {
             $redirectToUpdatePage = true;
         }
-        
+
         if(!$previousStatus){
             $redirectToUpdatePage = false;
         }
@@ -2488,6 +2536,7 @@ class DocumentiController extends CrudController
     public static function getManageLinks()
     {
 
+        $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
 
         if (\Yii::$app->user->can(WidgetIconDocumentiCreatedBy::class)) {
 
@@ -2497,25 +2546,34 @@ class DocumentiController extends CrudController
                 'url' => '/documenti/documenti/own-documents'
             ];
         }
-        if (\Yii::$app->user->can(WidgetIconDocumenti::class)) {
 
-            $links[] = [
-                'title' => AmosDocumenti::t('amosdocumenti', 'Visualizza i documenti di mio interesse'),
-                'label' => AmosDocumenti::t('amosdocumenti', 'Di mio interesse'),
-                'url' => '/documenti/documenti/own-interest-documents'
-            ];
+        if ($module->enableExploreDocumentsInIndex == true && self::getCwhScopeActive()) {
+            if (\Yii::$app->user->can(WidgetIconAllDocumenti::class)) {
+                $links[] = [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Esplora i documenti'),
+                    'label' => AmosDocumenti::t('amosdocumenti', 'Esplora tutti i documenti'),
+                    'url' => '/documenti/documenti/explore-documents'
+                ];
+            }
+        } else {
+            if (\Yii::$app->user->can(WidgetIconDocumenti::class)) {
+
+                $links[] = [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Visualizza i documenti di mio interesse'),
+                    'label' => AmosDocumenti::t('amosdocumenti', 'Di mio interesse'),
+                    'url' => '/documenti/documenti/own-interest-documents'
+                ];
+            }
+
+            if (\Yii::$app->user->can(WidgetIconAllDocumenti::class)) {
+
+                $links[] = [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Visualizza tutti i documenti'),
+                    'label' => AmosDocumenti::t('amosdocumenti', 'Tutti i documenti'),
+                    'url' => '/documenti/documenti/all-documents'
+                ];
+            }
         }
-
-        if (\Yii::$app->user->can(WidgetIconAllDocumenti::class)) {
-
-            $links[] = [
-                'title' => AmosDocumenti::t('amosdocumenti', 'Visualizza tutti i documenti'),
-                'label' => AmosDocumenti::t('amosdocumenti', 'Tutti i documenti'),
-                'url' => '/documenti/documenti/all-documents'
-            ];
-        }
-
-
 
         if (\Yii::$app->user->can(WidgetIconDocumentiDaValidare::class)) {
             $links[] = [

@@ -79,8 +79,9 @@ $this->registerJs($jsCount);
         <?php if ($documentLinkPresent) : ?>
             <?= Html::a(
                 Html::tag(
-                    'h5',
-                    $modelTitleSpecialChars
+                    'p',
+                    $modelTitleSpecialChars,
+                    ['class' => 'h5']
                 ),
                 $model->link_document,
                 [
@@ -92,8 +93,9 @@ $this->registerJs($jsCount);
         <?php else : ?>
             <?= Html::a(
                 Html::tag(
-                    'h5',
-                    $modelTitleSpecialChars
+                    'p',
+                    $modelTitleSpecialChars,
+                    ['class' => 'h5']
                 ),
                 $modelViewUrl,
                 [

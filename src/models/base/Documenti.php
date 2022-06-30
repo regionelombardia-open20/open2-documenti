@@ -87,11 +87,7 @@ abstract class Documenti extends ContentModel
      */
     public function rules()
     {
-        $defaultRequired = [
-            'titolo',
-            'status',
-        ];
-        $required = ArrayHelper::merge($defaultRequired, $this->documentsModule->documentExtraRequiredFields);
+        $required = ArrayHelper::merge($this->documentsModule->defaultRequired, $this->documentsModule->documentExtraRequiredFields);
 
         if ($this->documentsModule->enableCategories) {
             $required[] =  'documenti_categorie_id';
@@ -148,10 +144,6 @@ abstract class Documenti extends ContentModel
 
             [[ 'object', 'extended_description', 'distribution_proscription', 'dates_and_intermediate_stages', 'further_information', 'regulatory_requirements', 'protocol', 'help_box'], 'string'],
             [['start_date', 'end_date', 'protocol_date'], 'safe'],
-
-            [['descrizione_breve'], 'required'],
-
-
             [['documenti_agid_content_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => DocumentiAgidContentType::className(), 'targetAttribute' => ['documenti_agid_content_type_id' => 'id']],
             [['documenti_agid_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => DocumentiAgidType::className(), 'targetAttribute' => ['documenti_agid_type_id' => 'id']],
             [['agid_organizational_unit_content_type_area_id'], 'exist', 'skipOnError' => true, 'targetClass' => AgidOrganizationalUnit::className(), 'targetAttribute' => ['agid_organizational_unit_content_type_area_id' => 'id']],
@@ -231,6 +223,14 @@ abstract class Documenti extends ContentModel
     public function getChildren()
     {
         return $this->hasMany($this->documentsModule->model('Documenti'), ['parent_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getChildrenFolder()
+    {
+        return $this->hasMany($this->documentsModule->model('Documenti'), ['parent_id' => 'id'])->andWhere(['is_folder' => 1]);
     }
 
     /**

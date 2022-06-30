@@ -17,10 +17,12 @@ use open20\amos\core\record\CmsField;
 use open20\amos\core\record\SearchResult;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\tag\models\EntitysTagsMm;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
-use open20\amos\tag\models\EntitysTagsMm;
+use yii\db\Expression;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class DocumentiSearch
@@ -32,6 +34,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     private $container;
     public $parentId;
     public $dataPubblicazioneAl;
+
+    public $data_pubblicazione_from;
+    public $data_pubblicazione_to;
+
     /**
      *
      * @param array $config
@@ -49,9 +55,21 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function init()
     {
         parent::init();
-
+    
         $this->data_pubblicazione = null;
         $this->data_rimozione = null;
+        $this->documenti_categorie_id = null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return ArrayHelper::merge(parent::attributeLabels(), [
+            'data_pubblicazione_from' => AmosDocumenti::t('amosdocumenti', 'Data da'),
+            'data_pubblicazione_to' => AmosDocumenti::t('amosdocumenti', 'Data a'),
+        ]);
     }
 
     /**
@@ -67,7 +85,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return [
             [$integer, 'integer'],
             [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
-                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to'], 'safe'],
         ];
     }
 
@@ -147,6 +165,15 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
             }
         }
+
+        if (!empty($this->data_pubblicazione_from)) {
+            $query->andFilterWhere(['>=', new Expression("DATE(data_pubblicazione)"), new Expression("DATE('{$this->data_pubblicazione_from}')")]);
+        }
+
+        if (!empty($this->data_pubblicazione_to)) {
+            $query->andFilterWhere(['<=', new Expression("DATE(data_pubblicazione)"), new Expression("DATE('{$this->data_pubblicazione_to}')")]);
+        }
+
     }
 
     /**
@@ -246,6 +273,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $this->applySearchFilters($query);
         $this->getSearchQuery($query);
 
+        //VarDumper::dump($query->createCommand()->rawSql,3,true);
         return $dataProvider;
     }
 
@@ -307,10 +335,16 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function lastDocuments($params, $limit = null)
     {
-        $params = Yii::$app->request->getQueryParams();
+        $params                      = array_merge($params, Yii::$app->request->getQueryParams());
         $params['fromWidgetGraphic'] = true;
         $dataProvider = $this->searchAll($params, $limit);
 
+        if (!empty($params["conditionSearch"])) {
+            $commands = explode(";", $params["conditionSearch"]);
+            foreach ($commands as $command) {
+                $dataProvider->query->andWhere(eval("return ".$command.";"));
+            }
+        }
         return $dataProvider;
     }
 

@@ -65,7 +65,6 @@ $documentLinkPresent = (!empty($model->link_document));
 $enableContentDuplication = $documentsModule->enableContentDuplication;
 $foldersEnabled = $documentsModule->enableFolders;
 $enableDocumentVersioning = $documentsModule->enableDocumentVersioning;
-$documentCategory = $model->documentiCategorie;
 
 if ($model->drive_file_id) {
     $this->registerJs($jsGoogleDrive);
