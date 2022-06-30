@@ -59,8 +59,6 @@ use yii\helpers\ArrayHelper;
  */
 abstract class Documenti extends ContentModel
 {
-	
-
     /**
      * @var AmosDocumenti $documentsModule
      */
@@ -81,23 +79,25 @@ abstract class Documenti extends ContentModel
     {
         $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
         parent::init();
-
     }
 
-    /** 
+    /**
      * @inheritdoc
      */
-    public function rules() {
+    public function rules()
+    {
         $defaultRequired = [
             'titolo',
             'status',
         ];
         $required = ArrayHelper::merge($defaultRequired, $this->documentsModule->documentExtraRequiredFields);
 
-        
-        $rules = [
+        if ($this->documentsModule->enableCategories) {
+            $required[] =  'documenti_categorie_id';
+        }
+        return [
             [[
-            'descrizione',
+                'descrizione',
                 'metakey',
                 'metadesc'
             ], 'string'],
@@ -124,7 +124,7 @@ abstract class Documenti extends ContentModel
                 'is_folder',
                 'version',
                 'version_parent_id'
-            ], 'integer'], 
+            ], 'integer'],
             [[
                 'data_pubblicazione',
                 'data_rimozione',
@@ -138,10 +138,6 @@ abstract class Documenti extends ContentModel
             ], 'safe'],
             [ $required, 'required'],
         ];
-        if (!empty(AmosDocumenti::instance()) && AmosDocumenti::instance()->enableCategories) {
-            $rules['documenti_categorie_id'] = ['documenti_categorie_id', 'required'];
-        }
-        return $rules;
     }
 
     /**
@@ -212,6 +208,4 @@ abstract class Documenti extends ContentModel
     {
         return $this->hasOne($this->documentsModule->model('Documenti'), ['id' => 'version_parent_id']);
     }
-	
-
 }

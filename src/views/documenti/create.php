@@ -31,7 +31,5 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="documenti-create">
     <?= $this->render('_form', [
         'model' => $model,
-		'offunusedfields' => $offunusedfields,
-                'urlRedirect' => $urlRedirect
     ]) ?>
 </div>

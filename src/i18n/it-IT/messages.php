@@ -382,5 +382,4 @@ return [
     'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
     'DocumentiWorkflow/NONVALIDATO' => 'Non Validato',
     'Open file' => 'Apri file',
-    '#download' => 'Scarica',
 ];

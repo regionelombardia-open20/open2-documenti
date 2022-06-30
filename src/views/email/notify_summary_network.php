@@ -22,7 +22,6 @@ use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
 
 $colors = NotifyUtility::getColorNetwork($color);
 
-
 ?>
 <?php foreach ($arrayModels as $model): ?>
     <?php
@@ -33,8 +32,7 @@ $colors = NotifyUtility::getColorNetwork($color);
         <td colspan="2" style="padding-bottom:10px;">
             <table width="100%">
                 <tr>
-                    <td valigh="top"
-                        style="font-size:18px; font-weight:bold; font-family: sans-serif; text-align:left; vertical-align:top;">
+                    <td valigh="top" style="font-size:18px; font-weight:bold; font-family: sans-serif; text-align:left; vertical-align:top;">
                         <p style="margin:0 0 5px 0">
                             <?= Html::a($modelTitle, $modelAbsoluteFullViewUrl, [
                                 'style' => 'color: #000; text-decoration:none;',
@@ -45,6 +43,7 @@ $colors = NotifyUtility::getColorNetwork($color);
                         <p style="font-size:13px; color:#7d7d7d; padding:10px 0; font-family: sans-serif; font-weight:normal; margin:0; text-align: left;"><?= $model->getDescription(true) ?></p>
                     </td>
                     <td width="35%" align="right" valign="top" style="padding-left:10px; text-align:right;">
+                        <img src="<?= $model->getModelImageUrlForSummaries() ?>" width="165" border="0" style="max-width:100%" alt="<?= $modelTitle ?>">
                     </td>
                 </tr>
                 <tr>
@@ -58,14 +57,11 @@ $colors = NotifyUtility::getColorNetwork($color);
                                         </tr>
                                     </table>
                                 </td>
-                                <td align="right" width="85" valign="bottom"
-                                    style="text-align: center; padding-left: 10px;">
+                                <td align="right" width="85" valign="bottom" style="text-align: center; padding-left: 10px;">
                                     <a href="<?= $modelAbsoluteFullViewUrl ?>"
                                        style="background: <?= $colors[1] ?>; border:3px solid <?= $colors[1] ?>; color: #ffffff; font-family: sans-serif; font-size: 11px; line-height: 22px; text-align: center; text-decoration: none; display: block; font-weight: bold; text-transform: uppercase; padding:1px"
                                        class="button-a">
-                                        <!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]-->
-                                        <?= AmosDocumenti::t('amosdocumenti', '#download') ?><!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;
-                                        <![endif]-->
+                                        <!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]--><?= AmosDocumenti::t('amosdocumenti', '#read') ?><!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]-->
                                     </a>
                                 </td>
                             </tr>

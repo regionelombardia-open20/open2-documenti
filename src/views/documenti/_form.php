@@ -25,7 +25,6 @@ use open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
 use kartik\datecontrol\DateControl;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
-use open20\amos\core\forms\CloseSaveButtonWidget;
 
 /**
  * @var yii\web\View $this
@@ -208,11 +207,6 @@ if ($viewReportWidgets) {
 //$GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $model, 'useServiceAccount' => true]);
 //pr($GoogleDriveManager->getList('', true));
 
-$hidefields = '';
-if ($offunusedfields) {
-    $hidefields = 'display:none';
-}
-
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
     'id' => 'doc-form'
@@ -235,12 +229,11 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 CreatedUpdatedWidget::widget(['model' => $model, 'isTooltip' => true]) .
                 $reportFlagWidget, ['class' => 'subtitle-form']) ?>
         </div>
-          
         <div class="col-md-8 col-xs-12">
             <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
             <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
 
-            <?php if (!$isFolder && !$offunusedfields): ?>
+            <?php if (!$isFolder): ?>
                 <?= $form->field($model, 'sottotitolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_subtitle_field_hint')) ?>
                 <?= $form->field($model, 'descrizione_breve')->textarea(['maxlength' => true, 'rows' => 3, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_abstract_field_hint')) ?>
                 <?= $form->field($model, 'descrizione')->widget(TextEditorWidget::className(), [
@@ -251,7 +244,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 ]) ?>
             <?php endif; ?>
 
-            <?php if (!$isFolder && $enableCategories && !$offunusedfields): ?>
+            <?php if (!$isFolder && $enableCategories): ?>
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'documenti_categorie_id')->widget(Select2::className(), [
                         'options' => ['placeholder' => AmosDocumenti::t('amosdocumenti', 'Digita il nome della categoria'), 'id' => 'documenti_categorie_id-id', 'disabled' => FALSE],
@@ -279,7 +272,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 'isFolder' => $isFolder
             ]); ?>
 
-            <?php if (!$isFolder && !$offunusedfields): ?>
+            <?php if (!$isFolder): ?>
                 <div class="col-xs-12 attachment-section nop">
                     <div class="col-xs-12">
                         <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#attachments_title')) ?>
@@ -320,7 +313,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
         ?>
         <?php if ($showReceiverSection): ?>
 
-            <div class="col-xs-12"  style="<?= $hidefields ?>">
+            <div class="col-xs-12">
                 <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
                 <div class="col-xs-12 receiver-section">
                     <?=
@@ -339,8 +332,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
     </div>
 
-    <div class="row" >
-        <div class="col-xs-12" style="<?= $hidefields ?>">
+    <div class="row">
+        <div class="col-xs-12">
             <?php
             if (\Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')) :
                 if (Yii::$app->getModule('documenti')->params['site_publish_enabled']): ?>
@@ -563,9 +556,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
             ]);*/
             ?>
         </div>
-		
         <?php
-		if (!$offunusedfields){
         $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
             ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
             : AmosDocumenti::t('amosdocumenti', 'Annulla');
@@ -606,11 +597,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
             'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
             'viewWidgetOnNewRecord' => true,
 
+            'closeButton' => Html::a($closeButtonText, $appController->getFormCloseUrl($model), ['class' => 'btn btn-secondary']),
 
- 'closeButton' => Html::a(AmosDocumenti::t('amosdocumenti', 'Annulla'), is_null($urlRedirect)?Yii::$app->session->get('previousUrl'):$urlRedirect,
-                    ['class' => 'btn btn-secondary']),
-            
-            
             // fisso lo stato iniziale per generazione pulsanti e comportamenti
             // "fake" in fase di creazione (il record non e' ancora inserito nel db)
             'initialStatusName' => "BOZZA",
@@ -621,17 +609,10 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
             'draftButtons' => $draftButtons
         ]);
-		} else if ($offunusedfields){
-        ?> 
-		
-		<?= CloseSaveButtonWidget::widget([
-        'model' => $model,
-        'urlClose' => is_null($urlRedirect)?Yii::$app->session->get('previousUrl'):$urlRedirect,
-    ]); ?>
-                <?php } ?>
+        ?>
     </div>
 
-    
+
 </div>
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);?>
 <?php ActiveForm::end(); ?>
