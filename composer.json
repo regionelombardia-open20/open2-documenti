@@ -17,7 +17,7 @@
         "open20/amos-admin":"^2.2.0",
         "open20/amos-attachments": "^1.7.0",
         "open20/amos-comments":"^1.1",
-        "open20/amos-core":"^1.24.0",
+        "open20/amos-core":"^1.27.0",
         "open20/amos-dashboard":"^1.9.1",
         "open20/amos-notify":"^1.5",
         "open20/amos-workflow": "^1.0",

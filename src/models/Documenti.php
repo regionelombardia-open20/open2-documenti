@@ -33,6 +33,7 @@ use open20\amos\seo\behaviors\SeoContentBehavior;
 use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
 use raoul2000\workflow\base\SimpleWorkflowBehavior;
 use raoul2000\workflow\base\WorkflowException;
+use open20\amos\core\interfaces\ContentPublicationInteraface;
 use Yii;
 use yii\base\Exception;
 use yii\db\ActiveQuery;
@@ -61,7 +62,7 @@ use yii\helpers\Inflector;
  * @package open20\amos\documenti\models
  */
 
-class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface, SeoModelInterface
+class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface, SeoModelInterface, ContentPublicationInteraface
 {
     // Workflow ID
     const DOCUMENTI_WORKFLOW = 'DocumentiWorkflow';
@@ -1659,6 +1660,21 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         } else {
             return Url::toRoute(["/" . $this->getViewUrl(), "id" => $this->id]);
         }
+    }
+
+
+    /**
+     * Show if the content is visible
+     * used in particular to know if attachments file are visible
+     * @return boolean
+     */
+    public function isContentPublic(){
+        // isContentPublished si trova nel contentModel
+        $ok = $this->isContentPublished();
+        if($this->primo_piano && $ok){
+            return true;
+        }
+        return false;
     }
 
 }
