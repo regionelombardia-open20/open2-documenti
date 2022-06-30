@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -13,9 +12,7 @@ namespace open20\amos\documenti\widgets\icons;
 
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\core\widget\WidgetAbstract;
-
 use open20\amos\documenti\AmosDocumenti;
-
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -51,8 +48,7 @@ class WidgetIconDocumentiCategorie extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
     }
@@ -65,9 +61,7 @@ class WidgetIconDocumentiCategorie extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-            parent::getOptions(),
-            ['children' => []]
+                parent::getOptions(), ['children' => []]
         );
     }
-
 }

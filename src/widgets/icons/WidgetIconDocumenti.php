@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -16,9 +15,7 @@ use open20\amos\core\widget\WidgetIcon;
 use open20\amos\dashboard\models\AmosWidgets;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
-
 use open20\amos\utility\models\BulletCounters;
-
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -28,6 +25,7 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconDocumenti extends WidgetIcon
 {
+
     /**
      * @inheritdoc
      */
@@ -53,8 +51,7 @@ class WidgetIconDocumenti extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
 
@@ -62,30 +59,11 @@ class WidgetIconDocumenti extends WidgetIcon
         if ($this->disableBulletCounters == false) {
             $this->setBulletCount(
                 BulletCounters::getAmosWidgetIconCounter(
-                    Yii::$app->getUser()->getId(), 
-                    AmosDocumenti::getModuleName(),
-                    $this->getNamespace(),
-                    $this->resetBulletCount()
+                    Yii::$app->getUser()->getId(), AmosDocumenti::getModuleName(), $this->getNamespace(),
+                    $this->resetBulletCount(), WidgetIconAllDocumenti::className()
                 )
             );
         }
-        
-//        if ($this->disableBulletCounters == false) {
-//            $search = new DocumentiSearch();
-//            $search->setEventAfterCounter();
-//            $query = $search->searchOwnInterestsQuery([]);
-//            
-//            $this->setBulletCount(
-//                $this->makeBulletCounter(
-//                    Yii::$app->getUser()->getId(),
-//                    Documenti::className(),
-//                    $query
-//                )
-//            );
-//            
-//            \Yii::$app->session->set('_offQuery', $query);
-//            $this->trigger(self::EVENT_AFTER_COUNT);
-//        }
     }
 
     /**
@@ -96,8 +74,7 @@ class WidgetIconDocumenti extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-            parent::getOptions(),
-            ['children' => $this->getWidgetsIcon()]
+                parent::getOptions(), ['children' => $this->getWidgetsIcon()]
         );
     }
 
@@ -108,7 +85,7 @@ class WidgetIconDocumenti extends WidgetIcon
     public function getWidgetsIcon()
     {
         return AmosWidgets::find()
-            ->andWhere(['child_of' => self::className()])
-            ->all();
+                ->andWhere(['child_of' => self::className()])
+                ->all();
     }
 }

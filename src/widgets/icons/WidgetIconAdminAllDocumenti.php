@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -32,7 +31,7 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
      */
     public function init()
     {
-        
+
         parent::init();
 
         $paramsClassSpan = [
@@ -53,24 +52,9 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
-
-//        if ($this->disableBulletCounters == false) {
-//            /** @var DocumentiSearch $search */
-//            $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
-//            $this->setBulletCount(
-//                $this->makeBulletCounter(
-//                    Yii::$app->getUser()->getId(),
-//                    Documenti::className(),
-//                    $search->buildQuery([], 'admin-all')
-//                )
-//            );
-//                        $this->trigger(self::EVENT_AFTER_COUNT);
-
-//        }
     }
 
     /**
@@ -81,9 +65,7 @@ class WidgetIconAdminAllDocumenti extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-                parent::getOptions(),
-                ['children' => []]
+                parent::getOptions(), ['children' => []]
         );
     }
-
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -16,9 +15,7 @@ use open20\amos\core\widget\WidgetIcon;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
-
 use open20\amos\utility\models\BulletCounters;
-
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -28,7 +25,7 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconAllDocumenti extends WidgetIcon
 {
-    
+
     /**
      * @inheritdoc
      */
@@ -54,8 +51,7 @@ class WidgetIconAllDocumenti extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
 
@@ -63,31 +59,11 @@ class WidgetIconAllDocumenti extends WidgetIcon
         if ($this->disableBulletCounters == false) {
             $this->setBulletCount(
                 BulletCounters::getAmosWidgetIconCounter(
-                    Yii::$app->getUser()->getId(), 
-                    AmosDocumenti::getModuleName(),
-                    $this->getNamespace(),
-                    $this->resetBulletCount()
+                    Yii::$app->getUser()->getId(), AmosDocumenti::getModuleName(), $this->getNamespace(),
+                    $this->resetBulletCount(), null, WidgetIconDocumenti::className(), $this->saveMicrotime
                 )
             );
         }
-        
-//        if ($this->disableBulletCounters == false) {
-//            $search = new DocumentiSearch();
-//            $search->setEventAfterCounter();
-//            
-//            $query = $search->searchAllQuery([]);
-//            
-//            $this->setBulletCount(
-//                $this->makeBulletCounter(
-//                    Yii::$app->getUser()->getId(),
-//                    Documenti::className(),
-//                    $query
-//                )
-//            );
-//            
-//            \Yii::$app->session->set('_offQuery', $query);
-//            $this->trigger(self::EVENT_AFTER_COUNT);
-//        }
     }
 
     /**
@@ -97,8 +73,7 @@ class WidgetIconAllDocumenti extends WidgetIcon
     {
         //aggiunge all'oggetto container tutti i widgets recuperati dal controller del modulo
         return ArrayHelper::merge(
-            parent::getOptions(),
-            ['children' => []]
+                parent::getOptions(), ['children' => []]
         );
     }
 }

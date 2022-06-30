@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -13,11 +12,9 @@ namespace open20\amos\documenti\widgets\icons;
 
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\core\widget\WidgetAbstract;
-
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
-
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -53,20 +50,9 @@ class WidgetIconDocumentiCreatedBy extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
-
-//        /** @var DocumentiSearch $search */
-//        $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
-//        $this->setBulletCount(
-//            $this->makeBulletCounter(
-//                Yii::$app->getUser()->getId(),
-//                Documenti::className(),
-//                $search->searchCreatedByMeQuery([])
-//            )
-//        );
     }
 
     /**
@@ -77,9 +63,7 @@ class WidgetIconDocumentiCreatedBy extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-            $options = parent::getOptions(),
-            ['children' => []]
+                $options = parent::getOptions(), ['children' => []]
         );
     }
-
 }

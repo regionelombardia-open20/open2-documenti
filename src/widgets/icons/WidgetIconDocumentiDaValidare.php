@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -31,7 +30,7 @@ class WidgetIconDocumentiDaValidare extends WidgetIcon
      */
     public function init()
     {
-        
+
         parent::init();
 
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_to_validate'));
@@ -52,22 +51,9 @@ class WidgetIconDocumentiDaValidare extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
-
-//        if ($this->disableBulletCounters == false) {
-//            /** @var DocumentiSearch $search */
-//            $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
-//            $this->setBulletCount(
-//                $this->makeBulletCounter(
-//                    Yii::$app->getUser()->getId(),
-//                    Documenti::class,
-//                    $search->searchToValidateQuery([])
-//                )
-//            );
-//        }
     }
 
     /**
@@ -78,9 +64,7 @@ class WidgetIconDocumentiDaValidare extends WidgetIcon
     public function getOptions()
     {
         return ArrayHelper::merge(
-                parent::getOptions(),
-                ['children' => []]
+                parent::getOptions(), ['children' => []]
         );
     }
-
 }

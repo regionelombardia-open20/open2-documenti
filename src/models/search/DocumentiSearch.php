@@ -150,7 +150,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function search($params, $queryType = null, $limit = null, $onlyDratfs = false)
     {
-        $getParentId = \Yii::$app->request->get('parentId');
+        $getParentId = (\Yii::$app instanceof \yii\web\Application) ? \Yii::$app->request->get('parentId') : null;
         if($getParentId){
             $params['DocumentiSearch']['parentId'] = $getParentId;
         }
