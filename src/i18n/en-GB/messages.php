@@ -439,5 +439,7 @@ return [
     'Non ci sono documenti di tuo interesse da visualizzare!' => 'There are no documents of your interest to view!',
     'Clicca e scopri tutti i documenti della piattaforma' => 'Click and discover all documents of the platform',
     'e scopri ora tutti i documenti di' => 'and discover now all documents of',
-    'Non sono presenti documenti' => 'There are no documents'
+    'Non sono presenti documenti' => 'There are no documents',
+    "Data inizio pubblicazione dal" => "Publication date form",
+    "al" => "to",
 ];

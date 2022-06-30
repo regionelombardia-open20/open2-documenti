@@ -75,12 +75,12 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
                 'type' => DateControl::FORMAT_DATE
-            ]) ?>
+            ])->label(AmosDocumenti::t('amosdocumenti', "Data inizio pubblicazione dal")) ?>
         </div>
         <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
+            <?= $form->field($model, 'dataPubblicazioneAl')->widget(DateControl::className(), [
                 'type' => DateControl::FORMAT_DATE
-            ]) ?>
+            ])->label(AmosDocumenti::t('amosdocumenti', "al")) ?>
         </div>
     <?php } ?>
     <?php if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)): ?>

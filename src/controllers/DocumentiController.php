@@ -709,7 +709,6 @@ class DocumentiController extends CrudController
             ]);
 
             if (!Yii::$app->user->can('DOCUMENTI_CREATE')) {
-                $this->view->params['forceCreateNewButtonWidget'] = true;
                 $layout = $btnBack;
             } else {
                 if (!$isDriveFolder) {
