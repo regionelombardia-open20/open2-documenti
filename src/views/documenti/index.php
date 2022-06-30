@@ -189,7 +189,7 @@ $columns['data_pubblicazione'] = [
     'attribute' => 'data_pubblicazione',
     'value' => function ($model) {
         /** @var Documenti $model */
-        return (is_null($model->data_pubblicazione)) ? AmosDocumenti::t('amosdocumenti', 'Subito') : Yii::$app->formatter->asDate($model->data_pubblicazione);
+        return $model->getPublicatedFromFormatted();
     }
 ];
 
@@ -198,7 +198,7 @@ if (!$foldersEnabled) {
         'attribute' => 'data_rimozione',
         'value' => function ($model) {
             /** @var Documenti $model */
-            return (is_null($model->data_rimozione)) ? AmosDocumenti::t('amosdocumenti', 'Mai') : Yii::$app->formatter->asDate($model->data_rimozione);
+            return $model->getPublicatedAtFormatted();
         }
     ];
 

@@ -92,6 +92,7 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                     'model' => $model,
                     'publicationDateField' => 'data_pubblicazione',
                     'showPrevalentPartnershipAndTargets' => true,
+                    'publicationDateAsDateTime' => true,
                 ]
             ) ?>
             <?php

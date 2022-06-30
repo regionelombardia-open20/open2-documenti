@@ -93,11 +93,11 @@ $enableCategories = AmosDocumenti::instance()->enableCategories;
                     </dl>
                     <dl>
                         <dt><?= $model->getAttributeLabel('data_pubblicazione') ?></dt>
-                        <dd><?= Yii::$app->getFormatter()->asDate($model->data_pubblicazione) ?></dd>
+                        <dd><?= $model->getPublicatedFromFormatted(); ?></dd>
                     </dl>
                     <dl>
                         <dt><?= $model->getAttributeLabel('data_rimozione') ?></dt>
-                        <dd><?= Yii::$app->getFormatter()->asDate($model->data_rimozione) ?></dd>
+                        <dd><?= $model->getPublicatedAtFormatted(); ?></dd>
                     </dl>
                 </section>
             </div>

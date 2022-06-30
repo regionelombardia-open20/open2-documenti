@@ -201,6 +201,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableCatImgInDocView = false;
 
     /**
+     * @var bool $enablePublicationDateAsDatetime If true the publication date begin and end fields are date time, not only date.
+     */
+    public $enablePublicationDateAsDatetime = false;
+
+    /**
      * @inheritdoc
      */
     public static function getModuleName()

@@ -63,6 +63,7 @@ $this->registerJs($jsCount);
                 <?= ItemAndCardHeaderWidget::widget([
                     'model' => $model,
                     'publicationDateField' => 'data_pubblicazione',
+                    'publicationDateAsDateTime' => true,
                 ]);
                 ?>
             </div>

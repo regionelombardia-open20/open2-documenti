@@ -41,6 +41,8 @@ $controller = Yii::$app->controller;
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 
 $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPanel']) || \Yii::$app->params['enableAutoOpenSearchPanel'] === true;
+$publicationDateType = ($documentsModule->enablePublicationDateAsDatetime ? DateControl::FORMAT_DATETIME : DateControl::FORMAT_DATE);
+
 ?>
 
 <div class="documenti-search element-to-toggle" data-toggle-element="form-search">
@@ -74,12 +76,12 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
     <?php if (!$hidePubblicationDate) { ?>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
+                'type' => $publicationDateType
             ]) ?>
         </div>
         <div class="col-sm-6 col-lg-4">
             <?= $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
+                'type' => $publicationDateType
             ]) ?>
         </div>
     <?php } ?>

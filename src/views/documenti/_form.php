@@ -33,10 +33,13 @@ use yii\helpers\ArrayHelper;
  * @var array $scope
  */
 
+/** @var AmosDocumenti $documentsModule */
+$documentsModule = AmosDocumenti::instance();
+
 /** @var \open20\amos\documenti\controllers\DocumentiController $appController */
 $appController = Yii::$app->controller;
 $isFolder = $appController->documentIsFolder($model);
-$enableCategories = AmosDocumenti::instance()->enableCategories;
+$enableCategories = $documentsModule->enableCategories;
 $enableVersioning = $appController->documentsModule->enableDocumentVersioning;
 $isNewVersion = !empty(\Yii::$app->request->get('isNewVersion')) ? \Yii::$app->request->get('isNewVersion') : false;
 
@@ -47,7 +50,7 @@ $moduleCommunity = Yii::$app->getModule('community');
 $moduleCwh = Yii::$app->getModule('cwh');
 $moduleNotify = \Yii::$app->getModule('notify');
 
-$enableGroupNotification = AmosDocumenti::instance()->enableGroupNotification;
+$enableGroupNotification = $documentsModule->enableGroupNotification;
 $primoPiano = '';
 $inEvidenza = '';
 $enableComments = '';
@@ -381,13 +384,14 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 $endPublicationDateHint = ($model->is_folder ?
                     AmosDocumenti::t('amosdocumenti', '#folder_end_publication_date_hint') :
                     AmosDocumenti::t('amosdocumenti', '#end_publication_date_hint'));
+                $publicationDateType = ($documentsModule->enablePublicationDateAsDatetime ? DateControl::FORMAT_DATETIME : DateControl::FORMAT_DATE);
                 $publicationDate = Html::tag('div',
                         $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
-                            'type' => DateControl::FORMAT_DATE])->hint(AmosDocumenti::t('amosdocumenti', '#start_publication_date_hint')),
+                            'type' => $publicationDateType])->hint(AmosDocumenti::t('amosdocumenti', '#start_publication_date_hint')),
                         ['class' => 'col-md-4 col-xs-12']) .
                     Html::tag('div',
                         $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
-                            'type' => DateControl::FORMAT_DATE])->hint($endPublicationDateHint),
+                            'type' => $publicationDateType])->hint($endPublicationDateHint),
                         ['class' => 'col-md-4 col-xs-12']);
             }
             ?>

@@ -145,6 +145,13 @@ abstract class Documenti extends ContentModel
      */
     public function attributeLabels()
     {
+        if ($this->documentsModule->enablePublicationDateAsDatetime) {
+            $dataPubblicazioneLabel = AmosDocumenti::t('amosdocumenti', '#start_publication_datetime');
+            $dataRimozioneLabel = AmosDocumenti::t('amosdocumenti', '#end_publication_datetime');
+        } else {
+            $dataPubblicazioneLabel = AmosDocumenti::t('amosdocumenti', '#start_publication_date');
+            $dataRimozioneLabel = AmosDocumenti::t('amosdocumenti', '#end_publication_date');
+        }
         return ArrayHelper::merge(parent::attributeLabels(), [
             'id' => AmosDocumenti::t('amosdocumenti', 'Id'),
             'titolo' => AmosDocumenti::t('amosdocumenti', '#documents_title_field'),
@@ -158,8 +165,8 @@ abstract class Documenti extends ContentModel
             'in_evidenza' => AmosDocumenti::t('amosdocumenti', 'In evidenza'),
             'hits' => AmosDocumenti::t('amosdocumenti', 'Visualizzazioni'),
             'abilita_pubblicazione' => AmosDocumenti::t('amosdocumenti', 'Abilita pubblicazione'),
-            'data_pubblicazione' => AmosDocumenti::t('amosdocumenti', '#start_publication_date'),
-            'data_rimozione' => AmosDocumenti::t('amosdocumenti', '#end_publication_date'),
+            'data_pubblicazione' => $dataPubblicazioneLabel,
+            'data_rimozione' => $dataRimozioneLabel,
             'documenti_categorie_id' => AmosDocumenti::t('amosdocumenti', 'Categoria'),
             'status' => AmosDocumenti::t('amosdocumenti', 'Stato'),
             'comments_enabled' => AmosDocumenti::t('amosdocumenti', '#comments_enabled'),

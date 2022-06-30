@@ -18,6 +18,7 @@ use open20\amos\core\interfaces\ContentModelInterface;
 use open20\amos\core\interfaces\ModelDocumentInterface;
 use open20\amos\core\interfaces\ModelImageInterface;
 use open20\amos\core\interfaces\NewsletterInterface;
+use open20\amos\core\interfaces\PublicationDateFieldsInterface;
 use open20\amos\core\interfaces\ViewModelInterface;
 use open20\amos\core\interfaces\WorkflowMetadataInterface;
 use open20\amos\core\utilities\DuplicateContentUtility;
@@ -56,7 +57,7 @@ use yii\log\Logger;
  *
  * @package open20\amos\documenti\models
  */
-class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface
+class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface, PublicationDateFieldsInterface
 {
     // Workflow ID
     const DOCUMENTI_WORKFLOW = 'DocumentiWorkflow';
@@ -149,11 +150,12 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             $this->is_folder = Documenti::IS_DOCUMENT;
             $this->status = $this->getWorkflowSource()->getWorkflow(self::DOCUMENTI_WORKFLOW)->getInitialStatusId();
             if (!empty($this->documentsModule)) {
+                $datesAsDatetime = $this->documentsModule->enablePublicationDateAsDatetime;
                 if ($this->documentsModule->hidePubblicationDate) {
                     // the news will be visible forever
-                    $this->data_rimozione = '9999-12-31';
+                    $this->data_rimozione = '9999-12-31' . ($datesAsDatetime ? ' 23:59:59' : '00:00:00');
                 }
-                $this->data_pubblicazione = date("Y-m-d");
+                $this->data_pubblicazione = ($datesAsDatetime ? date('Y-m-d H:i:s') : date('Y-m-d'));
             }
             if ($this->documentsModule && $this->documentsModule->enableDocumentVersioning && !$this->is_folder) {
                 $this->version = 1;
@@ -181,7 +183,6 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['documentMainFile'],
                 'required',
                 'when' => function ($model) {
-//            pr($model->drive_file_id);die;
                     return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == '' && empty($model->drive_file_id)));
                 },
                 'whenClient' => "function(attribute, value) {
@@ -637,6 +638,64 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public function getPublicatedAt()
     {
         return $this->data_rimozione;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getPublicatedFromField()
+    {
+        return 'data_pubblicazione';
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getPublicatedAtField()
+    {
+        return 'data_rimozione';
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function theDatesAreDatetime()
+    {
+        return $this->documentsModule->enablePublicationDateAsDatetime;
+    }
+    
+    /**
+     * This method returns the beginning publication date formatted
+     * @return string
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function getPublicatedFromFormatted()
+    {
+        $publicationDate = $this->getPublicatedFrom();
+        if (is_null($publicationDate)) {
+            return AmosDocumenti::t('amosdocumenti', 'Subito');
+        }
+        if ($this->theDatesAreDatetime()) {
+            return Yii::$app->formatter->asDatetime($publicationDate, 'humanalwaysdatetime');
+        }
+        return Yii::$app->formatter->asDate($publicationDate);
+    }
+    
+    /**
+     * This method returns the end publication date formatted
+     * @return string
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function getPublicatedAtFormatted()
+    {
+        $publicationDate = $this->getPublicatedAt();
+        if (is_null($publicationDate)) {
+            return AmosDocumenti::t('amosdocumenti', 'Mai');
+        }
+        if ($this->theDatesAreDatetime()) {
+            return Yii::$app->formatter->asDatetime($publicationDate, 'humanalwaysdatetime');
+        }
+        return Yii::$app->formatter->asDate($publicationDate);
     }
     
     /**
@@ -1316,7 +1375,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                 'attribute' => 'data_pubblicazione',
                 'value' => function ($model) {
                     /** @var Documenti $model */
-                    return (is_null($model->data_pubblicazione)) ? AmosDocumenti::t('amosdocumenti', 'Subito') : Yii::$app->formatter->asDate($model->data_pubblicazione);
+                    return $model->getPublicatedFromFormatted();
                 }
             ]
         ];

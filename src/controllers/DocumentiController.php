@@ -667,7 +667,7 @@ class DocumentiController extends CrudController
             $this->model->regola_pubblicazione = $regolaPubblicazione;
             $this->model->destinatari = Yii::$app->request->post()['Documenti']['destinatari'];
             if (!$this->documentsModule->hidePubblicationDate) {
-                $this->model->data_pubblicazione = date("Y-m-d");
+                $this->model->data_pubblicazione = ($this->documentsModule->enablePublicationDateAsDatetime ? date('Y-m-d H:i:s') : date('Y-m-d'));
             }
             $this->model->setScenario(Documenti::SCENARIO_FOLDER);
             $this->model->is_folder = Documenti::IS_FOLDER;
@@ -1251,7 +1251,6 @@ class DocumentiController extends CrudController
     {
         $expandRowKey = \Yii::$app->request->post('expandRowKey');
         $actionId = $this->action->id;
-        $hidePubblicationDate = $this->documentsModule->hidePubblicationDate;
 
         $queryParams['parent_id'] = $expandRowKey;
         $dataProvider = $this->getModelSearch()->searchVersions($queryParams);
@@ -1346,7 +1345,7 @@ class DocumentiController extends CrudController
                         'attribute' => 'data_pubblicazione',
                         'value' => function ($model) {
                             /** @var Documenti $model */
-                            return (is_null($model->data_pubblicazione)) ? 'Subito' : Yii::$app->formatter->asDate($model->data_pubblicazione);
+                            return $model->getPublicatedFromFormatted();
                         },
                         'label' => AmosDocumenti::t('amosdocumenti', '#uploaded_at'),
                     ],
