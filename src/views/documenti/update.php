@@ -24,7 +24,11 @@ $this->params['breadcrumbs'][] = AmosDocumenti::t('amosdocumenti', 'Aggiorna');
 ?>
 
 <div class="documenti-update">
-    <?= $this->render('_form', [
+    <?=
+    $this->render('_form', [
         'model' => $model,
-    ]) ?>
+        'offunusedfields' => $offunusedfields,
+        'urlRedirect' => $urlRedirect
+    ])
+    ?>
 </div>

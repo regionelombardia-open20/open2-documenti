@@ -855,7 +855,7 @@ class DocumentiAjaxController extends Controller
      */
     private function baseQuery()
     {
-        /** @var Documenti $documentiModel */
+		 /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
         /** @var ActiveQuery $query */
         return $this->addCwhQuery(
@@ -902,15 +902,18 @@ class DocumentiAjaxController extends Controller
     /**
      * @return ActiveDataProvider
      */
-    private function getDataProvider($isFolderField)
-    {
+    private function getDataProvider($isFolderField) {
+        $documentsModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
+        $orderField = $documentsModule->params['orderParams']['documenti']['default_field'];
+        $order = $documentsModule->params['orderParams']['documenti']['order_type'];
+
         return new ActiveDataProvider([
             'query' => $this
-                ->baseQuery()
-                ->andWhere(['is_folder' => $isFolderField]),
+                    ->baseQuery()
+                    ->andWhere(['is_folder' => $isFolderField]),
             'sort' => [
                 'defaultOrder' => [
-                    'titolo' => SORT_ASC
+                    $orderField => $order
                 ]
             ],
             'pagination' => false

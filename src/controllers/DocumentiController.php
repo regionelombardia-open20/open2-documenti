@@ -639,11 +639,11 @@ class DocumentiController extends CrudController
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate($isFolder = null, $isAjaxRequest = null, $regolaPubblicazione = null, $parentId = null, $from = null)
+    public function actionCreate($isFolder = null, $isAjaxRequest = null, $regolaPubblicazione = null, $parentId = null, $from = null, $urlRedirect = null, $offunusedfields = null)
     {
         $this->setUpLayout('form');
         $this->model = $this->documentsModule->createModel('Documenti');
-
+		
         $moduleGroups = \Yii::$app->getModule('groups');
         $enableGroupNotification = $this->documentsModule->enableGroupNotification;
 
@@ -676,12 +676,19 @@ class DocumentiController extends CrudController
         }
 
         if ($this->model->load(Yii::$app->request->post())) {
+            if ($offunusedfields) {
+                $this->model->setScenario(Documenti::SCENARIO_OFF_UNUSED_FIELDS);
+                $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
+                $this->model->detachBehavior('workflow');
+                $this->model->detachBehavior('workflowLog');
+                $this->model->detachBehavior('NotifyBehavior');
+            }
             $fileId = \Yii::$app->request->post('fileid');
-            $GoogleDriveManager = null;
+            $GoogleDriveManager = null; 
             if (!empty($fileId)) {
                 $GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model]);
             }
-
+	
             if ($this->model->validate()) {
                 $validateOnSave = true;
                 if ($this->model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE) {
@@ -733,8 +740,11 @@ class DocumentiController extends CrudController
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
                     }
-
-                    $this->redirectOnCreate($this->model);
+                    if ($urlRedirect) {
+                        return $this->redirect($urlRedirect);
+                    } else {
+                        $this->redirectOnCreate($this->model);
+                    }
                 } else {
                     if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
                         Yii::$app->getSession()->addFlash(
@@ -763,10 +773,13 @@ class DocumentiController extends CrudController
                 }
             }
         }
+	//	pr($urlRedirect); die; 
 
         return $this->render('create', [
             'model' => $this->model,
-            'scope' => $this->scope
+            'scope' => $this->scope, 
+            'offunusedfields' => is_null($offunusedfields)? false : $offunusedfields,
+                'urlRedirect' => $urlRedirect
         ]);
     }
 
@@ -813,12 +826,11 @@ class DocumentiController extends CrudController
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionUpdate($id, $backToEditStatus = false)
+    public function actionUpdate($id, $backToEditStatus = false, $urlRedirect = null, $offunusedfields = null)
     {
         Url::remember();
         $moduleGroups = \Yii::$app->getModule('groups');
         $enableGroupNotification = $this->documentsModule->enableGroupNotification;
-
 
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
@@ -832,6 +844,13 @@ class DocumentiController extends CrudController
         if (Yii::$app->request->post()) {
             $previousStatus = $this->model->status;
             if ($this->model->load(Yii::$app->request->post())) {
+                if ($offunusedfields) {
+                    $this->model->setScenario(Documenti::SCENARIO_OFF_UNUSED_FIELDS);
+                    $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
+                    $this->model->detachBehavior('workflow');
+                    $this->model->detachBehavior('workflowLog');
+                    $this->model->detachBehavior('NotifyBehavior');
+                }
                 $GoogleDriveManager = null;
                 $fileId = \Yii::$app->request->post('fileid');
                 if (!empty($fileId)) {
@@ -855,7 +874,11 @@ class DocumentiController extends CrudController
                                 $this->sendNotificationEmail();
                             }
                         }
-                        return $this->redirectOnUpdate($this->model, $previousStatus);
+                        if ($urlRedirect) {
+                            return $this->redirect($urlRedirect);
+                        } else {
+                            return $this->redirectOnUpdate($this->model, $previousStatus);
+                        }
                     } else {
                         Yii::$app->getSession()->addFlash('danger', AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio'));
                         return $this->render('update', [
@@ -879,7 +902,9 @@ class DocumentiController extends CrudController
 
         return $this->render('update', [
             'model' => $this->model,
-            'scope' => $this->scope
+            'scope' => $this->scope,
+            'offunusedfields' => is_null($offunusedfields) ? false : $offunusedfields,
+            'urlRedirect' => $urlRedirect
         ]);
     }
 
@@ -932,13 +957,13 @@ class DocumentiController extends CrudController
      * @throws \yii\db\StaleObjectException
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionDelete($id)
+    public function actionDelete($id, $urlRedirect = null)
     {
         $this->model = $this->findModel($id);
         if ($this->documentsModule->enableFolders) {
-            return $this->enabledFoldersDelete();
+            return $this->enabledFoldersDelete($urlRedirect);
         } else {
-            return $this->standardDelete();
+            return $this->standardDelete($urlRedirect);
         }
     }
 
@@ -946,7 +971,7 @@ class DocumentiController extends CrudController
      * @return \yii\web\Response
      * @throws \yii\db\StaleObjectException
      */
-    protected function standardDelete()
+    protected function standardDelete($urlRedirect = null)
     {
         $this->model->delete();
         $isFolder = $this->model->isFolder();
@@ -961,20 +986,25 @@ class DocumentiController extends CrudController
                 AmosDocumenti::tHtml('amosdocumenti', 'Non sei autorizzato a cancellare il documento.'));
             Yii::$app->getSession()->addFlash('danger', $errorMessage);
         }
-        return $this->redirect(Url::previous());
+        
+        if ($urlRedirect) {
+            return $this->redirect($urlRedirect);
+        } else {
+            return $this->redirect(Url::previous());
+        }
     }
 
     /**
      * @return \yii\web\Response
      * @throws \yii\db\StaleObjectException
      */
-    protected function enabledFoldersDelete()
+    protected function enabledFoldersDelete($urlRedirect = null)
     {
         $allOk = $this->model->deleteAllChildren();
         if (!$allOk) {
             return $this->redirect(Url::previous());
         }
-        return $this->standardDelete();
+        return $this->standardDelete($urlRedirect);
     }
 
     /**

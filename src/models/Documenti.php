@@ -86,6 +86,8 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     const SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE = 'scenario_details_hide_pubblication_date';
     const SCENARIO_CREATE_HIDE_PUBBLICATION_DATE = 'scenario_create_hide_pubblication_date';
     const SCENARIO_UPDATE_HIDE_PUBBLICATION_DATE = 'scenario_update_hide_pubblication_date';
+	
+	 const SCENARIO_OFF_UNUSED_FIELDS = 'scenario_off_unused_fields';
 
     // Is folder constants
     const IS_FOLDER = 1;
@@ -211,7 +213,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             
             [['link_document'], 'url', 'skipOnEmpty' => function($model) {
                     return $model->link_document == '';
-                }
+                } 
             ],
         ]);
 
@@ -229,6 +231,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             ]);
         }
 
+        if ($this->scenario == self::SCENARIO_OFF_UNUSED_FIELDS) {
+            unset($rules['documenti_categorie_id']);
+        }
         return $rules;
     }
 
@@ -297,6 +302,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         $scenarios[self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE] = $scenarios[self::SCENARIO_DETAILS];
         $scenarios[self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE] = $scenarios[self::SCENARIO_CREATE];
 
+        $scenarios[self::SCENARIO_OFF_UNUSED_FIELDS] = ['titolo'];
         return $scenarios;
     }
 
