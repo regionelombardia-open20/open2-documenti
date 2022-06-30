@@ -54,7 +54,7 @@ class ModuleDocumentiAsset extends AssetBundle
         $moduleL = \Yii::$app->getModule('layout');
 
         if(!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS){
-            $this->css = ['less/documents_fullsize.less'];
+            $this->css = ['less/documents_fullsize.less', 'less/document_design_bi.less'];
         }
 
         if (!empty($moduleL)) {

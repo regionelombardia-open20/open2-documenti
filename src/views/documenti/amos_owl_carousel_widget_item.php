@@ -33,7 +33,7 @@ if (!$model->is_folder) {
 <div class="owl-item-content">
     <div class="col-xs-3 col-md-3 nop">
         <span class="date"><?= AmosDocumenti::t('amosdocumenti', '#carousel_update_at') ?></span>
-        <span class="date"><?= $model->getPublicatedFromFormatted(); ?></span>
+        <span class="date"><?= \Yii::$app->formatter->asDate($model->data_pubblicazione) ?></span>
         <div>
             <?= Html::a($documentIcon, $iconUrl, [
                 'title' => AmosDocumenti::t('amosdocumenti', '#carousel_download'),

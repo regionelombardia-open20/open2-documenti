@@ -92,7 +92,6 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                     'model' => $model,
                     'publicationDateField' => 'data_pubblicazione',
                     'showPrevalentPartnershipAndTargets' => true,
-                    'publicationDateAsDateTime' => true,
                 ]
             ) ?>
             <?php
@@ -185,6 +184,7 @@ $viewReportWidgets = (!is_null($reportModule) && in_array($model->className(), $
                     'viewFilesCounter' => true,
                     'enableSort' => true,
                     'viewSortBtns' => false,
+                    'requireModalMoveFile' => AmosDocumenti::instance()->requireModalMoveFile
                 ]) ?>
             </div>
         </div>

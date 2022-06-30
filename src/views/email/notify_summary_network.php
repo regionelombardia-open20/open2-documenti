@@ -11,7 +11,6 @@
 
 use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
-use open20\amos\documenti\models\Documenti;
 use open20\amos\notificationmanager\utility\NotifyUtility;
 use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
 
@@ -26,7 +25,6 @@ $colors = NotifyUtility::getColorNetwork($color);
 ?>
 <?php foreach ($arrayModels as $model): ?>
     <?php
-    /** @var Documenti $model */
     $modelTitle = $model->getTitle();
     $modelAbsoluteFullViewUrl = Yii::$app->urlManager->createAbsoluteUrl($model->getFullViewUrl());
     ?>
@@ -41,7 +39,7 @@ $colors = NotifyUtility::getColorNetwork($color);
                                 'title' => $modelTitle
                             ]) ?>
                         </p>
-                        <p style="font-size:11px; color:#4b4b4b; font-weight:bold;font-family: sans-serif;"><?= $model->getPublicatedFromFormatted(); ?></p>
+                        <p style="font-size:11px; color:#4b4b4b; font-weight:bold;font-family: sans-serif;"><?= Yii::$app->formatter->asDate($model->data_pubblicazione) ?></p>
                         <p style="font-size:13px; color:#7d7d7d; padding:10px 0; font-family: sans-serif; font-weight:normal; margin:0; text-align: left;"><?= $model->getDescription(true) ?></p>
                     </td>
                     <td width="35%" align="right" valign="top" style="padding-left:10px; text-align:right;">

@@ -44,8 +44,6 @@ class DocumentsOwlCarouselWidget extends AmosOwlCarouselWidget
         $documentsModule = AmosDocumenti::instance();
 
         if (!is_null($highlightsModule)) {
-            $datesAsDatetime = $documentsModule->enablePublicationDateAsDatetime;
-            $now = ($datesAsDatetime ? date('Y-m-d H:i:s') : date('Y-m-d'));
             /** @var \amos\highlights\Module $highlightsModule */
             $documentsHighlightsIds = $highlightsModule->getHighlightedContents($documentsModule->model('Documenti'));
             /** @var Documenti $documentiModel */
@@ -57,7 +55,7 @@ class DocumentsOwlCarouselWidget extends AmosOwlCarouselWidget
             $query->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO]);
             $query->andWhere(['or',
                 ['data_rimozione' => null],
-                ['>=', 'data_rimozione', $now]
+                ['>=', 'data_rimozione', date('Y-m-d')]
             ]);
             $documentsHighlights = $query->all();
         }

@@ -20,6 +20,7 @@ use open20\amos\documenti\models\Documenti;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
+use open20\amos\tag\models\EntitysTagsMm;
 
 /**
  * Class DocumentiSearch
@@ -66,7 +67,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return [
             [$integer, 'integer'],
             [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione',
-                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+                'data_rimozione', 'documenti_categorie_id','documenti_agid_content_type_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
     }
 
@@ -86,6 +87,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             'updated_by',
             'deleted_by',
             'documenti_categorie_id',
+            'documenti_agid_content_type_id',
+
+
         ];
         if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
             === false)) {
@@ -150,6 +154,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $showAll = false)
     {
+
         $getParentId = (\Yii::$app instanceof \yii\web\Application) ? \Yii::$app->request->get('parentId') : null;
         if($getParentId){
             $params['DocumentiSearch']['parentId'] = $getParentId;
@@ -157,6 +162,12 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $query = $this
             ->buildQuery($params, $queryType)
             ->limit($limit);
+
+        //ricerca soloo per contenuti che posso vedere AGID
+        if(\Yii::$app->getUser()->can('REDACTOR_DOCUMENTI')){
+            $ids = \open20\amos\documenti\models\DocumentiAgidTypeRoles::find()->select('documenti_agid_type_id')->andWhere(['user_id' =>\Yii::$app->getUser()->id ])->distinct()->column();
+            $query->andWhere([self::tableName() .'.documenti_agid_type_id' => $ids,]);
+        }
 
         /** Switch off notifications - method of NotifyRecord */
         $this->switchOffNotifications($query);
@@ -172,7 +183,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //overwrite default order in case  foldering is enabled
         if (empty($params['DocumentiSearch']['orderAttribute'])) {
-            if ($this->documentsModule->enableFolders) {
+            if (AmosDocumenti::instance()->enableFolders) {
                 $dataProvider->setSort([
                     'defaultOrder' => [
                         'is_folder' => SORT_DESC,
@@ -187,7 +198,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 ]);
             }
         }
-        
         //if you don't use the seach form, the recursive search is not active
         if (!($this->load($params) && $this->validate())) {
             //if you come from widget grphic LastDocuments Show also documents that are inside the folders
@@ -198,17 +208,14 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             }
             return $dataProvider;
         }
-    
+
+        // recursive search
         if (!empty($this->parentId)) {
-            $idsToSearch = $this->parentId;
-            if (!$this->documentsModule->disableAdminListRecursion) {
-                // recursive search
-                /** @var Documenti $documentiModel */
-                $documentiModel = $this->documentsModule->createModel('Documenti');
-                $currentFolder  = $documentiModel::findOne($this->parentId);
-                $idsToSearch = $currentFolder->getAllChildrens();
-            }
-            $query->andWhere([self::tableName().'.parent_id' => $idsToSearch]);
+            /** @var Documenti $documentiModel */
+            $documentiModel = $this->documentsModule->createModel('Documenti');
+            $currentFolder  = $documentiModel::findOne($this->parentId);
+            $listChildrenId = $currentFolder->getAllChildrens();
+            $query->andWhere([self::tableName().'.parent_id' => $listChildrenId]);
         }
 
         //if parentid empty the search is without (parent_id IS NULL)
@@ -238,6 +245,39 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             }
         }
 
+
+        // Agid 
+        $documentsModule = AmosDocumenti::instance();
+
+        if( $documentsModule->enableAgid ){
+
+            if( !empty($params['DocumentiSearch']['updated_from']) ){
+                $query->andWhere(['>=', 'documenti.updated_at', $params['DocumentiSearch']['updated_from'] ]);
+            }
+    
+            if( !empty($params['DocumentiSearch']['updated_to']) ){
+                $query->andWhere(['<=', 'documenti.updated_at', $params['DocumentiSearch']['updated_to'] ]);
+            }
+
+            if( !empty($params['DocumentiSearch']['agid_organizational_unit_content_type_office_id']) ){
+                $query->andWhere(['documenti.agid_organizational_unit_content_type_office_id' => $params['DocumentiSearch']['agid_organizational_unit_content_type_office_id'] ]);
+            }
+
+            if( !empty($params['DocumentiSearch']['agid_organizational_unit_content_type_area_id']) ){
+                $query->andWhere(['documenti.agid_organizational_unit_content_type_area_id' => $params['DocumentiSearch']['agid_organizational_unit_content_type_area_id'] ]);
+            }
+            
+            if( !empty($params['DocumentiSearch']['documenti_agid_content_type_id']) ){
+                $query->andWhere(['documenti.documenti_agid_content_type_id' => $params['DocumentiSearch']['documenti_agid_content_type_id'] ]);
+            }
+            
+            if( !empty($params['DocumentiSearch']['documenti_agid_type_id']) ){
+                $query->andWhere(['documenti_agid_type_id' => $params['DocumentiSearch']['documenti_agid_type_id'] ]);
+            }
+        }
+
+        
+     
         $this->applySearchFilters($query);
         $this->getSearchQuery($query);
 
@@ -257,19 +297,13 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //check params to get orders value
         $this->setOrderVars($params);
-        
-        /** @var Documenti $documentModel */
-        $documentModel = $this->documentsModule->createModel('Documenti');
-    
+
         /** @var \yii\db\ActiveQuery $baseQuery */
-        $baseQuery = $documentModel::find()->distinct();
-    
+        $documentModel = $this->documentsModule->model('Documenti');
+        $baseQuery     = $documentModel::find()->distinct();
+
         if ($this->documentsModule->enableDocumentVersioning) {
-            $baseQuery->andWhere([$documentModel::tableName() . '.version_parent_id' => null]);
-        }
-    
-        if ($this->documentsModule->enableAclDocuments) {
-            $baseQuery->andWhere([$documentModel::tableName() . '.is_acl' => self::IS_NOT_ACL]);
+            $baseQuery->andWhere(['version_parent_id' => null]);
         }
 
         return $baseQuery;
@@ -414,6 +448,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         return $this
                 ->baseSearch($params)
+                ->distinct()->leftJoin(EntitysTagsMm::tableName(), EntitysTagsMm::tableName() . ".classname = '".  str_replace('\\','\\\\',Documenti::className()) . "' and ".EntitysTagsMm::tableName(). ".record_id = ". Documenti::tableName() . ".id and " . EntitysTagsMm::tableName(). ".deleted_at is NULL")
                 ->where([
                     self::tableName().'.deleted_at' => null,
                     self::tableName().'.status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO,
@@ -429,26 +464,11 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
-        $currentDoc     = $documentiModel::find()
-            ->select('max(version), id')
-            ->andWhere([
-                'OR',
-                [
-                    'version_parent_id' => $params['parent_id'],
-                    'id' => $params['parent_id']
-                ],
-            ])
-            ->one();
-
         $query = $documentiModel::find()
-            ->andFilterWhere([
-                'OR',
-                [
+            ->andFilterWhere([                
                     'version_parent_id' => $params['parent_id'],
-                    'id' => $params['parent_id']
-                ],
             ])
-            ->andFilterWhere(['!=', 'id', $currentDoc->id])
+            ->andFilterWhere(['!=', 'id', $params['parent_id']])
             ->orderBy('version DESC');
 
         $dataProvider = new ActiveDataProvider([
@@ -513,6 +533,15 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $this->load($params);
         $query  = $this->homepageDocumentsQuery($params);
         $this->applySearchFilters($query);
+        $i=0;
+        foreach ($this->documenti_agid_content_type_id as $id) {
+            if ($i == 0) {
+                $query->andFilterWhere(['like', 'documenti_agid_content_type_id', $id]);
+            } else {
+                $query->orFilterWhere(['like', 'documenti_agid_content_type_id', $id]);
+            }
+            $i++;
+        }
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

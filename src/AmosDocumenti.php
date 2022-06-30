@@ -15,6 +15,9 @@ use open20\amos\core\exceptions\AmosException;
 use open20\amos\core\module\AmosModule;
 use open20\amos\core\module\ModuleInterface;
 use open20\amos\core\interfaces\SearchModuleInterface;
+use open20\amos\documenti\models\DocumentiAgidTypeRoles;
+use open20\amos\privileges\interfaces\CategoriesRolesInterface;
+use open20\amos\documenti\models\DocumentiAgidType;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
 use open20\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti;
@@ -32,7 +35,7 @@ use open20\amos\core\interfaces\CmsModuleInterface;
  * Class AmosDocumenti
  * @package open20\amos\documenti
  */
-class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface
+class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, CategoriesRolesInterface
 {
     public static $CONFIG_FOLDER = 'config';
 
@@ -51,16 +54,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool|false if document foldering is enabled or not
      */
     public $enableFolders = false;
-
-    /**
-     * @var bool $enableFoldersDescription
-     */
-    public $enableFoldersDescription = false;
-    
-    /**
-     * @var bool $disableAdminListRecursion
-     */
-    public $disableAdminListRecursion = false;
 
     /**
      * @var bool|true if document categories are enabled or not
@@ -209,16 +202,31 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $enableCatImgInDocView If true replace the document icon with the category image in the document view and lists.
      */
     public $enableCatImgInDocView = false;
-
+    
+    
     /**
-     * @var bool $enablePublicationDateAsDatetime If true the publication date begin and end fields are date time, not only date.
+     * @var bool $cmsSync
      */
-    public $enablePublicationDateAsDatetime = false;
-
+    public $cmsSync = false;
+   
     /**
-     * @var bool $enableAclDocuments If true enable the ACL documents.
+     *
+     * @var string 
      */
-    public $enableAclDocuments = false;
+    public $cmsBaseFolder = 'Documenti';
+    
+    /**
+     *
+     * @var boolean 
+     */
+    public $enableAgid = false;
+    
+    /**
+     *
+     * @var boolean 
+     */
+    public $requireModalMoveFile = true;
+
 
     /**
      * @inheritdoc
@@ -253,15 +261,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         if (!is_array($this->defaultListViews)) {
             throw new AmosException(self::t('amosdocumenti', '#exception_msg_defaultlistviews_not_array'));
         }
-    }
-    
-    /**
-     * Same as calling AmosDocumenti::t('amosdocumenti', ...$args)
-     * @return string
-     */
-    public static function txt($txt, ...$args)
-    {
-        return self::t('amosdocumenti', $txt, ...$args);
     }
 
     /**
@@ -299,11 +298,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         return [
             'Documenti' => __NAMESPACE__ . '\\' . 'models\Documenti',
             'DocumentiSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiSearch',
-            'DocumentiAcl' => __NAMESPACE__ . '\\' . 'models\DocumentiAcl',
-            'DocumentiAclGroups' => __NAMESPACE__ . '\\' . 'models\DocumentiAclGroups',
-            'DocumentiAclGroupsSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiAclGroupsSearch',
-            'DocumentiAclGroupsUserMm' => __NAMESPACE__ . '\\' . 'models\DocumentiAclGroupsUserMm',
-            'DocumentiAclSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiAclSearch',
             'DocumentiCategorie' => __NAMESPACE__ . '\\' . 'models\DocumentiCategorie',
             'DocumentiCategorieSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiCategorieSearch',
             'DocumentiCategoryCommunityMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryCommunityMm',
@@ -327,4 +321,33 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     {
         return AmosDocumenti::instance()->model('Documenti');
     }
+
+    /**
+     *
+     * @return string
+     */
+    public function getFrontEndMenu($dept = 1)
+    {
+        $menu = parent::getFrontEndMenu();
+        $app  = \Yii::$app;
+        if (!$app->user->isGuest && (\Yii::$app->user->can('LETTORE_DOCUMENTI')||\Yii::$app->user->can('REDACTOR_DOCUMENTI'))) {
+            $menu .= $this->addFrontEndMenu(AmosDocumenti::t('amosdocumenti','#menu_front_documenti'), AmosDocumenti::toUrlModule('/documenti/all-documents'),$dept);
+        }
+        return $menu;
+    }
+
+    public static function getCategoryArrayRole(){
+
+        return  ArrayHelper::map(DocumentiAgidType::find()->orderBy('name')->all(), 'id', 'name');
+    }
+    public static function getCategoryArrayRoleAssignedToUser($userId){
+            $ids = \open20\amos\documenti\models\DocumentiAgidTypeRoles::find()->select('documenti_agid_type_id')->andWhere(['user_id' =>$userId])->distinct()->column();
+            return  ArrayHelper::map(DocumentiAgidType::find()->orderBy('name')->andWhere(['id' => $ids,])->all(), 'id', 'name');
+
+    }
+
+    public static function getModelCategoryRole(){
+        return DocumentiAgidTypeRoles::classname();
+    }
+
 }

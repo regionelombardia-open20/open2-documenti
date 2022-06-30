@@ -22,7 +22,7 @@ use yii\widgets\ActiveForm;
 
 <div class="documenti-order element-to-toggle" data-toggle-element="form-order">
     <div class="col-xs-12">
-        <h2><?= AmosDocumenti::t('amosdocumenti', 'Ordina per') ?>:</h2>
+        <p class="h3"><?= AmosDocumenti::t('amosdocumenti', 'Ordina per') ?>:</p>
     </div>
 
     <?php $form = ActiveForm::begin([

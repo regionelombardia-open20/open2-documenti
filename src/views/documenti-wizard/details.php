@@ -36,8 +36,6 @@ $documentsModule = AmosDocumenti::instance();
 /** @var DocumentiCategorie $documentiCategorieModel */
 $documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
 
-$publicationDateType = ($documentsModule->enablePublicationDateAsDatetime ? DateControl::FORMAT_DATETIME : DateControl::FORMAT_DATE);
-
 ?>
 
 <div class="document-wizard-details">
@@ -171,12 +169,12 @@ $publicationDateType = ($documentsModule->enablePublicationDateAsDatetime ? Date
             if($module->hidePubblicationDate == false) {?>
                 <div class="col-lg-6 col-sm-6">
                     <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
-                        'type' => $publicationDateType
+                        'type' => DateControl::FORMAT_DATE
                     ]) ?>
                 </div>
                 <div class="col-lg-6 col-sm-6">
                     <?= $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
-                        'type' => $publicationDateType
+                        'type' => DateControl::FORMAT_DATE
                     ]) ?>
                 </div>
             <?php } ?>

@@ -19,8 +19,8 @@ use open20\amos\documenti\AmosDocumenti;
  * @var open20\amos\documenti\models\search\DocumentiCategorieSearch $searchModel
  */
 
-$this->title = AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories');
-$this->params['breadcrumbs'][] = $this->title;
+//$this->title = AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories');
+//$this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="documenti-categorie-index">
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>

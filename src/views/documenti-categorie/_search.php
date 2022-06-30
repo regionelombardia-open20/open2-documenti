@@ -21,7 +21,7 @@ use open20\amos\documenti\AmosDocumenti;
 ?>
 
 <div class="documenti-categorie-search">
-    <div class="col-xs-12"><h2><?= AmosDocumenti::tHtml('Cerca per') ?>:</h2></div>
+    <div class="col-xs-12"><p class="h3"><?= AmosDocumenti::tHtml('Cerca per') ?>:</p></div>
     <?php $form = ActiveForm::begin([
         'action' => ['index'],
         'method' => 'get',

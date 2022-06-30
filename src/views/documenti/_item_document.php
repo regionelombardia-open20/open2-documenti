@@ -25,11 +25,9 @@ use open20\amos\notificationmanager\forms\NewsWidget;
  * @var open20\amos\documenti\models\Documenti $model
  */
 
-/** @var DocumentiController $appController */
-$appController = Yii::$app->controller;
 
 /** @var AmosDocumenti $documentsModule */
-$documentsModule = $appController->documentsModule;
+$documentsModule = AmosDocumenti::instance();
 
 $modelViewUrl = $model->getFullViewUrl();
 $document = $model->getDocumentMainFile();
@@ -56,146 +54,73 @@ JS;
 $this->registerJs($jsCount);
 ?>
 
-<div class="listview-container document">
-    <div class="post-horizontal">
-        <div class="col-sm-7 col-xs-12 nop">
-            <div class="col-xs-12 nop">
-                <?= ItemAndCardHeaderWidget::widget([
-                    'model' => $model,
-                    'publicationDateField' => 'data_pubblicazione',
-                    'publicationDateAsDateTime' => true,
-                ]);
-                ?>
-            </div>
+<div class="document-item-container d-flex border-bottom py-4 w-100">
+    <div class="info-doc">
+
+        <?= Html::a(Html::tag('h5', htmlspecialchars($model->titolo)), $modelViewUrl, ['class' => 'link-list-title ']) ?>
+        <?php if ($model->descrizione_breve) { ?>
+            <p class="mb-0">
+                <?= htmlspecialchars($model->descrizione_breve) ?>
+            </p>
+        <?php } ?>
+        <div class="small mb-2">
+            <?= PublishedByWidget::widget([
+                'model' => $model,
+                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}{category}' . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
+            ]) ?>
         </div>
-        <div class="col-sm-7 col-xs-12 nop">
-            <div class="post-content col-xs-12 nop">
-                <div class="post-title col-xs-10">
-                    <?= Html::a(Html::tag('h2', htmlspecialchars($model->titolo)), $modelViewUrl) ?>
-                </div>
-                <?php
-                echo NewsWidget::widget([
-                    'model' => $model,
-                ]);
-                ?>
-                <?= ContextMenuWidget::widget([
-                    'model' => $model,
-                    'actionModify' => $model->getFullUpdateUrl(),
-                    'actionDelete' => $model->getFullDeleteUrl(),
-                    'modelValidatePermission' => 'DocumentValidate',
-                    'mainDivClasses' => 'col-xs-1 nop'
-                ]) ?>
-                <div class="clearfix"></div>
-                <div class="row nom post-wrap">
-                    <div class="post-text col-xs-12">
-                        <p>
-                            <?= htmlspecialchars($model->descrizione_breve) ?><br>
-                            <?= Html::a(AmosDocumenti::tHtml('amosdocumenti', 'Leggi tutto'), $modelViewUrl, ['class' => 'underline']) ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <div>
+            <?php
+            if ($documentPresent) {
+                echo Html::a(
+                    AmosDocumenti::tHtml('amosdocumenti', 'Scarica'),
+                    [
+                        '/attachments/file/download/',
+                        'id' => $document->id,
+                        'hash' => $document->hash
+                    ],
+                    [
+                        'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
+                        'class' => 'text-uppercase font-weight-semibold mr-2',
+                    ]
+                );
+            } else {
+                if ($documentLinkPresent) {
+                    echo Html::a(
+                        AmosDocumenti::tHtml('amosdocumenti', 'Apri file'),
+                        $model->link_document,
+                        [
+                            'title' => AmosDocumenti::t('amosdocumenti', 'Apri file'),
+                            'class' => 'text-uppercase font-weight-semibold mr-1',
+                            'target' => '_blank',
+                            'data-key' => $model->id
+                        ]
+                    );
+                }
+            }
+
+            ?>
+            <span class="text-muted small">(.<?= $docExtension = strtolower($document->type); ?> - <?= $model->documentMainFile->size%1024 ?> Kb)</span>
         </div>
 
-        <div class="sidebar col-sm-5 col-xs-12">
-            <div class="container-sidebar">
-                <?php if ($enableCatImgInDocView): ?>
-                    <?php
-                    $afterCatImgStr = '';
-                    if ($documentPresent) {
-                        $afterCatImgStr .= Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
-                    }
-                    if ($documentLinkPresent) {
-                        $afterCatImgStr .= Html::tag('p', StringUtils::shortText($model->titolo, 80), ['class' => 'title']) .
-                            Html::tag('p', StringUtils::shortText($model->link_document, 50), ['class' => 'title']);
-                    }
-                    ?>
-                    <div class="box">
-                        <div class="sidebar-documents-category-new-rl">
-                            <?= Html::img($documentCategory->getAvatarUrl('square_small'), [
-                                'class' => 'gridview-image',
-                                'alt' => AmosDocumenti::t('amosdocumenti', 'Immagine della categoria')
-                            ]); ?>
-                            <p><?= $documentCategory->titolo ?></p>
-                            
-                        </div>
-                        <?= $afterCatImgStr ?>
-                    </div>
-                <?php else: ?>
-                    <?php if ($documentPresent) : ?>
-                        <div class="box">
-                            <?php
-                            if ($model->drive_file_id) {
-                                echo AmosIcons::show('download-general', ['class' => 'am-4'], 'dash') .
-                                    AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am') .
-                                    Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
-                            } else {
-                                echo AmosIcons::show('download-general', ['class' => 'am-4'], 'dash') . Html::tag('p', $document->name . '.' . $document->type, ['class' => 'title']);
-                            }
-                            ?>
-                        </div>
-                    <?php endif; ?>
-                    <?php if ($documentLinkPresent) : ?>
-                        <div class="box">
-                            <?= AmosIcons::show('doc-www', ['class' => 'am-4'], 'dash') . Html::tag('p', StringUtils::shortText($model->titolo, 80), ['class' => 'title']); ?>
-                            <?= Html::tag('p', StringUtils::shortText($model->link_document, 50), ['class' => 'title']); ?>
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-                <div class="box post-info">
-                    <?= PublishedByWidget::widget([
-                        'model' => $model,
-                        'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}{category}' . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
-                    ]) ?>
-                    <p>
-                        <strong><?= ($model->primo_piano) ? AmosDocumenti::tHtml('amosdocumenti', 'Pubblicato in prima pagina') : '' ?></strong>
-                    </p>
-                </div>
-                <?php if ($documentPresent || $documentLinkPresent || $visible || $enableContentDuplication) : ?>
-                    <div class="footer_sidebar col-xs-12 nop">
-                        <?php
-                        echo $this->render('_duplicate_btn', [
-                            'model' => $model,
-                            'isInIndex' => false,
-                            'customClasses' => 'bk-btnImport pull-right btn btn-secondary m-l-10'
-                        ]);
-                        if ($documentPresent) {
-                            echo Html::a(
-                                AmosDocumenti::tHtml('amosdocumenti', 'Scarica file'),
-                                [
-                                    '/attachments/file/download/',
-                                    'id' => $document->id,
-                                    'hash' => $document->hash
-                                ],
-                                [
-                                    'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
-                                    'class' => 'bk-btnImport pull-right btn btn-amministration-primary',
-                                ]
-                            );
-                        } else {
-                            if ($documentLinkPresent) {
-                                echo Html::a(
-                                    AmosDocumenti::tHtml('amosdocumenti', 'Open file'),
-                                    $model->link_document,
-                                    [
-                                        'title' => AmosDocumenti::t('amosdocumenti', 'Open file'),
-                                        'class' => 'link-document-id bk-btnImport pull-right btn btn-amministration-primary',
-                                        'target' => '_blank',
-                                        'data-key' => $model->id
-                                    ]
-                                );
-                            }
-                        }
-
-                        if ($visible) {
-                            echo StatsToolbar::widget([
-                                'model' => $model,
-                            ]);
-                        }
-                        ?>
-                    </div>
-                <?php endif; ?>
-            </div>
+    </div>
+    <div class="ml-auto doc-actions d-flex">
+        <div>
+            <?= NewsWidget::widget(['model' => $model]); ?>
+        </div>
+        <div>
+            <?= ContextMenuWidget::widget([
+                'model' => $model,
+                'actionModify' => "/documenti/documenti/update?id=" . $model->id,
+                'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
+                'modelValidatePermission' => 'DocumentValidate',
+                'mainDivClasses' => 'manage-documents'
+            ]) ?>
+        </div>
+        <div>
+            <?php
+            echo Html::a(AmosIcons::show('search-in-file', ['class' => 'icon text-white p-2 rounded-circle bg-primary text-center'], 'am'), $modelViewUrl, ['class' => '', 'data-toggle' => 'tooltip', 'title' => 'Vedi dettaglio']);
+            ?>
         </div>
     </div>
 </div>

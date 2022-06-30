@@ -20,7 +20,7 @@ use yii\base\Component;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\di\NotInstantiableException;
 use yii\log\Logger;
 

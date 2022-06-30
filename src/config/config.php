@@ -17,19 +17,13 @@ return [
         //active the search
         'searchParams' => [
             'documenti' => [
-                'enable' => true
-            ],
-            'documenti-acl' => [
-                'enable' => true
-            ],
-            'documenti-acl-groups' => [
-                'enable' => true
+                'enable' => true,
             ]
         ],
         //active the order
         'orderParams' => [
             'documenti' => [
-                'enable' => true,
+                'enable' => false,
                 'fields' => [
                     'titolo',
                     'data_pubblicazione'

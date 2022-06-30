@@ -68,7 +68,7 @@ echo $this->render('parts/modals/delete-stanza-modal');
                 <section id="content-explorer-navbar"></section>
                 <div class="col-md-4 col-xs-12 documents-explorer-sidebar-container">
                     <div id="location-title" class="col-xs-12 sidebar-container-header">
-                        <h2><?= Yii::t('amosdocumenti', 'Aree di condivisione'); ?></h2>
+                        <h2><?= AmosDocumenti::t('amosdocumenti', 'Aree di condivisione'); ?></h2>
     <!--                        <span id="go-back-room" class="am am-arrow-left" title="Torna indietro"> <!--TODO add class hidden if first layer-->
     <!--                            <span class="sr-only">Indietro</span>-->
     <!--                        </span>-->

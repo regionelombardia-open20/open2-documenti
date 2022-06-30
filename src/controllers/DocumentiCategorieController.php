@@ -18,7 +18,6 @@ use open20\amos\dashboard\controllers\TabDashboardControllerTrait;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\DocumentiCategoryCommunityMm;
 use open20\amos\documenti\models\DocumentiCategoryRolesMm;
-use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
 use Yii;
 use yii\helpers\Url;
 
@@ -79,8 +78,7 @@ class DocumentiCategorieController extends CrudController
      */
     public function setTitleAndBreadcrumbs($pageTitle)
     {
-        $this->child_of = WidgetIconDocumentiDashboard::className();
-        Yii::$app->view->title = $pageTitle;
+        //Yii::$app->view->title = $pageTitle;
         Yii::$app->view->params['breadcrumbs'] = [
             ['label' => $pageTitle]
         ];
@@ -94,9 +92,30 @@ class DocumentiCategorieController extends CrudController
      */
     public function actionIndex($layout = NULL)
     {
+        //cta:tutti i documenti
+        $this->view->title =[
+            //GESTIONE TITOLO
+            'titleSection' => 'Categorie di documenti',
+            //GESTIONE CTA
+            'labelCta' => 'Tutti i documenti', //tutte o di mio interesse
+            'titleCta' => 'Visualizza la lista dei documenti', //tutte o di mio interesse
+            'linkCta' =>'/documenti/documenti/all-documents', //tutte o di mio interesse
+            //GESTIONE +
+            'labelCreate' => 'Nuovo',
+            'titleCreate' => 'Crea un nuovo documento',
+            'linkCreate' =>'/documenti/documenti/create',
+            //GESTIONE MANAGE
+            'labelManage' => 'Gestisci',
+            'titleManage' =>'Gestisci i documenti',
+            'linkManage' => '#',
+        ];
+
         Url::remember();
         $this->setUpLayout('list');
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
+        if( isset(\Yii::$app->getModule('documenti')->params['containerFullWidth']) ){
+            $this->view->params['containerFullWidth'] = \Yii::$app->getModule('documenti')->params['containerFullWidth'];
+        }
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories'));
         $this->setDataProvider($this->modelSearch->search(Yii::$app->request->getQueryParams()));
         return parent::actionIndex();
