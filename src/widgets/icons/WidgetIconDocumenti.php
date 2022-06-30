@@ -15,9 +15,9 @@ use open20\amos\core\widget\WidgetIcon;
 use open20\amos\dashboard\models\AmosWidgets;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
-use open20\amos\utility\models\BulletCounters;
 use Yii;
 use yii\helpers\ArrayHelper;
+use open20\amos\core\record\Record;
 
 /**
  * Class WidgetIconDocumenti
@@ -57,12 +57,7 @@ class WidgetIconDocumenti extends WidgetIcon
 
         // Read and reset counter from bullet_counters table, bacthed calculated!
         if ($this->disableBulletCounters == false) {
-            $this->setBulletCount(
-                BulletCounters::getAmosWidgetIconCounter(
-                    Yii::$app->getUser()->getId(), AmosDocumenti::getModuleName(), $this->getNamespace(),
-                    $this->resetBulletCount(), WidgetIconAllDocumenti::className()
-                )
-            );
+            $this->setBulletCount(Record::getStaticBullet(Record::BULLET_TYPE_OWN, false, 'documenti', false, true));
         }
     }
 

@@ -72,6 +72,87 @@ class DocumentiCategorieController extends CrudController
         $this->setUpLayout();
     }
 
+    public function beforeAction($action)
+    {
+        if (\Yii::$app->user->isGuest) {
+            $titleSection = AmosDocumenti::t('amosdocumenti', 'Categorie documenti');
+            $urlLinkAll   = '';
+
+            $labelSigninOrSignup = AmosDocumenti::t('amosdocumenti', '#beforeActionCtaLoginRegister');
+            $titleSigninOrSignup = AmosDocumenti::t(
+                'amosdocumenti',
+                '#beforeActionCtaLoginRegisterTitle',
+                ['platformName' => \Yii::$app->name]
+            );
+            $labelSignin = AmosDocumenti::t('amosdocumenti', '#beforeActionCtaLogin');
+            $titleSignin = AmosDocumenti::t(
+                'amosdocumenti',
+                '#beforeActionCtaLoginTitle',
+                ['platformName' => \Yii::$app->name]
+            );
+
+            $labelLink = $labelSigninOrSignup;
+            $titleLink = $titleSigninOrSignup;
+            $socialAuthModule = Yii::$app->getModule('socialauth');
+            if ($socialAuthModule && ($socialAuthModule->enableRegister == false)) {
+                $labelLink = $labelSignin;
+                $titleLink = $titleSignin;
+            }
+
+            $ctaLoginRegister = Html::a(
+                $labelLink,
+                isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ? \Yii::$app->params['linkConfigurations']['loginLinkCommon']
+                    : \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login',
+                [
+                    'title' => $titleLink
+                ]
+            );
+            $subTitleSection  = Html::tag(
+                'p',
+                AmosDocumenti::t(
+                    'amosdocumenti',
+                    '#beforeActionSubtitleSectionGuest',
+                    ['platformName' => \Yii::$app->name, 'ctaLoginRegister' => $ctaLoginRegister]
+                )
+            );
+
+        } else {
+            $titleSection = AmosDocumenti::t('amosdocumenti', 'Categorie documenti');
+            $labelLinkAll = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');
+            $urlLinkAll   = '/documenti/documenti/all-documents';
+            $titleLinkAll = AmosDocumenti::t('amosdocumenti', 'Visualizza le categorie di documenti');
+
+            $subTitleSection = Html::tag('p', AmosDocumenti::t('amosdocumenti', '#beforeActionSubtitleSectionLogged'));
+        }
+
+        $labelCreate = AmosDocumenti::t('amosdocumenti', 'Nuova');
+        $titleCreate = AmosDocumenti::t('amosdocumenti', 'Crea una nuova categoria di documenti');
+        $labelManage = AmosDocumenti::t('amosdocumenti', 'Gestisci');
+        $titleManage = AmosDocumenti::t('amosdocumenti', 'Gestisci i documenti');
+        $urlCreate   = '/documenti/documenti-categorie/create';
+        $urlManage   = null;
+
+        $this->view->params = [
+            'isGuest' => \Yii::$app->user->isGuest,
+            'modelLabel' => 'documenti',
+            'titleSection' => $titleSection,
+            'subTitleSection' => $subTitleSection,
+            'urlLinkAll' => $urlLinkAll,
+            'labelLinkAll' => $labelLinkAll,
+            'titleLinkAll' => $titleLinkAll,
+            'labelCreate' => $labelCreate,
+            'titleCreate' => $titleCreate,
+            'labelManage' => $labelManage,
+            'titleManage' => $titleManage,
+            'urlCreate' => $urlCreate,
+            'urlManage' => $urlManage
+        ];
+
+        // other custom code here
+
+        return parent::beforeAction($action);
+    }
+
     /**
      * Used for set page title and breadcrumbs.
      * @param string $pageTitle
@@ -92,30 +173,9 @@ class DocumentiCategorieController extends CrudController
      */
     public function actionIndex($layout = NULL)
     {
-        //cta:tutti i documenti
-        $this->view->title =[
-            //GESTIONE TITOLO
-            'titleSection' => 'Categorie di documenti',
-            //GESTIONE CTA
-            'labelCta' => 'Tutti i documenti', //tutte o di mio interesse
-            'titleCta' => 'Visualizza la lista dei documenti', //tutte o di mio interesse
-            'linkCta' =>'/documenti/documenti/all-documents', //tutte o di mio interesse
-            //GESTIONE +
-            'labelCreate' => 'Nuovo',
-            'titleCreate' => 'Crea un nuovo documento',
-            'linkCreate' =>'/documenti/documenti/create',
-            //GESTIONE MANAGE
-            'labelManage' => 'Gestisci',
-            'titleManage' =>'Gestisci i documenti',
-            'linkManage' => '#',
-        ];
-
         Url::remember();
         $this->setUpLayout('list');
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
-        if( isset(\Yii::$app->getModule('documenti')->params['containerFullWidth']) ){
-            $this->view->params['containerFullWidth'] = \Yii::$app->getModule('documenti')->params['containerFullWidth'];
-        }
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories'));
         $this->setDataProvider($this->modelSearch->search(Yii::$app->request->getQueryParams()));
         return parent::actionIndex();
@@ -234,4 +294,13 @@ class DocumentiCategorieController extends CrudController
         }
         return $this->redirect(['/documenti/documenti-categorie/index']);
     }
+
+
+    /**
+     * @return array
+     */
+    public static function getManageLinks(){
+        return DocumentiController::getManageLinks();
+    }
+
 }

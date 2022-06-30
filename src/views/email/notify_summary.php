@@ -12,6 +12,7 @@
 use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
+use open20\amos\notificationmanager\AmosNotify;
 
 /**
  * @var \open20\amos\admin\models\UserProfile $profile
@@ -21,6 +22,8 @@ use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
 if (!empty($profile)) {
     $this->params['profile'] = $profile;
 }
+
+$notifyModule = AmosNotify::instance();
 
 ?>
 
@@ -61,9 +64,13 @@ if (!empty($profile)) {
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td align="right" width="85" valign="bottom" style="text-align: center; padding-left: 10px;"><a href="<?= $modelAbsoluteFullViewUrl ?>"
-                                                                                                                                            style="background: #297A38; border:3px solid #297A38; color: #ffffff; font-family: sans-serif; font-size: 11px; line-height: 22px; text-align: center; text-decoration: none; display: block; font-weight: bold; text-transform: uppercase; height: 20px;"
-                                                                                                                                            class="button-a">
+                                            <td align="right" width="85" valign="bottom" style="text-align: center; padding-left: 10px;">
+                                            <a href="<?= $modelAbsoluteFullViewUrl ?>"
+                                            style="background:<?= ($notifyModule->mailThemeColor['bgPrimary']) ? $notifyModule->mailThemeColor['bgPrimary'] : '#297A38' ?>;
+                                            border:3px solid <?= ($notifyModule->mailThemeColor['bgPrimary']) ? $notifyModule->mailThemeColor['bgPrimary'] : '#297A38' ?>;
+                                            color:<?= ($notifyModule->mailThemeColor['textContrastBgPrimary']) ? $notifyModule->mailThemeColor['textContrastBgPrimary'] : '#ffffff' ?>;
+                                            font-family: sans-serif; font-size: 11px; line-height: 22px; text-align: center; text-decoration: none; display: block; 
+                                            font-weight: bold; text-transform: uppercase; height: 20px;" class="button-a">
                                                     <!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]--><?= AmosDocumenti::t('amosdocumenti', '#read') ?><!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]-->
                                                 </a>
                                             </td>

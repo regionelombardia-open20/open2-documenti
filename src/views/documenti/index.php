@@ -41,27 +41,18 @@ $enableCategories = $controller->documentsModule->enableCategories;
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 $showCountDocumentRecursive = $controller->documentsModule->showCountDocumentRecursive;
 
-$documentiModule = AmosDocumenti::instance();
+$parentId = \Yii::$app->request->get('parentId');
+//$this->params['subTitleSection'] = 'ciao';
+if (!empty($parentId)) {
+    $folder = Documenti::findOne($parentId);
+    if ($folder) {
+        $this->params['subTitleSection'] = '<span class="icon icon-folder icon-sm mdi mdi-folder "></span>'.ucfirst($folder->getTitle());
+        $this->params['subTitleAdditionalClass'] = 'lead m-t-10';
 
+    }
+}
 
 $columns = [];
-
-
-// AGID COLUMN
-$columns['id'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', '#id'),
-    'attribute' => 'id',
-    'visible' => $documentiModule->enableAgid,
-];
-
-// AGID COLUMN
-// AGID COLUMN
-$columns['documenti.titolo'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'titolo'),
-    'attribute' => "titolo",
-    'visible' => $documentiModule->enableAgid,
-];
-
 if ($foldersEnabled) {
     $columns['type'] = [
         'label' => AmosDocumenti::t('amosdocumenti', '#type'),
@@ -78,11 +69,15 @@ if ($foldersEnabled) {
                 }
             }
 
-            $icon = DocumentsUtility::getDocumentIcon($model, true);
-            if ($model->drive_file_id) {
-                return AmosIcons::show($icon, ['title' => $title], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
-            } else {
-                return AmosIcons::show($icon, ['title' => $title], 'dash');
+            if(\Yii::$app->params['befe']){
+                return DocumentsUtility::getDocumentIcon($model);
+            }else {
+                $icon = DocumentsUtility::getDocumentIcon($model, true);
+                if ($model->drive_file_id) {
+                    return AmosIcons::show($icon, ['title' => $title], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
+                } else {
+                    return AmosIcons::show($icon, ['title' => $title], 'dash');
+                }
             }
         }
     ];
@@ -105,6 +100,8 @@ if ($foldersEnabled) {
                 $document = $model->getDocumentMainFile();
                 if ($document) {
                     $url = $document->getUrl();
+                } else {
+                    $url = $model->link_document;
                 }
             }
             return Html::a(
@@ -117,8 +114,7 @@ if ($foldersEnabled) {
                         ) . '"' . $model->titolo . '"'
                 ]
             );
-        },
-        'visible' => !$documentiModule->enableAgid,
+        }
     ];
 
     $columns['downloads'] = [
@@ -161,8 +157,7 @@ if ($foldersEnabled) {
                     ]
                 );
             },
-            'format' => 'html',
-            'visible' => !$documentiModule->enableAgid
+            'format' => 'html'
         ];
     }
 
@@ -186,96 +181,16 @@ if ($foldersEnabled) {
         'attribute' => 'titolo',
         'headerOptions' => [
             'id' => $model->getAttributeLabel('titolo')
-        ],
-        'visible' => !$documentiModule->enableAgid,
+        ]
     ];
 
     if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
         $columns['created_by'] = [
             'attribute' => 'createdUserProfile',
             'label' => AmosDocumenti::t('amosdocumenti', 'Pubblicato Da'),
-            'visible' => !$documentiModule->enableAgid
         ];
     }
 }
-
-
-
-
-// AGID COLUMN
-$columns['documentiAgidContentType'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'documenti_agid_content_type_id'),
-    'attribute' => 'documentiAgidContentType.name',
-    'value' => function ($model){
-        return $model->documentiAgidContentType->name;
-    },
-    'visible' => $documentiModule->enableAgid,
-];
-
-// AGID COLUMN
-$columns['documentiAgidType'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'documenti_agid_type_id'),
-    'attribute' => 'documentiAgidType.name',
-    'value' => function ($model){
-        return $model->documentiAgidType->name;
-    },
-    'visible' => $documentiModule->enableAgid,
-];
-
-// AGID COLUMN
-$columns['start_date'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', '#Publication start date'),
-    'attribute' => 'start_date',
-    'format' => ['date', 'php:d/m/Y'],
-    'visible' => $documentiModule->enableAgid
-];
-
-// AGID COLUMN
-$columns['end_date'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', '#Publication end date'),
-    'attribute' => 'end_date',
-    'format' => ['date', 'php:d/m/Y H:i:s'],
-    'visible' => $documentiModule->enableAgid
-];
-
-// AGID COLUMN
-$columns['updated_by'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'updated_by'),
-    'attribute' => 'updated_by',
-    'value' => function ($model) {
-        if( $user_profile = $model->getUserProfileByUserId($model->updated_by) ){
-            return $user_profile->nome . " " . $user_profile->cognome;
-        }
-        return;
-    },
-    'visible' => $documentiModule->enableAgid,
-];
-
-// AGID COLUMN
-$columns['created_by'] = [
-    'attribute' => 'created_by',
-    'label' => AmosDocumenti::t('amosdocumenti', 'created_by'),
-    'value' => function ($model) {
-        if( $user_profile = $model->getUserProfileByUserId($model->created_by) ){
-            return $user_profile->nome . " " . $user_profile->cognome;
-        }
-        return;
-    },
-    'visible' => $documentiModule->enableAgid,
-];
-
-// AGID COLUMN
-$columns['updated_at'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'updated_at'),
-    'attribute' => 'updated_at',
-    'format' => ['date', 'php:d/m/Y H:i:s'],
-    'visible' => $documentiModule->enableAgid,
-];
-
-
-
-
-
 
 $columns['status'] = [
     'label' => AmosDocumenti::t('amosdocumenti', 'Stato'),
@@ -292,8 +207,7 @@ $columns['data_pubblicazione'] = [
     'value' => function ($model) {
         /** @var Documenti $model */
         return (is_null($model->data_pubblicazione)) ? AmosDocumenti::t('amosdocumenti', 'Subito') : Yii::$app->formatter->asDate($model->data_pubblicazione);
-    },
-    'visible' => !$documentiModule->enableAgid,
+    }
 ];
 
 if (!$foldersEnabled) {
@@ -302,8 +216,7 @@ if (!$foldersEnabled) {
         'value' => function ($model) {
             /** @var Documenti $model */
             return (is_null($model->data_rimozione)) ? AmosDocumenti::t('amosdocumenti', 'Mai') : Yii::$app->formatter->asDate($model->data_rimozione);
-        },
-        'visible' => !$documentiModule->enableAgid,
+        }
     ];
 
     $columns['status'] = [
@@ -331,7 +244,6 @@ if ($controller->documentsModule->enableDocumentVersioning) {
         },
     ];
 }
-
 
 //the columns for export have to be before the special columns (ExpandRowColumn, Action column)
 $exportColumns = $columns;
@@ -417,7 +329,7 @@ $actionColumns = [
             if (!$model->is_folder && Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model])) {
                 $btn = Html::a(
                     AmosIcons::show('file'),
-                    $model->getFullViewUrl(),
+                    ['view', 'id' => $model->id],
                     [
                         'class' => 'btn btn-tools-secondary',
                         'title' => AmosDocumenti::t('amosdocumenti', 'Open the card')
@@ -518,9 +430,6 @@ $actionColumns = [
 ];
 $columns[] = $actionColumns;
 ?>
-
-
-
 <div class="documents-index">
     <?php
     echo $this->render('_search', ['model' => $model, 'originAction' => Yii::$app->controller->action->id]);
@@ -564,24 +473,24 @@ $columns[] = $actionColumns;
     }"
     ]);
 
-        echo DataProviderView::widget([
-            'dataProvider' => $dataProvider,
-            'currentView' => $currentView,
-            'gridView' => [
-                'rowOptions' => function ($model) {
-                    return ['class' => 'kv-disable-click'];
-                },
-                'columns' => $columns,
-                'enableExport' => true
-            ],
-            'listView' => [
-                'itemView' => '_item',
-                'showItemToolbar' => false,
-            ],
-            'exportConfig' => [
-                'exportEnabled' => true,
-                'exportColumns' => $exportColumns
-            ]
-        ]);
+    echo DataProviderView::widget([
+        'dataProvider' => $dataProvider,
+        'currentView' => $currentView,
+        'gridView' => [
+            'rowOptions' => function ($model) {
+                return ['class' => 'kv-disable-click'];
+            },
+            'columns' => $columns,
+            'enableExport' => true
+        ],
+        'listView' => [
+            'itemView' => '_item',
+            'showItemToolbar' => false,
+        ],
+        'exportConfig' => [
+            'exportEnabled' => true,
+            'exportColumns' => $exportColumns
+        ]
+    ]);
     ?>
 </div>

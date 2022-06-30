@@ -17,7 +17,7 @@ use \open20\amos\documenti\AmosDocumenti;
             <div class="folder">
                 <div class="folder-container-single" data-parent-id="{{model-id}}">
                     <div class="folder-name" data-model-id="{{model-id}}"> <!--TODO change tag a with div -->
-                        <span class="dash dash-folder-open"></span>
+                        <span class="dash dash-folder icon-folder"></span>
                         <span class="link-name" title="{{name}}">{{name}}</span> <!--TODO change tag span with a for title link-->
                     </div>
                 </div>

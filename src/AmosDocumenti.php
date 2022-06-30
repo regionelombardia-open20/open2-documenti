@@ -15,9 +15,6 @@ use open20\amos\core\exceptions\AmosException;
 use open20\amos\core\module\AmosModule;
 use open20\amos\core\module\ModuleInterface;
 use open20\amos\core\interfaces\SearchModuleInterface;
-use open20\amos\documenti\models\DocumentiAgidTypeRoles;
-use open20\amos\privileges\interfaces\CategoriesRolesInterface;
-use open20\amos\documenti\models\DocumentiAgidType;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
 use open20\amos\documenti\widgets\icons\WidgetIconAdminAllDocumenti;
@@ -30,12 +27,14 @@ use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
 use Yii;
 use yii\helpers\ArrayHelper;
 use open20\amos\core\interfaces\CmsModuleInterface;
+use open20\amos\core\interfaces\BreadcrumbInterface;
+
 
 /**
  * Class AmosDocumenti
  * @package open20\amos\documenti
  */
-class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, CategoriesRolesInterface
+class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface
 {
     public static $CONFIG_FOLDER = 'config';
 
@@ -78,7 +77,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var string List of the allowed extensions for the upload of files.
      */
-    public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx';
+    public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx, odt';
 
     /**
      * @var bool|false $hidePubblicationDate
@@ -88,7 +87,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
-    public $defaultListViews = ['list', 'grid', 'expl'];
+    public $defaultListViews = ['list', 'grid']; 
     
     /**
      * @var array $viewPathEmailSummary
@@ -131,7 +130,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var bool|false $hideWizard
      */
-    public $hideWizard = false;
+    public $hideWizard = true;
 
     /**
      * @var string
@@ -175,6 +174,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $documentsOnlyText If true the main document file and the external document link are not required at all.
      */
     public $documentsOnlyText = false;
+    
+    /**
+     * This param enables the search by tags
+     * @var bool $searchByTags
+     */
+    
+    public $searchByTags = false;
 
     /**
      * @var bool
@@ -226,6 +232,12 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var boolean 
      */
     public $requireModalMoveFile = true;
+    
+    /**
+     *
+     * @var boolean 
+     */
+    public $openInFrontEnd = false;
 
     /**
      * Enable/Disable notification on Documenti model
@@ -335,24 +347,56 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     {
         $menu = parent::getFrontEndMenu();
         $app  = \Yii::$app;
-        if (!$app->user->isGuest && (\Yii::$app->user->can('LETTORE_DOCUMENTI')||\Yii::$app->user->can('REDACTOR_DOCUMENTI'))) {
+        if (!$app->user->isGuest) {
             $menu .= $this->addFrontEndMenu(AmosDocumenti::t('amosdocumenti','#menu_front_documenti'), AmosDocumenti::toUrlModule('/documenti/all-documents'),$dept);
         }
         return $menu;
     }
 
-    public static function getCategoryArrayRole(){
-
-        return  ArrayHelper::map(DocumentiAgidType::find()->orderBy('name')->all(), 'id', 'name');
+    /**
+     * @return array
+     */
+    public function getIndexActions(){
+        return [
+            'documenti/index',
+            'documenti-categorie/index',
+            'documenti/all-documents',
+            'documenti/own-documents',
+            'documenti/own-interest-documents',
+            'documenti/to-validate-documents'
+        ];
     }
-    public static function getCategoryArrayRoleAssignedToUser($userId){
-            $ids = \open20\amos\documenti\models\DocumentiAgidTypeRoles::find()->select('documenti_agid_type_id')->andWhere(['user_id' =>$userId])->distinct()->column();
-            return  ArrayHelper::map(DocumentiAgidType::find()->orderBy('name')->andWhere(['id' => $ids,])->all(), 'id', 'name');
 
+    /**
+     * @return array
+     */
+    public function defaultControllerIndexRoute()
+    {
+        return [
+            'documenti' => '/documenti/documenti/own-interest-documents',
+        ];
     }
 
-    public static function getModelCategoryRole(){
-        return DocumentiAgidTypeRoles::classname();
+    /**
+     * @return array
+     */
+    public function defaultControllerIndexRouteSlogged()
+    {
+        return [
+            'documenti' => '/documenti/documenti/all-documents',
+        ];
     }
 
+
+    /**
+     * @return array
+     */
+    public function getControllerNames(){
+        $names =  [
+            'documenti' => self::t('amosdocumenti', "Documenti"),
+            'documenti-categorie'  => self::t('amosdocumenti', "Categorie documenti"),
+        ];
+
+        return $names;
+    }
 }

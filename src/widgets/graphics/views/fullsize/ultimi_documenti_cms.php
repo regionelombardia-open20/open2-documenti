@@ -38,7 +38,7 @@ $listaModels = $listaDocumenti->getModels();
 $modelLabel = 'documenti';
 
 $titleSection = AmosDocumenti::t('amosdocumenti', 'Documenti');
-$urlLinkAll = AmosDocumenti::t('amosdocumenti', 'documenti/documenti/all-documents');
+$urlLinkAll = AmosDocumenti::t('amosdocumenti', '/documenti/documenti/all-documents');
 $labelLinkAll = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');
 $titleLinkAll = AmosDocumenti::t('amosdocumenti', 'Visualizza la lista dei documenti');
 
@@ -47,16 +47,29 @@ $titleCreate = AmosDocumenti::t('amosdocumenti', 'Crea un nuovo documento');
 $labelManage = AmosDocumenti::t('amosdocumenti', 'Gestisci');
 $titleManage = AmosDocumenti::t('amosdocumenti', 'Gestisci i documenti');
 $urlCreate = AmosDocumenti::t('amosdocumenti', '/documenti/documenti/create');
-$urlManage = AmosDocumenti::t('amosdocumenti', '#');
+
+$manageLinks = [];
+$controller = \open20\amos\documenti\controllers\DocumentiController::class;
+if (method_exists($controller, 'getManageLinks')) {
+    $manageLinks = $controller::getManageLinks();
+}
+
+
+$moduleCwh = \Yii::$app->getModule('cwh');
+if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
+    $scope = $moduleCwh->getCwhScope();
+    $isSetScope = (!empty($scope)) ? true : false;
+}
 
 ?>
 <div class="widget-graphic-cms-bi-less card-<?= $modelLabel ?> container">
     <div class="page-header">
     <?= $this->render(
-            "@vendor/open20/amos-layout/src/views/layouts/fullsize/parts/bi-plugin-header",
+            "@vendor/open20/amos-layout/src/views/layouts/fullsize/parts/bi-less-plugin-header",
             [
                 'isGuest' => \Yii::$app->user->isGuest,
-                'modelLabel' => 'news',
+                'isSetScope' => $isSetScope,
+                'modelLabel' => 'documenti',
                 'titleSection' => $titleSection,
                 'subTitleSection' => $subTitleSection,
                 'urlLinkAll' => $urlLinkAll,
@@ -67,7 +80,7 @@ $urlManage = AmosDocumenti::t('amosdocumenti', '#');
                 'labelManage' => $labelManage,
                 'titleManage' => $titleManage,
                 'urlCreate' => $urlCreate,
-                'urlManage' => $urlManage,
+                'manageLinks' => $manageLinks,
             ]
         );
         ?>
@@ -78,7 +91,12 @@ $urlManage = AmosDocumenti::t('amosdocumenti', '#');
             <div class="" role="listbox" data-role="list-view">
                 <?php foreach ($listaModels as $singolodocumento) : ?>
                     <div>
-                        <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_document", ['model' => $singolodocumento]); ?>
+                        <?php if($singolodocumento->is_folder){ ?>
+                        <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_folder", ['model' => $singolodocumento]); ?>
+                        <?php }else{ ?>
+                            <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_document", ['model' => $singolodocumento]); ?>
+                        <?php }?>
+
                     </div>
                 <?php endforeach ?>
             </div>

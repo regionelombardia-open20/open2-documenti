@@ -243,7 +243,7 @@ class GoogleDriveWidget extends Widget
         }
         
         function addPreviewFolder(filename){
-            $('<span class="dash dash-folder-open"></span>').insertBefore( "#drive-folder-filename" );
+            $('<span class="dash dash-folder icon-folder"></span>').insertBefore( "#drive-folder-filename" );
             $('#drive-folder-filename').text(filename);
         }
         

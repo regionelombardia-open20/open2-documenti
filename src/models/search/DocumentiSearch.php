@@ -67,7 +67,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return [
             [$integer, 'integer'],
             [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione',
-                'data_rimozione', 'documenti_categorie_id','documenti_agid_content_type_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
     }
 
@@ -87,9 +87,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             'updated_by',
             'deleted_by',
             'documenti_categorie_id',
-            'documenti_agid_content_type_id',
-
-
         ];
         if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
             === false)) {
@@ -154,7 +151,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $showAll = false)
     {
-
         $getParentId = (\Yii::$app instanceof \yii\web\Application) ? \Yii::$app->request->get('parentId') : null;
         if($getParentId){
             $params['DocumentiSearch']['parentId'] = $getParentId;
@@ -163,12 +159,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             ->buildQuery($params, $queryType)
             ->limit($limit);
 
-        //ricerca soloo per contenuti che posso vedere AGID
-        if(\Yii::$app->getUser()->can('REDACTOR_DOCUMENTI')){
-            $ids = \open20\amos\documenti\models\DocumentiAgidTypeRoles::find()->select('documenti_agid_type_id')->andWhere(['user_id' =>\Yii::$app->getUser()->id ])->distinct()->column();
-            $query->andWhere([self::tableName() .'.documenti_agid_type_id' => $ids,]);
-        }
-
         /** Switch off notifications - method of NotifyRecord */
         $this->switchOffNotifications($query);
 
@@ -176,6 +166,11 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         if ($limit) {
             $dp_params ['pagination'] = false;
         }
+
+        if(\Yii::$app->user->isGuest) {
+            $query->andWhere(['primo_piano' => 1]);
+        }
+
 
         //set the data provider
         $dataProvider = new ActiveDataProvider($dp_params);
@@ -201,7 +196,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         //if you don't use the seach form, the recursive search is not active
         if (!($this->load($params) && $this->validate())) {
             //if you come from widget grphic LastDocuments Show also documents that are inside the folders
-            if (($queryType != 'to-validate') && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
+            if ((!in_array($queryType, ['to-validate', 'created-by'])) && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
                 if(!$showAll) {
                     $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
                 }
@@ -245,39 +240,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             }
         }
 
-
-        // Agid 
-        $documentsModule = AmosDocumenti::instance();
-
-        if( $documentsModule->enableAgid ){
-
-            if( !empty($params['DocumentiSearch']['updated_from']) ){
-                $query->andWhere(['>=', 'documenti.updated_at', $params['DocumentiSearch']['updated_from'] ]);
-            }
-    
-            if( !empty($params['DocumentiSearch']['updated_to']) ){
-                $query->andWhere(['<=', 'documenti.updated_at', $params['DocumentiSearch']['updated_to'] ]);
-            }
-
-            if( !empty($params['DocumentiSearch']['agid_organizational_unit_content_type_office_id']) ){
-                $query->andWhere(['documenti.agid_organizational_unit_content_type_office_id' => $params['DocumentiSearch']['agid_organizational_unit_content_type_office_id'] ]);
-            }
-
-            if( !empty($params['DocumentiSearch']['agid_organizational_unit_content_type_area_id']) ){
-                $query->andWhere(['documenti.agid_organizational_unit_content_type_area_id' => $params['DocumentiSearch']['agid_organizational_unit_content_type_area_id'] ]);
-            }
-            
-            if( !empty($params['DocumentiSearch']['documenti_agid_content_type_id']) ){
-                $query->andWhere(['documenti.documenti_agid_content_type_id' => $params['DocumentiSearch']['documenti_agid_content_type_id'] ]);
-            }
-            
-            if( !empty($params['DocumentiSearch']['documenti_agid_type_id']) ){
-                $query->andWhere(['documenti_agid_type_id' => $params['DocumentiSearch']['documenti_agid_type_id'] ]);
-            }
-        }
-
-        
-     
         $this->applySearchFilters($query);
         $this->getSearchQuery($query);
 
@@ -533,15 +495,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $this->load($params);
         $query  = $this->homepageDocumentsQuery($params);
         $this->applySearchFilters($query);
-        $i=0;
-        foreach ($this->documenti_agid_content_type_id as $id) {
-            if ($i == 0) {
-                $query->andFilterWhere(['like', 'documenti_agid_content_type_id', $id]);
-            } else {
-                $query->orFilterWhere(['like', 'documenti_agid_content_type_id', $id]);
-            }
-            $i++;
-        }
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -551,6 +504,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 ],
             ],
         ]);
+
+        $query->andWhere(['primo_piano' =>1]);
+
         if ($params["withPagination"]) {
             $dataProvider->setPagination(['pageSize' => $limit]);
             $query->limit(null);
@@ -563,6 +519,29 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 $query->andWhere(eval("return ".$command.";"));
             }
         }
+        return $dataProvider;
+    }
+
+    /**
+     * @param $params
+     * @param null $limit
+     * @return \open20\amos\core\interfaces\ActiveDataProvider|ActiveDataProvider
+     */
+    public function cmsSearchOwnInterest($params, $limit = null)
+    {
+        if (\Yii::$app->user->isGuest) {
+            $dataProvider = $this->cmsSearch($params, $limit);
+        } else {
+            $dataProvider = $this->searchOwnInterest($params, $limit);
+        }
+
+        if (!empty($params["withPagination"])) {
+            $dataProvider->setPagination(['pageSize' => $limit]);
+            $dataProvider->query->limit(null);
+        } else {
+            $dataProvider->query->limit($limit);
+        }
+
         return $dataProvider;
     }
 

@@ -16,7 +16,7 @@ use open20\amos\dashboard\models\AmosUserDashboards;
 use open20\amos\documenti\AmosDocumenti;
 //use open20\amos\documenti\models\Documenti;
 //use open20\amos\documenti\models\search\DocumentiSearch;
-use open20\amos\utility\models\BulletCounters;
+use open20\amos\core\record\Record;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\Application as Web;
@@ -59,11 +59,7 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
 
         // Read and reset counter from bullet_counters table, bacthed calculated!
         if ($this->disableBulletCounters == false) {
-            $widgetAll = \Yii::createObject(['class' => WidgetIconAllDocumenti::className(), 'saveMicrotime' => false]);
-
-            $this->setBulletCount(
-                $widgetAll->getBulletCount()
-            );
+            $this->setBulletCount(Record::getStaticBullet(Record::BULLET_TYPE_ALL, false, 'documenti', false, true));
         }
     }
 

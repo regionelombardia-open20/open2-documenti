@@ -61,6 +61,12 @@ class WidgetGraphicsCmsUltimiDocumenti extends WidgetGraphic
     {
         $listaDocumenti = $this->getDataProvider();
 
+        if( isset(\Yii::$app->params['showWidgetEmptyContent']) && \Yii::$app->params['showWidgetEmptyContent'] == false ){
+            if($listaDocumenti->getTotalCount() == 0 ){
+                return false;
+            }
+        }
+
         $moduleL = \Yii::$app->getModule('layout');
         $viewPath = '@vendor/open20/amos-documenti/src/widgets/graphics/views/';
         $viewToRender = $viewPath . 'ultimi_documenti_cms';

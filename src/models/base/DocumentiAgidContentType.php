@@ -59,25 +59,4 @@ return [
     'deleted_by' => Yii::t('app', 'Deleted by'),
 ];
 }
-     /**
-      * Base query, it exclude deleted elements
-      *
-      * @return mixed
-      * @throws \yii\base\InvalidConfigException
-      */
-     public static function findRedactor()
-     {
-         $return = DocumentiAgidContentType::find();
-         if (\Yii::$app->getUser()->can('REDACTOR_DOCUMENTI')) {
-             $tableName = static::getTableSchema()->name;
-             $ids = \open20\amos\documenti\models\DocumentiAgidTypeRoles::find()->select('documenti_agid_type_id')->andWhere(['user_id' =>\Yii::$app->getUser()->id ])->distinct()->column();
-             $content_types = DocumentiAgidType::find()
-                                                     ->select('agid_document_content_type_id')
-                                                     ->andWhere(['id' => $ids,])
-                                                     ->distinct()->column();
-             
-             $return->andWhere([$tableName . '.id' => $content_types]);
-         }
-         return $return;
-     }
 }

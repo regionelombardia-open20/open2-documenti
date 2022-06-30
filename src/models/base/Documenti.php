@@ -15,7 +15,6 @@ use open20\amos\core\record\ContentModel;
 use open20\amos\documenti\AmosDocumenti;
 use yii\helpers\ArrayHelper;
 use open20\agid\organizationalunit\models\AgidOrganizationalUnit;
-use open20\amos\admin\models\base\UserProfile;
 
 /**
  * Class Documenti
@@ -66,9 +65,6 @@ abstract class Documenti extends ContentModel
      */
     protected $documentsModule = null;
 
-    public $updated_from;
-    public $updated_to;
-
     /**
      * @inheritdoc
      */
@@ -96,15 +92,15 @@ abstract class Documenti extends ContentModel
             'status',
         ];
         $required = ArrayHelper::merge($defaultRequired, $this->documentsModule->documentExtraRequiredFields);
-        $titleMax=100;
+
         if ($this->documentsModule->enableCategories) {
             $required[] =  'documenti_categorie_id';
         }
         if ($this->documentsModule->enableAgid) {
             $required[] =  'documenti_agid_type_id';
-            $titleMax=255;
+            $required[] =  'documenti_agid_content_type_id';
         }
-
+        
         return [
             [[
                 'descrizione',
@@ -114,8 +110,6 @@ abstract class Documenti extends ContentModel
             ], 'string'],
             [[
                 'titolo',
-            ], 'string','max' =>$titleMax],
-            [[
                 'sottotitolo',
             ], 'string', 'max' => 100],
             [['descrizione_breve'], 'string', 'max' => 255],
@@ -155,7 +149,8 @@ abstract class Documenti extends ContentModel
             [[ 'object', 'extended_description', 'distribution_proscription', 'dates_and_intermediate_stages', 'further_information', 'regulatory_requirements', 'protocol', 'help_box'], 'string'],
             [['start_date', 'end_date', 'protocol_date'], 'safe'],
 
-            [['descrizione_breve', 'documenti_agid_content_type_id'], 'required'],
+            [['descrizione_breve'], 'required'],
+
 
             [['documenti_agid_content_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => DocumentiAgidContentType::className(), 'targetAttribute' => ['documenti_agid_content_type_id' => 'id']],
             [['documenti_agid_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => DocumentiAgidType::className(), 'targetAttribute' => ['documenti_agid_type_id' => 'id']],
@@ -177,7 +172,7 @@ abstract class Documenti extends ContentModel
             'descrizione' => AmosDocumenti::t('amosdocumenti', '#documents_description_field'),
             'metakey' => AmosDocumenti::t('amosdocumenti', 'Meta key'),
             'metadesc' => AmosDocumenti::t('amosdocumenti', 'Meta descrizione'),
-            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Pubblica sul sito'),
+            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)?'),
             'filemanager_mediafile_id' => AmosDocumenti::t('amosdocumenti', 'Documento pricipale'),
             'in_evidenza' => AmosDocumenti::t('amosdocumenti', 'In evidenza'),
             'hits' => AmosDocumenti::t('amosdocumenti', 'Visualizzazioni'),
@@ -285,38 +280,6 @@ abstract class Documenti extends ContentModel
         return $this->hasOne(\open20\agid\organizationalunit\models\AgidOrganizationalUnit::className(), ['id' => 'agid_organizational_unit_content_type_office_id']);
     }
     
-    /**
-     * Method to return UserProfile by user_id
-     *
-     * @param int $id
-     * @return void
-     */
-    public function getUserProfileByUserId($id = null){
 
-        return UserProfile::find()->andWhere(['user_id' => $id])->one();
-    }
     
-
-    /**
-     * Method to get all workflow status for model
-     *
-     * @return array
-     */
-    public function getAllWorkflowStatus(){
-
-        return ArrayHelper::map(
-                ArrayHelper::getColumn(
-                    (new \yii\db\Query())->from('sw_status')
-                    ->where(['workflow_id' => $this::DOCUMENTI_WORKFLOW])
-                    ->orderBy(['sort_order' => SORT_ASC])
-                    ->all(),
-
-                    function ($element) {
-                        $array['status'] = $element['workflow_id'] . "/" . $element['id'];
-                        $array['label'] = $element['label'];
-                        return $array;
-                    }
-                ),
-            'status', 'label');
-    }
 }

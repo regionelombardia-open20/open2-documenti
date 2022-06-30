@@ -10,14 +10,9 @@
  */
 
 use open20\amos\core\forms\ContextMenuWidget;
-use open20\amos\core\forms\ItemAndCardHeaderWidget;
 use open20\amos\core\forms\PublishedByWidget;
 use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
-use open20\amos\core\utilities\StringUtils;
-use open20\amos\core\views\toolbars\StatsToolbar;
 use open20\amos\documenti\AmosDocumenti;
-use open20\amos\documenti\controllers\DocumentiController;
 use open20\amos\notificationmanager\forms\NewsWidget;
 
 /**
@@ -25,10 +20,9 @@ use open20\amos\notificationmanager\forms\NewsWidget;
  * @var open20\amos\documenti\models\Documenti $model
  */
 
-
 /** @var AmosDocumenti $documentsModule */
 $documentsModule = AmosDocumenti::instance();
-
+$documentMainFile = $model->getDocumentMainFile();
 $modelViewUrl = $model->getFullViewUrl();
 $document = $model->getDocumentMainFile();
 $documentPresent = ($document != null);
@@ -37,6 +31,9 @@ $visible = isset($statsToolbar) ? $statsToolbar : false;
 $enableContentDuplication = $documentsModule->enableContentDuplication;
 $enableCatImgInDocView = $documentsModule->enableCatImgInDocView;
 $documentCategory = $model->documentiCategorie;
+$isFolder = $model->is_folder;
+$enableCategories = $documentsModule->enableCategories;
+$modelTitleSpecialChars = htmlspecialchars($model->titolo);
 
 $jsCount = <<<JS
     $('.link-document-id').click(function() {
@@ -55,54 +52,112 @@ $this->registerJs($jsCount);
 ?>
 
 <div class="document-item-container d-flex border-bottom py-4 w-100">
-    <div class="info-doc">
 
-        <?= Html::a(Html::tag('h5', htmlspecialchars($model->titolo)), $modelViewUrl, ['class' => 'link-list-title ']) ?>
+    <div class="info-doc">
+        <div>
+
+            <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
+            <span class="text-muted small"><?= $docExtension = strtoupper($document->type); ?>
+            <?php if ($documentPresent): ?>
+             
+                (<?= $model->documentMainFile->size % 1024 ?> Kb) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
+             <?php endif; ?>
+             </span>
+
+            <!-- TODO da finire e fare la parte per link documento esterno -->
+            <?php
+            if ($documentPresent) {
+                echo Html::tag('span', ((strlen($documentMainFile->name) > 80) ? substr($documentMainFile->name, 0, 75) . '[...]' : $documentMainFile->name) . '.' . $documentMainFile->type, ['class' => 'text-muted small']);
+            } else {
+                if ($documentLinkPresent) {
+                    echo Html::tag('span',(AmosDocumenti::tHtml('amosdocumenti', 'File esterno')), ['class' => 'text-muted small']);
+                }
+            }
+            ?>
+
+        </div>
+        <?php if ($documentLinkPresent) : ?>
+            <?= Html::a(
+                Html::tag(
+                    'h5',
+                    $modelTitleSpecialChars
+                ),
+                $model->link_document,
+                [
+                    'class' => 'link-list-title',
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Apri il link esterno al documento') . ' ' . $modelTitleSpecialChars
+                ]
+            )
+            ?>
+        <?php else : ?>
+            <?= Html::a(
+                Html::tag(
+                    'h5',
+                    $modelTitleSpecialChars
+                ),
+                $modelViewUrl,
+                [
+                    'class' => 'link-list-title',
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Apri la scheda del documento') . ' ' . $modelTitleSpecialChars
+                ]
+            )
+            ?>
+        <?php endif; ?>
         <?php if ($model->descrizione_breve) { ?>
-            <p class="mb-0">
+            <p class="mb-0 m-t-5 text-muted">
                 <?= htmlspecialchars($model->descrizione_breve) ?>
             </p>
         <?php } ?>
-        <div class="small mb-2">
+        <div class="small mb-2 m-t-10">
             <?= PublishedByWidget::widget([
                 'model' => $model,
-                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}{category}' . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
+                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '{category}' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
             ]) ?>
         </div>
         <div>
             <?php
             if ($documentPresent) {
                 echo Html::a(
-                    AmosDocumenti::tHtml('amosdocumenti', 'Scarica'),
+                    AmosDocumenti::t('amosdocumenti', 'Scarica'),
                     [
                         '/attachments/file/download/',
                         'id' => $document->id,
                         'hash' => $document->hash
                     ],
                     [
-                        'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
-                        'class' => 'text-uppercase font-weight-semibold mr-2',
+                        'title' => AmosDocumenti::t('amosdocumenti', 'Scarica il documento') . ' ' . $modelTitleSpecialChars,
+                        'class' => 'm-r-10 small uppercase bold',
                     ]
                 );
-            } else {
-                if ($documentLinkPresent) {
+            } 
+
+            ?>
+
+            <?php if ($documentPresent) : ?>
+                <?= Html::a(
+                    AmosDocumenti::t('amosdocumenti', '#detail'),
+                    ($documentLinkPresent) ? $model->link_document : $modelViewUrl,
+                    [
+                        'class' => 'small uppercase bold',
+                        'title' => AmosDocumenti::t('amosdocumenti', '#see_document_detail') . ' ' . $modelTitleSpecialChars
+                    ]
+                )
+                ?>
+            <?php else : ?>
+                <?php if ($documentLinkPresent) {
                     echo Html::a(
-                        AmosDocumenti::tHtml('amosdocumenti', 'Apri file'),
+                        AmosDocumenti::t('amosdocumenti', '#detail'),
                         $model->link_document,
                         [
-                            'title' => AmosDocumenti::t('amosdocumenti', 'Apri file'),
-                            'class' => 'text-uppercase font-weight-semibold mr-1',
+                            'title' => AmosDocumenti::t('amosdocumenti', '#see_external_document_detail') . ' ' . $modelTitleSpecialChars,
+                            'class' => 'small m-r-10 uppercase bold',
                             'target' => '_blank',
                             'data-key' => $model->id
                         ]
                     );
-                }
-            }
-
-            ?>
-            <span class="text-muted small">(.<?= $docExtension = strtolower($document->type); ?> - <?= $model->documentMainFile->size%1024 ?> Kb)</span>
+                } ?>
+            <?php endif; ?>
         </div>
-
     </div>
     <div class="ml-auto doc-actions d-flex">
         <div>
@@ -116,11 +171,6 @@ $this->registerJs($jsCount);
                 'modelValidatePermission' => 'DocumentValidate',
                 'mainDivClasses' => 'manage-documents'
             ]) ?>
-        </div>
-        <div>
-            <?php
-            echo Html::a(AmosIcons::show('search-in-file', ['class' => 'icon text-white p-2 rounded-circle bg-primary text-center'], 'am'), $modelViewUrl, ['class' => '', 'data-toggle' => 'tooltip', 'title' => 'Vedi dettaglio']);
-            ?>
         </div>
     </div>
 </div>

@@ -11,6 +11,7 @@
 
 namespace open20\amos\documenti\utility;
 
+use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\user\User;
 use open20\amos\core\utilities\Email;
@@ -36,8 +37,10 @@ class DocumentsUtility extends BaseObject
      */
     public static function getDocumentIcon($model, $onlyIconName = false)
     {
+        $iconName = 'file-o';
+        $classDocIcon = 'icon icon-link icon-sm mdi mdi-file-link';
         if ($model->is_folder) {
-            $folderIconName = 'folder-open';
+            $folderIconName = 'folder';
             if ($onlyIconName) {
                 return $folderIconName;
             }
@@ -46,44 +49,78 @@ class DocumentsUtility extends BaseObject
             }
             return AmosIcons::show($folderIconName, ['class' => 'icon_widget_graph'], 'dash');
         }
-        
+
         if (!(empty($model->link_document))) {
             $linkIcon = 'doc-www';
             if ($onlyIconName === false) {
-                $linkIcon = AmosIcons::show($linkIcon, ['class' => 'icon_widget_graph'], 'dash');
+                if (!empty(\Yii::$app->params['befe'])) {
+                    return Html::tag('span', null, ['class' => $classDocIcon]);
+
+                } else {
+                    $linkIcon = AmosIcons::show($linkIcon, ['class' => 'icon_widget_graph'], 'dash');
+                }
             }
-            
+
             return $linkIcon;
         }
-        
-        $iconName = 'file-o';
+
+
         $documentFile = $model->getDocumentMainFile();
         if (!is_null($documentFile)) {
             $docExtension = strtolower($documentFile->type);
-            
+
             $extensions = [
-                'doc'  => 'file-doc-o',
+                'doc' => 'file-doc-o',
                 'docx' => 'file-docx-o',
-                'rtf'  => 'file-rtf-o',
-                'xls'  => 'file-xls-o',
+                'rtf' => 'file-rtf-o',
+                'xls' => 'file-xls-o',
                 'xlsx' => 'file-xlsx-o',
-                'txt'  => 'file-txt-o',
-                'pdf'  => 'file-pdf-o2',
+                'txt' => 'file-txt-o',
+                'pdf' => 'file-pdf-o2',
             ];
-            
+
+            $extensionsBefe = [
+                'jpg' => 'icon icon-image icon-sm mdi mdi-file-image',
+                'png' => 'icon icon-image icon-sm mdi mdi-file-image',
+                'jpeg' => 'icon icon-image icon-sm mdi mdi-file-image',
+                'svg' => 'icon icon-image icon-sm mdi mdi-file-image',
+                'pdf' => 'icon icon-pdf icon-sm mdi mdi-file-pdf',
+                'docx' => 'icon icon-word icon-sm mdi mdi-file-word',
+                'doc' => 'icon icon-word icon-sm mdi mdi-file-word',
+                'pptx' => 'icon icon-powerpoint icon-sm mdi mdi-file-powerpoint',
+                'xls' => 'icon icon-excel icon-sm mdi mdi-file-excel',
+                'xlsx' => 'icon icon-excel icon-sm mdi mdi-file-excel',
+                'csv' => 'icon icon-black icon-sm mdi mdi-file-delimited',
+                'rtf' => 'icon icon-black icon-sm mdi mdi-file-document',
+                'txt' => 'icon icon-black icon-sm mdi mdi-file-document',
+                'zip' => 'icon icon-link icon-sm mdi mdi-folder-zip',
+                'rar' => 'icon icon-link icon-sm mdi mdi-folder-zip',
+            ];
+
+
+            if (!empty(\Yii::$app->params['befe'])) {
+                if (!empty($extensionsBefe[$docExtension])) {
+                    $classDocIcon = $extensionsBefe[$docExtension];
+                } else {
+                    $classDocIcon = 'icon icon-link icon-sm mdi mdi-file-link';
+                }
+            }
+
             if (isset($extensions[$docExtension])) {
                 $iconName = $extensions[$docExtension];
             }
         }
-        
+
         if ($onlyIconName) {
             return $iconName;
         }
 
         if ($model->drive_file_id) {
             return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
-        }
-        else {
+        } else {
+            if (!empty(\Yii::$app->params['befe'])) {
+                return Html::tag('span', null, ['class' => $classDocIcon, 'title' => $docExtension]);
+            }
             return AmosIcons::show($iconName, ['class' => 'icon_widget_graph'], 'dash');
         }
     }
@@ -192,7 +229,8 @@ class DocumentsUtility extends BaseObject
         return $options;
     }
 
-    public static function resetRoutesDocumentsExplorer() {
+    public static function resetRoutesDocumentsExplorer()
+    {
         \Yii::$app->session->set('stanzePath', []);
         \Yii::$app->session->set('foldersPath', []);
     }
@@ -208,19 +246,19 @@ class DocumentsUtility extends BaseObject
 
         /** @var ActiveQuery $query */
         $query = $documentiCategorieModel::find();
-        if(\Yii::$app->getModule('documenti')->filterCategoriesByRole){
+        if (\Yii::$app->getModule('documenti')->filterCategoriesByRole) {
             //check enabled role for category active - user can publish under a category if there's at least one match betwwn category and user roles
-            $query->joinWith('documentiCategoryRolesMms')->innerJoin('auth_assignment', 'item_name='. DocumentiCategoryRolesMm::tableName().'.role and user_id ='. \Yii::$app->user->id);
+            $query->joinWith('documentiCategoryRolesMms')->innerJoin('auth_assignment', 'item_name=' . DocumentiCategoryRolesMm::tableName() . '.role and user_id =' . \Yii::$app->user->id);
         }
-        if(\Yii::$app->getModule('documenti')->enableCategoriesForCommunity){
+        if (\Yii::$app->getModule('documenti')->enableCategoriesForCommunity) {
             $moduleCwh = \Yii::$app->getModule('cwh');
             $moduleCommunity = \Yii::$app->getModule('community');
 
-            if($moduleCwh && $moduleCommunity) {
+            if ($moduleCwh && $moduleCommunity) {
                 $scope = $moduleCwh->getCwhScope();
                 if (!empty($scope) && isset($scope['community'])) {
                     $isCommunityManager = DocumentsUtility::isCommunityManager($scope['community']);
-                    if(\Yii::$app->getModule('documenti')->showAllCategoriesForCommunity) {
+                    if (\Yii::$app->getModule('documenti')->showAllCategoriesForCommunity) {
                         $query->joinWith('documentiCategoryCommunityMms')->andWhere([
                             'OR',
                             ['IS', 'community_id', null],
@@ -233,10 +271,10 @@ class DocumentsUtility extends BaseObject
                             ->andWhere(['community_id' => $scope['community']])->count();
 
                         // if you have at least a category for this community show only them
-                        if($count > 0) {
+                        if ($count > 0) {
                             $query->joinWith('documentiCategoryCommunityMms')
                                 ->andWhere(['community_id' => $scope['community']]);
-                            if(!$isCommunityManager){
+                            if (!$isCommunityManager) {
                                 $query->andWhere(['visible_to_participant' => true]);
                             }
                         } else {
@@ -245,8 +283,7 @@ class DocumentsUtility extends BaseObject
                                 ->andWhere(['IS', 'community_id', NULL]);
                         }
                     }
-                }
-                else {
+                } else {
                     // if you are on dashboard
                     $query->joinWith('documentiCategoryCommunityMms')->andWhere(['IS', 'community_id', null]);
                 }
@@ -262,12 +299,13 @@ class DocumentsUtility extends BaseObject
      * @return bool
      * @throws \yii\base\InvalidConfigException
      */
-    public static function isCommunityManager($community_id){
+    public static function isCommunityManager($community_id)
+    {
         $count = \open20\amos\community\models\CommunityUserMm::find()
             ->andWhere(['community_id' => $community_id])
             ->andWhere(['user_id' => \Yii::$app->user->id])
             ->andWhere(['role' => \open20\amos\community\models\Community::ROLE_COMMUNITY_MANAGER])->count();
-        
+
         return ($count > 0);
 
     }

@@ -62,7 +62,7 @@ $documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
                     <?= $form->field($model, 'documentMainFile')->widget(AttachmentsInput::classname(), [
                         'options' => [
                             'multiple' => FALSE,
-                            'accept' => ".csv, .pdf, .txt, .doc, .docx, .xls, .xlsx, .rtf",
+                            'accept' => ".csv, .pdf, .txt, .doc, .docx, .xls, .xlsx, .rtf, .odt",
                         ],
                         'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
                             'maxFileCount' => 1, // Client max files,
