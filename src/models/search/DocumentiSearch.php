@@ -148,7 +148,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     /**
      * @inheritdoc
      */
-    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false)
+    public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $showAll = false)
     {
         $getParentId = (\Yii::$app instanceof \yii\web\Application) ? \Yii::$app->request->get('parentId') : null;
         if($getParentId){
@@ -191,7 +191,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         if (!($this->load($params) && $this->validate())) {
             //if you come from widget grphic LastDocuments Show also documents that are inside the folders
             if (($queryType != 'to-validate') && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
-                $query->andWhere([self::tableName().'.parent_id' => $this->parentId]);
+                if(!$showAll) {
+                    $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
+                }
             }
             return $dataProvider;
         }
@@ -320,9 +322,10 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      * @param int|null $limit
      * @return ActiveDataProvider
      */
-    public function searchOwnInterest($params, $limit = null)
+    public function searchOwnInterest($params, $limit = null, $showAll = false)
     {
-        return $this->search($params, 'own-interest', $limit);
+
+        return $this->search($params, 'own-interest', $limit, false, $showAll);
     }
 
     /**

@@ -86,7 +86,20 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var array $defaultListViews This set the default order for the views in lists
      */
     public $defaultListViews = ['list', 'grid', 'expl'];
-
+    
+    /**
+     * @var array $viewPathEmailSummary
+     */
+    public $viewPathEmailSummary = [
+        'open20\amos\documenti\models\Documenti' => '@vendor/open20/amos-documenti/src/views/email/notify_summary'
+    ];
+    
+    /**
+     * @var array $viewPathEmailSummaryNetwork
+     */
+    public $viewPathEmailSummaryNetwork = [
+        'open20\amos\documenti\models\Documenti' => '@vendor/open20/amos-documenti/src/views/email/notify_summary_network'
+    ];
 
     /**
      * @var string $defaultView Set the default view for module

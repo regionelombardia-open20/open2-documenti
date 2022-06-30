@@ -667,7 +667,7 @@ class DocumentiAjaxController extends Controller
         $routeFolders = JSON::decode($post['foldersPath']);
 //        if(empty($routeFolders)) {
 //            $routeFolders['links'][] = [
-//                'classes' => "",
+//                'classes' => "", 
 //                'model-id' => $post['parent-id'],
 //                'name' => "prova",
 //            ];
@@ -812,13 +812,18 @@ class DocumentiAjaxController extends Controller
             if (!empty($file->link_document)) {
                 $link = \open20\amos\core\utilities\StringUtils::shortText($file->link_document, 50);
             }
+            
+            $documentsModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
+            $orderField = $documentsModule->params['orderParams']['documenti']['default_field'];
+            $dateorderField = new \DateTime($file->$orderField);
+            $datevalue = (isset($file->$orderField) && $file->$orderField != "") ? $dateorderField->format('d/m/Y') : date('d/m/Y', strtotime((isset($file->updated_at) && $file->updated_at != "") ? $file->updated_at : $file->created_at));
 
             $filesFound['files'][] = [
                 'link' => $link,
                 'name' => $title,
                 'icon-class' => DocumentsUtility::getDocumentIcon($file, true),
                 'url' => Url::toRoute([self::DOCUMENTI_URL, 'id' => $file->id]),
-                'date' => date('d/m/Y', strtotime((isset($file->updated_at) && $file->updated_at != "") ? $file->updated_at : $file->created_at)),
+                'date' => $datevalue,
                 'size' => empty($file->link_document)
                     ? $this->getSize($file->getDocumentMainFile()->size)
                     : null,

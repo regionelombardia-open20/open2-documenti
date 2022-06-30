@@ -255,6 +255,8 @@ return [
     '#PUBLISHED' => 'pubblicato',
     'Publish' => 'Pubblica',
     '#PUBLISH' => 'Pubblica',
+    '#published_on' => 'Pubblicato il',
+    '#read' => 'Leggi',
     'Recipients' => 'Destinatari',
     '#REJECT_DOCUMENT_MODAL_TEXT' => 'Vuoi rigettare questo documento?',
     'Reject' => 'Rifiuta',
@@ -380,4 +382,5 @@ return [
     'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
     'DocumentiWorkflow/NONVALIDATO' => 'Non Validato',
     'Open file' => 'Apri file',
+    '#download' => 'Scarica',
 ];

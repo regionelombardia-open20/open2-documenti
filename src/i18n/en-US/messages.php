@@ -255,6 +255,8 @@ return [
     '#PUBLISHED' => 'published',
     'Publish' => 'Publish',
     '#PUBLISH' => 'Publish',
+    '#published_on' => 'Published on',
+    '#read' => 'Read',
     'Recipients' => 'Recipients',
     '#REJECT_DOCUMENT_MODAL_TEXT' => 'Do you want to reject this document?',
     'Reject' => 'Reject',

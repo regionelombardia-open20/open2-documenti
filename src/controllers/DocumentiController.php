@@ -639,7 +639,7 @@ class DocumentiController extends CrudController
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate($isFolder = null, $isAjaxRequest = null, $regolaPubblicazione = null, $parentId = null, $from = null, $urlRedirect = null, $offunusedfields = null)
+    public function actionCreate($isFolder = null, $isAjaxRequest = null, $regolaPubblicazione = null, $parentId = null, $from = null, $urlRedirect = null, $offunusedfields = null, $scope_id = null)
     {
         $this->setUpLayout('form');
         $this->model = $this->documentsModule->createModel('Documenti');
@@ -674,9 +674,14 @@ class DocumentiController extends CrudController
             $this->model->validatori = "community-2";
             $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
-
+if (!is_null($scope_id)) {
+                        $this->setScope($scope_id);
+                    }
         if ($this->model->load(Yii::$app->request->post())) {
             if ($offunusedfields) {
+                if(!is_null($scope_id)){
+                    $this->setScope($scope_id);
+                }
                 $this->model->setScenario(Documenti::SCENARIO_OFF_UNUSED_FIELDS);
                 $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
                 $this->model->detachBehavior('workflow');
@@ -826,7 +831,7 @@ class DocumentiController extends CrudController
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionUpdate($id, $backToEditStatus = false, $urlRedirect = null, $offunusedfields = null)
+    public function actionUpdate($id, $backToEditStatus = false, $urlRedirect = null, $offunusedfields = null, $scope_id = null)
     {
         Url::remember();
         $moduleGroups = \Yii::$app->getModule('groups');
@@ -841,10 +846,16 @@ class DocumentiController extends CrudController
             $this->model->setScenario(Documenti::SCENARIO_UPDATE);
         }
 
+if (!is_null($scope_id)) {
+                        $this->setScope($scope_id);
+                    }
         if (Yii::$app->request->post()) {
             $previousStatus = $this->model->status;
             if ($this->model->load(Yii::$app->request->post())) {
                 if ($offunusedfields) {
+                    if (!is_null($scope_id)) {
+                        $this->setScope($scope_id);
+                    }
                     $this->model->setScenario(Documenti::SCENARIO_OFF_UNUSED_FIELDS);
                     $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
                     $this->model->detachBehavior('workflow');
@@ -1177,8 +1188,20 @@ class DocumentiController extends CrudController
 
         Yii::$app->session->set('stanzePath', []);
         Yii::$app->session->set('foldersPath', []);
-
         if (!is_null($parentId)) { //set parent Id to filter documents within a folder
+
+            /*$moduleCwh = \Yii::$app->getModule('cwh');
+            $moduleCommunity = \Yii::$app->getModule('community');
+            if (isset($moduleCwh) && isset($moduleCommunity)) {
+                $folder = Documenti::findOne($parentId);
+                if($folder) {
+                    pr($folder->validatori);
+//                    $moduleCwh->setCwhScopeInSession([
+//                        'community' => $id,
+//                    ]);
+                }
+            }*/
+
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);

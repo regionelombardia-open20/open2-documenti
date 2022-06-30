@@ -565,7 +565,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
         </div>
 		
         <?php
-		if (!$isFolder && !$offunusedfields){
+		if (!$offunusedfields){
         $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
             ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
             : AmosDocumenti::t('amosdocumenti', 'Annulla');

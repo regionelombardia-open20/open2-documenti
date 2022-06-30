@@ -79,8 +79,8 @@ abstract class Documenti extends ContentModel
      */
     public function init()
     {
-        parent::init();
         $this->documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
+        parent::init();
 
     }
 
@@ -94,6 +94,7 @@ abstract class Documenti extends ContentModel
         ];
         $required = ArrayHelper::merge($defaultRequired, $this->documentsModule->documentExtraRequiredFields);
 
+        
         $rules = [
             [[
             'descrizione',
