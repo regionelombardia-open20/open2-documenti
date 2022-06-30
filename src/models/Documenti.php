@@ -1600,4 +1600,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
         return \open20\amos\admin\models\UserProfile::find()->andWhere(['user_id' => $id])->one();
     }
+
+    /**
+     * @return bool
+     */
+    public function sendNotification()
+    {
+        return AmosDocumenti::instance()->documnetiModelsendNotification;
+    }
+
 }

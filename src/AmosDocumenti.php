@@ -227,6 +227,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      */
     public $requireModalMoveFile = true;
 
+    /**
+     * Enable/Disable notification on Documenti model
+     * @var bool $documentiModelsendNotification
+     */
+    public $documnetiModelsendNotification = true;
 
     /**
      * @inheritdoc
