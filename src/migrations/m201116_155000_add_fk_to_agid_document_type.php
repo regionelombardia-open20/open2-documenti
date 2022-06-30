@@ -5,37 +5,32 @@
  * OPEN 2.0
  *
  *
- * @package    svilupposostenibile\enti
+ * @package    open20\amos\documenti\migrations
  * @category   CategoryName
  */
 
 use yii\db\Migration;
 
-
+/**
+ * Class m201116_155000_add_fk_to_agid_document_type
+ */
 class m201116_155000_add_fk_to_agid_document_type extends Migration
 {
-    public function up()
+    /**
+     * @inheritDoc
+     */
+    public function safeUp()
     {
-        // addColumn
         $this->addColumn('documenti_agid_type', 'agid_document_content_type_id', $this->integer()->null()->defaultValue(null));
-
-        // addForeignKey
-        $this->addForeignKey(
-            'fk-agid-document-content-type-id',
-            'documenti_agid_type',
-            'agid_document_content_type_id',
-            'documenti_agid_content_type',
-            'id',
-            'SET NULL'
-        );
+        return true;
     }
-
-    public function down()
+    
+    /**
+     * @inheritDoc
+     */
+    public function safeDown()
     {
-        // dropForeignKey
-        $this->dropForeignKey ('fk-agid-document-content-type-id', 'documenti_agid_type');
-        // dropColumn
         $this->dropColumn('documenti_agid_type', 'agid_document_content_type_id');
+        return true;
     }
-
 }
