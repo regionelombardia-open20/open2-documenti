@@ -20,6 +20,7 @@ use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\utility\DocumentsUtility;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
+use yii\helpers\VarDumper;
 use yii\log\Logger;
 
 /**
@@ -228,7 +229,7 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
         $query->andWhere(['>', new \yii\db\Expression('YEAR(documenti.created_at)'), $lastyear]);
         $query->select(new \yii\db\Expression("concat(YEAR(documenti.created_at), '-', MONTH(documenti.created_at)) as titolodate, documenti.titolo, YEAR(documenti.created_at) anno, MONTH(documenti.created_at) mese, documenti.id id"));
         $query->groupBy('anno, mese');
-        $query->orderBy('titolodate desc');
+        $query->orderBy('anno, mese DESC');
 
         return $query;
     }
@@ -506,6 +507,14 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
 
         if ($this->parentId == $parent.'-'.$model) {
             $active = 'active';
+        } else if ($this->parentId == null) {
+            if (!empty($this->firstYearAndMonth)) {
+                $value = explode('-', $this->firstYearAndMonth);
+
+                if (($value[0] == $parent) && ($value[1] == $model)) {
+                    $active = 'active';
+                }
+            }
         }
 
         $content                = $icon.Html::tag('span', $titolo).$arrow;
@@ -514,19 +523,9 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
         $options                = ['title' => $titolo, 'class' => 'hierarchical-link text-black text-decoration-none font-weight-normal'];
 
         if ($lvl > 0) {
-
             $element = '<div class="hierarchical-element ml-'.$lvl.' px-2 py-2 bg-white mb-3 font-weight-normal '.$active.'">'.Html::a($content,
                     $url, $options).'</div>';
         } else {
-
-            if ($this->parentId == null) {
-                if (!empty($this->firstYearAndMonth)) {
-                    $value = explode('-', $this->firstYearAndMonth);
-                    if ($value[0] == $titolo) {
-                        $active = 'active';
-                    }
-                }
-            }
             $element = '<div class="hierarchical-element px-2 py-2 bg-white mb-3 '.$active.'">'.Html::a($content, $url,
                     $options).'</div>';
         }
