@@ -20,6 +20,8 @@ use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\tag\models\EntitysTagsMm;
+use open20\amos\cwh\models\CwhPubblicazioniCwhNodiEditoriMm;
+use open20\amos\cwh\models\CwhPubblicazioni;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
@@ -146,7 +148,24 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             'metadesc',
         ];
     }
-
+    
+    
+    
+    public function getFoldersList($communityId,$id){
+        $editorsNode = CwhPubblicazioniCwhNodiEditoriMm::find()->andWhere(['cwh_network_id' => $communityId])->all();
+                           // $query = DocumentiSearch::find()->andWhere(['is_folder'=>1]);
+        $idList = [];
+        foreach($editorsNode as $en){
+            $pubblicazione = CwhPubblicazioni::findOne($en->cwh_pubblicazioni_id);
+            $content_id = $pubblicazione->content_id;
+            $idList[] = $content_id;
+        }
+        $data = DocumentiSearch::find()->andWhere(['is_folder'=>1])->andWhere(['id'=>$idList])
+                ->andWhere(['not',['id'=>$id]])
+                ->andWhere(['status'=> Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
+                ->asArray()->all();
+        return $data;
+    }
     /**
      * Use to add Join condition/add other filtering condition
      *

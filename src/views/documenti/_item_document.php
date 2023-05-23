@@ -35,6 +35,22 @@ $isFolder = $model->is_folder;
 $enableCategories = $documentsModule->enableCategories;
 $modelTitleSpecialChars = htmlspecialchars($model->titolo);
 
+
+$additionalButtons = [];
+$moduleCwh = \Yii::$app->getModule('cwh');
+isset($moduleCwh) ? $showReceiverSection = true : null;
+isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
+
+$controller = Yii::$app->controller;
+$moduleId = $controller->module->id;
+if($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId){
+    $additionalButtons[]  = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"),'#modalMove', [
+                        'class' => 'open-modalMove',
+                        'data-toggle' => 'modal',
+                        'data-id' => $model->id,
+                    ]);
+}
+
 $jsCount = <<<JS
     $('.link-document-id').click(function() {
         var idDoc = $(this).attr('data-key');
@@ -49,13 +65,23 @@ $jsCount = <<<JS
 JS;
 
 $this->registerJs($jsCount);
+
+
+$onlyofficeModule = \Yii::$app->getModule('onlyoffice');
+if($onlyofficeModule){
+    $iconoo = $onlyofficeModule->isValidExtension($document->type) ? true : false ;
+}
 ?>
 
 <div class="document-item-container d-flex border-bottom py-4 w-100">
 
     <div class="info-doc">
         <div>
+            <?php  if($iconoo) {?>
+               
+                <?= AmosIcons::show('mdi-layers-triple', ['class' => ' icon icon-layers-triple icon-sm mdi mdi-layers-triple'], 'mdi');?>
 
+            <?php } ?>
             <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
             <span class="text-muted small"><?= $docExtension = strtoupper($document->type); ?>
             <?php if ($documentPresent): ?>
@@ -167,6 +193,7 @@ $this->registerJs($jsCount);
                 'actionModify' => "/documenti/documenti/update?id=" . $model->id,
                 'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
                 'modelValidatePermission' => 'DocumentValidate',
+                 'additionalButtons' => $additionalButtons,
                 'mainDivClasses' => 'manage-documents'
             ]) ?>
         </div>

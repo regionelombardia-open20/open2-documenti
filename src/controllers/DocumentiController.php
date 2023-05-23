@@ -179,6 +179,7 @@ class DocumentiController extends CrudController
                                 'sync-doc-file',
                                 'is-google-drive-document-modified',
                                 'explore-documents',
+                                'move'
                             ],
                             'roles' => [
                                 'LETTORE_DOCUMENTI',
@@ -561,6 +562,9 @@ class DocumentiController extends CrudController
         }
         if ($this->documentsModule->enableContentDuplication) {
             $actionColumn = '{duplicateBtn}' . $actionColumn;
+        }
+        if ($this->documentsModule->enableMoveDoc) {
+            $actionColumn = '{move}' . $actionColumn;
         }
         return $actionColumn;
     }
@@ -1157,7 +1161,7 @@ class DocumentiController extends CrudController
                     Yii::$app->getSession()->addFlash(
                         'danger',
                         AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio')
-                    );
+                    );  
                 }
             }
         }
@@ -1267,6 +1271,36 @@ class DocumentiController extends CrudController
             return $this->redirect(Url::previous());
         }
         return $this->standardDelete();
+    }
+    
+    
+    public function actionMove(){
+        
+        if(Yii::$app->request->post()){
+            $id = Yii::$app->request->post()['docId'];
+            $parentId = Yii::$app->request->post()['destinationFolder'];
+            $this->model = $this->findModel($id);
+            $this->model->parent_id = $parentId;
+            if($parentId == 0)
+                $this->model->parent_id = null;
+            if($this->model->save()){
+                Yii::$app->getSession()->addFlash(
+                        'success',
+                        AmosDocumenti::tHtml('amosdocumenti', 'Documento spostato correttamente')
+                    ); 
+            }else{
+                Yii::$app->getSession()->addFlash(
+                        'danger',
+                        AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio')
+                    ); 
+            }
+        }else{
+            Yii::$app->getSession()->addFlash(
+                        'danger',
+                        AmosDocumenti::tHtml('amosdocumenti', 'Si &egrave; verificato un errore durante il salvataggio')
+                    ); 
+        }
+        return $this->redirect(Url::previous());
     }
 
     /**
@@ -1468,9 +1502,21 @@ class DocumentiController extends CrudController
         Yii::$app->session->set('stanzePath', []);
         Yii::$app->session->set('foldersPath', []);
         if (!is_null($parentId)) {
+            $folder = Documenti::findOne($parentId);
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);
+            $this->view->params['breadcrumbs'][] = ['label' => Yii::$app->session->get('previousTitle'), 'url' => Yii::$app->session->get('previousUrl')];
+            $this->view->params['breadcrumbs'][] = AmosDocumenti::t('amosdocumenti', 'Aggiorna');
+
+            $this->view->params['forceBreadcrumbs'][] = [
+                'label' => AmosDocumenti::t('amosdocumenti', 'Documenti'),
+                'url' => Yii::$app->session->get('previousUrl'),
+            ];
+
+            $this->view->params['forceBreadcrumbs'][] = [
+                'label' => AmosDocumenti::t('amosdocumenti', ucfirst($folder->getTitle())),
+            ];
         }
 
         $dataProvider = $this->getModelSearch()->searchAll(
@@ -1495,6 +1541,8 @@ class DocumentiController extends CrudController
         \Yii::$app->params['titleSection'] = $this->view->title;
 
         $this->view->params['bulletCount'] = $this->model->getBullet(\open20\amos\core\record\Record::BULLET_TYPE_ALL, true);
+        
+        
 
         if (!\Yii::$app->user->isGuest) {
             $this->view->params['titleSection'] = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');

@@ -260,6 +260,12 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $cmsSync
      */
     public $cmsSync = false;
+    
+    
+    /**
+     * @var bool $enableMoveDoc
+     */
+    public $enableMoveDoc = false;
 
     /**
      *

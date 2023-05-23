@@ -19,10 +19,16 @@ use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\DocumentsOwlCarouselWidget;
 
+
+
 if ($currentView['name'] == 'expl') {
     echo $this->render('_explorer', []);
     return null;
 }
+
+$moduleCwh = \Yii::$app->getModule('cwh');
+isset($moduleCwh) ? $showReceiverSection = true : null;
+isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
 
 /**
  * @var yii\web\View $this
@@ -51,6 +57,8 @@ if (!empty($parentId)) {
 
     }
 }
+
+$documentsModule = AmosDocumenti::instance();
 
 $columns = [];
 if ($foldersEnabled) {
@@ -326,6 +334,7 @@ $deleteOptions['data-confirm'] = function ($model) {
     return $trans;
 };
 
+
 $actionColumns = [
     'class' => 'open20\amos\core\views\grid\ActionColumn',
     'template' => $actionColumnsTemplate,
@@ -350,6 +359,21 @@ $actionColumns = [
                         'title' => AmosDocumenti::t('amosdocumenti', 'Open the card')
                     ]
                 );
+            }
+            return $btn;
+        },
+        'move' => function ($url, $model) use ($documentsModule) {
+            /** @var Documenti $model */
+            $btn = '';
+            
+            if (!$model->is_folder && Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model]) 
+                    && $documentsModule->enableMoveDoc 
+                    ) {
+                $btn = \yii\helpers\Html::a(AmosIcons::show('swap'),'#modalMove', [
+                        'class' => 'open-modalMove btn btn-tools-secondary',
+                        'data-toggle' => 'modal',
+                        'data-id' => $model->id,
+                    ]);
             }
             return $btn;
         },
@@ -444,7 +468,23 @@ $actionColumns = [
     ]
 ];
 $columns[] = $actionColumns;
+
+
 ?>
+
+<?php
+if($documentsModule->enableMoveDoc){
+        echo $this->render('_move_document', [
+            'parentId' => $parentId,
+    ]); 
+
+}
+?>
+
+
+
+
+
 <div class="documents-index">
     <?php
     echo $this->render('_search', ['model' => $model, 'originAction' => Yii::$app->controller->action->id]);

@@ -273,7 +273,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                 ],
                                 'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
                                     'maxFileCount' => 100, // Client max files
-                                    'showPreview' => false,
+                                    'showPreview' => true,
+                                    'showRemove' => true,
                                 ],
                             ])->label(AmosDocumenti::t('amosdocumenti', 'document_attachments'))
                                 ->hint(AmosDocumenti::t('amosdocumenti', 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>

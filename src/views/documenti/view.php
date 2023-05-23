@@ -41,6 +41,20 @@ $documentsModule = AmosDocumenti::instance();
 $controller = Yii::$app->controller;
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 
+$additionalButtons = [];
+$moduleCwh = \Yii::$app->getModule('cwh');
+isset($moduleCwh) ? $showReceiverSection = true : null;
+isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
+
+$moduleId = $controller->module->id;
+if($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId){
+    $additionalButtons[]  = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"),'#modalMove', [
+        'class' => 'open-modalMove',
+        'data-toggle' => 'modal',
+        'data-id' => $model->id,
+    ]);
+}
+
 if (\Yii::$app->user->can('ADMIN')) {
     $layoutPublishedByWidget = $documentsModule->layoutPublishedByWidget['layoutAdmin'];
 } else {
@@ -98,6 +112,12 @@ $viewReportWidgets = (
     && in_array($model->className(), $reportModule->modelsEnabled)
 );
 
+if($documentsModule->enableMoveDoc){
+        echo $this->render('_move_document', [
+            'parentId' => $model->parent_id,
+    ]); 
+
+}
 ?>
 
 <div class="documents-view">
@@ -120,6 +140,7 @@ $viewReportWidgets = (
                         'model' => $model,
                         'actionModify' => '/documenti/documenti/update?id=' . $model->id,
                         'actionDelete' => '/documenti/documenti/delete?id=' . $model->id,
+                        'additionalButtons' => $additionalButtons,
                         'modelValidatePermission' => 'DocumentValidate',
                     ];
 
