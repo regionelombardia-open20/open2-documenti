@@ -56,11 +56,13 @@ final class DocumentiCartellePath extends Record
     
     
     public static function generatePath($doc,$level,$parent_array){
-	   $parent_array[$doc->id] = $doc->parent_id;
-        if($doc->parent_id){
-            $documento = Documenti::findOne($doc->parent_id);
-            $level++;
-             return self::generatePath($documento,$level,$parent_array);
+        if($doc){
+	    $parent_array[$doc->id] = $doc->parent_id;
+            if($doc->parent_id){
+                $documento = Documenti::findOne($doc->parent_id);
+                $level++;
+                 return self::generatePath($documento,$level,$parent_array);
+            }
         }
         return $parent_array;
     }

@@ -148,6 +148,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public $titolodate;
 
     public $typeMainDocument;
+    
+    /*
+     * usata per scegliere, se è abilitato OnlyOffice, quale tipo di file caricare
+     */
+    public $onlyOfficeNewFile;
 
     /**
      * @inheritdoc
@@ -191,12 +196,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public function rules()
     {
         $rules = ArrayHelper::merge(parent::rules(), [
-            [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],
+            [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],           
+            [['typeMainDocument'], 'integer'],
             [['documentMainFile'],
                 'required',
                 'when' => function ($model) {
                 // pr($model->drive_file_id);die;
-                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == '' && empty($model->drive_file_id)));
+                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == '' && empty($model->drive_file_id) && $model->typeMainDocument != 3));
                 },
                 'whenClient' => "function(attribute, value) {
                     return (" . (!$this->documentsModule->documentsOnlyText ? "true" : "false") . " && ($('#documenti-link_document').val() == '') && $('#drive-file-id').val() == '');
@@ -234,6 +240,14 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['link_document'], 'url', 'skipOnEmpty' => function ($model) {
                 return $model->link_document == '';
             }
+            ],
+                    
+            [['onlyOfficeNewFile'],
+                'required',
+                'when' => function ($model) {             
+                    return ($model->documentMainFile == 3 ? true : false);
+                },
+                'message' => AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file_required')
             ],
         ]);
 
@@ -1272,6 +1286,33 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     {
         return AmosDocumenti::t('amosdocumenti', parent::getWorkflowStatusLabel());
     }
+    
+    public function getTypeMainDocument()
+    {
+        $types = [
+            1 => AmosDocumenti::t('amosdocumenti', 'File'),
+            2 => AmosDocumenti::t('amosdocumenti', 'Link esterno'),
+        ];
+        
+        if($this->documentsModule->getModuleOnlyOffice()){
+            $types[3] = AmosDocumenti::t('amosdocumenti', 'Only Office');
+        } 
+        
+        return $types;
+    }
+    
+    public function getOnlyOfficeNewFiles()
+    {
+       
+        $new_files = []; 
+        
+        $moduleOnlyOffice = $this->documentsModule->getModuleOnlyOffice();
+        if($moduleOnlyOffice){
+            $new_files = $moduleOnlyOffice->tipiGestibili;
+        }
+        
+        return $new_files;
+    }
 
     /**
      * @return string
@@ -1686,6 +1727,28 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             return true;
         }
         return false;
+    }
+    
+    public function uploadDefaultFile(){
+        
+        $module = \Yii::$app->getModule('attachments');
+        $moduleOnlyOffice = $this->documentsModule->getModuleOnlyOffice();
+        
+        $type_file = $this->onlyOfficeNewFile;
+        $path = $moduleOnlyOffice->samplesPath;
+        $filename = $moduleOnlyOffice->getFileSampleByType($type_file);
+        
+        $userTempDir = $module->getUserDirPath('documentMainFile');
+        $file = \Yii::getAlias($path.$filename);               
+        $dest = $userTempDir.str_replace(' ','_',strtolower($this->titolo)).'.'.$type_file;
+        copy($file, $dest);
+
+        foreach (\yii\helpers\FileHelper::findFiles($userTempDir) as $file) {
+
+            $module->attachFile($file,$this,'documentMainFile',true,false,false);
+
+        }
+      
     }
 
 }

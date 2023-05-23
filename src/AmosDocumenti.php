@@ -47,6 +47,10 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * will be taken. If this is false, layout will be disabled within this module.
      */
     public $layout = 'main';
+    
+    
+    
+    
 
     /**
      *
@@ -62,6 +66,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool|false if document foldering is enabled or not
      */
     public $enableFolders = false;
+    
 
     /**
      * @var bool|true if document categories are enabled or not
@@ -492,5 +497,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         ];
 
         return $names;
+    }
+    
+    
+    public function getModuleOnlyOffice(){
+               
+        $moduleOnlyOffice = \Yii::$app->getModule('onlyoffice');        
+        
+        return isset($moduleOnlyOffice) ? $moduleOnlyOffice : false;
+        
     }
 }

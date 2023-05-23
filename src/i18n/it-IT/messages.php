@@ -459,4 +459,7 @@ return [
 
     '#loading' => 'Caricamento in corso...',
     '#titolo_spazi' => 'Il titolo contiene più spazi attigui, correggere il testo.',
+    
+    '#onlyoffice_type_file' => 'Tipo',
+    '#onlyoffice_type_file_required' => 'Tipo di file è obbligatorio',
 ];

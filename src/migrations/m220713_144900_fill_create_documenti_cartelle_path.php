@@ -21,9 +21,11 @@ class m220713_144900_fill_create_documenti_cartelle_path extends Migration
     {
         Yii::$app->db->createCommand()->truncateTable(DocumentiCartellePath::tableName())->execute();
         $documenti = Documenti::find()->andWhere(['deleted_at'=>null])->all();
-        foreach($documenti as $doc){
-            $result = DocumentiCartellePath::generatePath($doc,1,[]);
-            DocumentiCartellePath ::savePath($result,$doc->id);
+        if(!empty($documenti)){
+            foreach($documenti as $doc){
+                $result = DocumentiCartellePath::generatePath($doc,1,[]);
+                DocumentiCartellePath ::savePath($result,$doc->id);
+            }
         }
      
     }

@@ -6,6 +6,17 @@ use yii\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 
 $enabledGoogleDrive = $module && $module->enableGoogleDrive;
+$onlyofficeModule = \Yii::$app->getModule('onlyoffice');
+if($onlyofficeModule){
+	$buttonDisalbe = !$onlyofficeModule->isValidExtension($model->documentMainFile->type) ? "disabled" : "" ;
+	$new_files = $onlyofficeModule->tipiGestibili;
+	$file_list = '';
+	foreach ($new_files as $file){
+		$file_list .= $file.", ";
+	}
+	$file_list = rtrim($file_list, ", ");
+}
+
 $documentsModule = AmosDocumenti::instance();
 $js = <<<JS
 
@@ -13,32 +24,33 @@ $js = <<<JS
         if($(this).val() ==='1'){
             $('#main-file-container').show();
             $('#link-document-container').hide();
+            $('#onlyoffice-document-type').hide();
             $('#link-document-id').val('');
-        } else {
+        } else if($(this).val() ==='2') {
             $('#main-file-container').hide();
+            $('#onlyoffice-document-type').hide();
             $('#link-document-container').show();
+            $('.file-input .fileinput-remove').click();
+        } else if($(this).val() ==='3') {
+            $('#onlyoffice-document-type').show();
+            $('#main-file-container').hide();
+            $('#link-document-container').hide();
+            $('#link-document-id').val('');
+            $('.file-input .fileinput-remove').click();
         }
     });
 JS;
 
-$this->registerJs($js); ?>
-<?php if(!empty($model->link_document)){
-    $hideExternalLink = '';
-    $hideMainDocument = 'display:none';
-    $model->typeMainDocument = 2;
-}else{
-    $hideExternalLink = 'display:none';
-    $hideMainDocument = '';
-    $model->typeMainDocument = 1;
-}?>
+$this->registerJs($js);
+
+
+?>
 
 <?= $form->field($model, 'typeMainDocument')->widget(\kartik\select2\Select2::className(), [
-    'data' => [
-        1 => AmosDocumenti::t('amosdocumenti', 'File'),
-        2 => AmosDocumenti::t('amosdocumenti', 'Link esterno')],
-    'options' => ['id' => 'type-main-document-id']
-])->label(AmosDocumenti::t('amosdocumenti', 'tipo di documento'))
-?>
+    'data' => $model->getTypeMainDocument(),
+    'options' => ['id' => 'type-main-document-id', 'disabled' => !$model->isNewRecord]
+])->label(AmosDocumenti::t('amosdocumenti', 'tipo di documento')) ?>
+
 <?php if ($enabledGoogleDrive && !empty($model->drive_file_id)) { ?>
     <div class="documents-view">
         <?= $this->render('_download_box', [
@@ -57,9 +69,19 @@ $this->registerJs($js); ?>
     <?php } ?>
 
     <?php if (!$isFolder) { ?>
+        
+        <?php if($onlyofficeModule && !$model->isNewRecord): ?>
+            <div id="onlyoffice-document" class="col-xs-12 m-b-20 nop">
+                <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Apri con OnlyOffice'),['/documenti/documenti/onlyoffice-edit','id'=>$model->id],['class'=>'btn btn-outline-primary '.$buttonDisalbe, 'title' => 'prova']); ?>
+				<?php if($buttonDisalbe): ?>
+				<p><small><?=AmosDocumenti::t('amosdocumenti', 'Formato non supportato da onlyoffice. I formati supportati sono: ').$file_list?></small></p>
+				<?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <div id="container-document-mainfile" class="col-xs-12 nop">
 
-            <div id="main-file-container" style="<?=$hideMainDocument?>">
+            <div id="main-file-container" style="<?= $model->typeMainDocument == 1 ? '' : 'display:none' ?>">
                 <?= $form->field($model,
                     'documentMainFile')->widget(AttachmentsInput::classname(), [
                     'options' => [
@@ -79,13 +101,21 @@ $this->registerJs($js); ?>
                     ->hint(AmosDocumenti::t('amosdocumenti', 'Rappresenta il documento principale.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
             </div>
 
-            <div id="link-document-container" style="<?=$hideExternalLink?>">
+            <div id="link-document-container" style="<?= $model->typeMainDocument == 2 ? '' : 'display:none' ?>">
                 <?= $form->field($model, 'link_document')->textInput([
                     'maxlength' => true,
                     'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder'),
                     'id' => 'link-document-id'
                 ])
                     ->hint(AmosDocumenti::t('amosdocumenti', '#link_document_field_hint'))
+                ?>
+            </div>
+            
+            <div id="onlyoffice-document-type" style="<?= $model->typeMainDocument == 3 ? '' : 'display:none' ?>">
+                <?= $form->field($model, 'onlyOfficeNewFile')->widget(\kartik\select2\Select2::className(), [
+                    'data' => $model->getOnlyOfficeNewFiles(),
+                    'options' => ['id' => 'onlyoffice-file-id']
+                ])->label(AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file'))
                 ?>
             </div>
 

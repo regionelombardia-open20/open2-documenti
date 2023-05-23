@@ -192,6 +192,7 @@ class DocumentiController extends CrudController
                             'allow' => true,
                             'actions' => [
                                 'own-documents',
+                                'onlyoffice-edit'
                             ],
                             'roles' => ['CREATORE_DOCUMENTI', 'AMMINISTRATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
                         ],
@@ -199,7 +200,7 @@ class DocumentiController extends CrudController
                             'allow' => true,
                             'actions' => [
                                 'validate-document',
-                                'reject-document',
+                                'reject-document',                              
                             ],
                             'roles' => [
                                 'AMMINISTRATORE_DOCUMENTI',
@@ -212,7 +213,8 @@ class DocumentiController extends CrudController
                         [
                             'allow' => true,
                             'actions' => [
-                                'to-validate-documents'
+                                'to-validate-documents',
+                                'onlyoffice-callback-api'
                             ],
                             'roles' => [
                                 'VALIDATORE_DOCUMENTI',
@@ -670,7 +672,7 @@ class DocumentiController extends CrudController
             'titleSecondAction' => $titleSecondAction,
             'hideSecondAction' => $this->documentsModule->enableFolders
         ];
-
+  
         if (!parent::beforeAction($action)) {
             return false;
         }
@@ -863,7 +865,7 @@ class DocumentiController extends CrudController
                 ['scenario' => Documenti::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE]
             );
         }
-
+ 
         $params = Yii::$app->request->getQueryParams();
         if (isset($params['isFolder'])) {
             $this->model->setScenario(Documenti::SCENARIO_FOLDER);
@@ -885,6 +887,8 @@ class DocumentiController extends CrudController
             $this->model->validatori = "community-2";
             $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
+        
+        $this->model->typeMainDocument = 1;
 
         if ($this->model->load(Yii::$app->request->post())) {
             $fileId = \Yii::$app->request->post('fileid');
@@ -894,6 +898,7 @@ class DocumentiController extends CrudController
             }
 
             if ($this->model->validate()) {
+               
                 $validateOnSave = true;
                 if ($this->model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE) {
                     $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA;
@@ -923,8 +928,18 @@ class DocumentiController extends CrudController
                     $validateOnSave = false;
                 }
 
-
+                
                 if ($this->model->save($validateOnSave)) {
+                    
+                    /*
+                     * solo in caso di creazione di un documento
+                     * con Only Office
+                     */
+                    if($this->model->typeMainDocument == 3)
+                        $this->model->uploadDefaultFile();
+                    
+                    /*************/
+                    
                     if (!empty($GoogleDriveManager)) {
                         $GoogleDriveManager->shareWithUser($fileId);
                         $GoogleDriveManager->getResourcesAndSave($fileId);
@@ -1066,7 +1081,12 @@ class DocumentiController extends CrudController
 
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
-
+        $this->model->typeMainDocument = 1;
+        
+        if(!empty($this->model->link_document))
+            $this->model->typeMainDocument = 2;
+        
+        
         if ($this->documentIsFolder($this->model)) {
             $this->model->setScenario(Documenti::SCENARIO_FOLDER);
         } else {
@@ -2565,6 +2585,30 @@ class DocumentiController extends CrudController
 
         return json_encode($select_option);
     }
+	
+	public function actionOnlyofficeEdit($id)
+    {
+        Url::remember();
+        
+        $this->setUpLayout('form');
+        $this->model = $this->findModel($id);
+		if (empty($this->model->documentMainFile))
+        {
+			Yii::$app->getSession()->addFlash(
+                'danger',
+                AmosDocumenti::t('amosdocumenti', 'Prima di poter visualizzare il documento salvare')
+            );
+			 return $this->redirect(['update', 'id' => $id]);
+            
+        }
+ 
+        return $this->render(
+            'onlyoffice_edit',
+            [
+                'model' => $this->model,            
+            ]
+        );
+    }
 
     /**
      *
@@ -2635,5 +2679,7 @@ class DocumentiController extends CrudController
             ];
         }
         return $links;
-    }
+    }      
+    
+    
 }

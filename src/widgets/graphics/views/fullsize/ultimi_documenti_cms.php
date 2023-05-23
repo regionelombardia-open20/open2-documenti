@@ -81,6 +81,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                 'hideCreate' => $moduleDocumenti->hideNewButtonInWGCmsUltimiDocumenti,
                 'urlCreate' => $urlCreate,
                 'manageLinks' => $manageLinks,
+                'canCreateCommunityWidget' => \Yii::$app->user->can('DOCUMENTI_CREATE'),
             ]
         );
         ?>

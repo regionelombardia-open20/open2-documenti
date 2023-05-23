@@ -19,6 +19,9 @@ use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use yii\web\View;
+use open20\onlyoffice\widgets\EditorWidget;
+use yii\helpers\Url;
+
 
 /**
  * @var yii\web\View $this
@@ -94,6 +97,7 @@ $viewReportWidgets = (
     !is_null($reportModule)
     && in_array($model->className(), $reportModule->modelsEnabled)
 );
+
 ?>
 
 <div class="documents-view">
@@ -243,6 +247,42 @@ $viewReportWidgets = (
             </div>
         </div>
 
+        <?php 
+            $onlyofficeModule = Yii::$app->getModule('onlyoffice');
+            $modelUserProfile = \open20\amos\admin\models\UserProfile::find()
+            ->andWhere(['user_id' => Yii::$app->user->id])
+            ->one();
+			
+            if($onlyofficeModule && $onlyofficeModule->isValidExtension($model->documentMainFile->type)): ?>
+                <div class="open-office m-t-20">
+                    <?= EditorWidget::widget([
+							'urlFile' => $model->documentMainFile->getWebUrl('original', true, false),
+							'keyFile' => $model->documentMainFile->hash,
+							'nameFile' => $model->documentMainFile->name . '.' . strtolower($model->documentMainFile->type),
+							'options' => [
+								'iframeHeight' => '700px',
+								'fileTypeAuto' => strtolower($model->documentMainFile->type),
+								'documentTypeAuto' => true,
+							],
+							'configForJs' => [
+								'documentType' => $onlyofficeModule->getDocumentTypeByExtension($model->documentMainFile->type,true),
+								'editorConfig' => [
+									'mode' => 'view',
+									'callbackUrl' => Url::to(['/documenti/onlyoffice/callback-api'], true),
+									'customization' => [
+										'forcesave' => false, 
+									],
+									
+									'user' => [
+										'id' => Yii::$app->user->id,
+										'name' => ((!empty($modelUserProfile)) ? $modelUserProfile->nomeCognome : ''),
+									],
+								],
+							]
+						]) ?>
+                </div>
+        <?php endif; ?>
+        
         <div class="document-description m-t-20">
             <p class="text-uppercase"><strong><?= AmosDocumenti::t('amosdocumenti', 'descrizione_breve'); ?></strong></p>
             <?= $model->descrizione_breve; ?>
