@@ -102,6 +102,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $whiteListFilesExtensions = 'csv,doc,docx,pdf,rtf,txt,xls,xlsx,odt';
 
     /**
+     * @var bool
+     */
+    public $enableExtensionFilter = true;
+
+    /**
      * @var string List of the allowed mime types.
      */
     public $mimeTypes = 'text/csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,

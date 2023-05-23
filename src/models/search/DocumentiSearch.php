@@ -42,6 +42,8 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
     public $data_pubblicazione_from;
     public $data_pubblicazione_to;
+    public $extensions;
+    public $genericText;
 
     /**
      *
@@ -60,7 +62,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function init()
     {
         parent::init();
-    
+
         $this->data_pubblicazione = null;
         $this->data_rimozione = null;
         $this->documenti_categorie_id = null;
@@ -83,15 +85,16 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function rules()
     {
-        $integer = ['id', 'primo_piano', 'hits', 'abilita_pubblicazione', 'updated_by', 'deleted_by', 'parent_id','ricerca_sottocartelle'];
+        $integer = ['id', 'primo_piano', 'hits', 'abilita_pubblicazione', 'updated_by', 'deleted_by', 'parent_id', 'ricerca_sottocartelle'];
         if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
                 === false)) {
             $integer[] = 'created_by';
         }
         return [
             [$integer, 'integer'],
-            [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
-                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to','ricerca_sottocartelle'], 'safe'],
+            ['genericText', 'string'],
+            [['extensions', 'parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
+                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to', 'ricerca_sottocartelle'], 'safe'],
         ];
     }
 
@@ -148,24 +151,25 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             'metadesc',
         ];
     }
-    
-    
-    
-    public function getFoldersList($communityId,$id){
+
+
+    public function getFoldersList($communityId, $id)
+    {
         $editorsNode = CwhPubblicazioniCwhNodiEditoriMm::find()->andWhere(['cwh_network_id' => $communityId])->all();
-                           // $query = DocumentiSearch::find()->andWhere(['is_folder'=>1]);
+        // $query = DocumentiSearch::find()->andWhere(['is_folder'=>1]);
         $idList = [];
-        foreach($editorsNode as $en){
+        foreach ($editorsNode as $en) {
             $pubblicazione = CwhPubblicazioni::findOne($en->cwh_pubblicazioni_id);
             $content_id = $pubblicazione->content_id;
             $idList[] = $content_id;
         }
-        $data = DocumentiSearch::find()->andWhere(['is_folder'=>1])->andWhere(['id'=>$idList])
-                ->andWhere(['not',['id'=>$id]])
-                ->andWhere(['status'=> Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
-                ->asArray()->all();
+        $data = DocumentiSearch::find()->andWhere(['is_folder' => 1])->andWhere(['id' => $idList])
+            ->andWhere(['not', ['id' => $id]])
+            ->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
+            ->asArray()->all();
         return $data;
     }
+
     /**
      * Use to add Join condition/add other filtering condition
      *
@@ -195,6 +199,15 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         if (!empty($this->data_pubblicazione_to)) {
             $query->andFilterWhere(['<=', new Expression("DATE(data_pubblicazione)"), new Expression("DATE('{$this->data_pubblicazione_to}')")]);
+        }
+
+        if (!empty($this->extensions)) {
+            $query->leftJoin('attach_file', new Expression('attach_file.item_id = documenti.id AND model = "open20\\\\amos\\\\documenti\\\\models\\\\Documenti"'));
+            $query->andWhere(['attach_file.type' => $this->extensions]);
+//            var_dump($query->createCommand()->rawSql);
+//            var_dump($query->createCommand()->rawSql);
+//            var_dump($query->createCommand()->rawSql);
+//            print_r($query->createCommand()->rawSql);
         }
 
     }
@@ -251,17 +264,17 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         //if you come from widget grphic LastDocuments Show also documents that are inside the folders
         if ((!in_array($queryType, ['to-validate', 'created-by'])) && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
             if (!$showAll) {
-              if(!$params['DocumentiSearch']['ricerca_sottocartelle']){
+                if (!$params['DocumentiSearch']['ricerca_sottocartelle']) {
                     $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
-                }else{
+                } else {
                     $query->innerJoin(
                         DocumentiCartellePath::tableName(),
-                        self::tableName().'.id = '.DocumentiCartellePath::tableName().'.id_doc_folder')
-                            ->andWhere([DocumentiCartellePath::tableName() . '.id_folder' => $this->parentId]);
+                        self::tableName() . '.id = ' . DocumentiCartellePath::tableName() . '.id_doc_folder')
+                        ->andWhere([DocumentiCartellePath::tableName() . '.id_folder' => $this->parentId]);
                 }
             }
         }
-            
+
         // recursive search
         if (!empty($this->parentId)) {
             /** @var Documenti $documentiModel */
@@ -305,7 +318,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return $dataProvider;
     }
 
-    
+
     /**
      * @param AmosModule $moduleCwh
      * @param string $classname
@@ -378,14 +391,14 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function lastDocuments($params, $limit = null)
     {
-        $params                      = array_merge($params, Yii::$app->request->getQueryParams());
+        $params = array_merge($params, Yii::$app->request->getQueryParams());
         $params['fromWidgetGraphic'] = true;
         $dataProvider = $this->searchAll($params, $limit);
 
         if (!empty($params["conditionSearch"])) {
             $commands = explode(";", $params["conditionSearch"]);
             foreach ($commands as $command) {
-                $dataProvider->query->andWhere(eval("return ".$command.";"));
+                $dataProvider->query->andWhere(eval("return " . $command . ";"));
             }
         }
         return $dataProvider;
@@ -575,6 +588,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $this->load($params);
         $query = $this->homepageDocumentsQuery($params);
         $this->applySearchFilters($query);
+        $this->applyExtraFilterSearch($query);
 
         if (!empty($params["conditionSearch"])) {
             $commands = explode(";", $params["conditionSearch"]);
@@ -582,7 +596,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 if (strpos($command, 'scope_community_id')) {
                     $communityId = $this->extractCommunityIdFromCommand($command);
                     $query = $this->cmsFilterScopeCommunity($query, $communityId);
-                }else{
+                } else {
                     $query->andWhere(eval("return " . $command . ";"));
                 }
             }
@@ -609,6 +623,25 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return $dataProvider;
     }
 
+    /**
+     * @param $query
+     * @return void
+     */
+    public function applyExtraFilterSearch($query)
+    {
+        if (!empty($this->genericText)) {
+            $query->andWhere(['OR',
+                ['LIKE', 'titolo', $this->genericText],
+                ['LIKE', 'descrizione', $this->genericText],
+                ['LIKE', 'sottotitolo', $this->genericText],
+                ['LIKE', 'descrizione_breve', $this->genericText],
+            ]);
+        }
+        if (!empty($this->extensions)) {
+            $query->leftJoin('attach_file', new Expression('attach_file.item_id = documenti.id AND model = "open20\\\\amos\\\\documenti\\\\models\\\\Documenti"'));
+            $query->andWhere(['attach_file.type' => $this->extensions]);
+        }
+    }
 
     /**
      * @param $command

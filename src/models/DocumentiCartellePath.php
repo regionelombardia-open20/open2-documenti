@@ -85,7 +85,7 @@ final class DocumentiCartellePath extends Record
                 $documentoPath->save();
                 $level--;
             }
-        } catch (Exception $e){
+        } catch (\Exception $e){
             Yii::$app->getSession()->addFlash(
                 'danger',
                 AmosDocumenti::tHtml(

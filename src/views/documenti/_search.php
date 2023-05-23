@@ -72,19 +72,19 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
     <div class="col-sm-6 col-lg-4">
         <?= $form->field($model, 'descrizione') ?>
     </div>
-    
+
     <?php if (!$hidePubblicationDate) { ?>
         <?php if (!$hideSearchPubblicationDates) { ?>
-        <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
-            ])->label(AmosDocumenti::t('amosdocumenti', "#data_di_pubblicazione_dal")) ?>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <?= $form->field($model, 'dataPubblicazioneAl')->widget(DateControl::className(), [
-                'type' => DateControl::FORMAT_DATE
-            ])->label(AmosDocumenti::t('amosdocumenti', "#data_di_pubblicazione_al")) ?>
-        </div>
+            <div class="col-sm-6 col-lg-4">
+                <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
+                    'type' => DateControl::FORMAT_DATE
+                ])->label(AmosDocumenti::t('amosdocumenti', "#data_di_pubblicazione_dal")) ?>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <?= $form->field($model, 'dataPubblicazioneAl')->widget(DateControl::className(), [
+                    'type' => DateControl::FORMAT_DATE
+                ])->label(AmosDocumenti::t('amosdocumenti', "#data_di_pubblicazione_al")) ?>
+            </div>
         <?php } ?>
     <?php } ?>
     <?php if (!$hideSearchPubblicationFromTo) { ?>
@@ -140,6 +140,30 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
             ]) ?>
         </div>
     <?php endif; ?>
+
+    <?php if ($controller->documentsModule->enableExtensionFilter): ?>
+        <div class="col-sm-6 col-lg-4">
+            <?php $extensionsString = $controller->documentsModule->whiteListFilesExtensions;
+            $extensions = explode(',', $extensionsString);
+            $ext = [];
+            foreach ($extensions as $extension) {
+                $ext[$extension] = $extension;
+            }
+            ?>
+            <?= $form->field($model, 'extensions')->widget(Select::className(), [
+                'data' => $ext,
+                'language' => substr(Yii::$app->language, 0, 2),
+                'options' => [
+                    'multiple' => true,
+                    'placeholder' => AmosDocumenti::t('amosdocumenti', 'Search by extension'),
+                ],
+                'pluginOptions' => [
+                    'allowClear' => true
+                ],
+            ])->label(AmosDocumenti::t('amosdocumenti', "Estensione")) ?>
+        </div>
+    <?php endif; ?>
+
 
     <?php if (isset($moduleTag) && in_array($documentsModule->model('Documenti'), $moduleTag->modelsEnabled) && $documentsModule->searchByTags && $moduleTag->behaviors): ?>
         <div class="col-xs-12">

@@ -31,9 +31,9 @@ class DocumentiCategoryCommunityMm extends \open20\amos\documenti\models\base\Do
         return isset($hints[$attribute]) ? $hints[$attribute] : null;
     }
 
-    public static function getEditFields()
+    public function getEditFields()
     {
-        $labels = self::attributeLabels();
+        $labels = $this->attributeLabels();
 
         return [
             [

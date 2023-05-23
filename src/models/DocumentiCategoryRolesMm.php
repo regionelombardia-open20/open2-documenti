@@ -45,9 +45,9 @@ class DocumentiCategoryRolesMm extends \open20\amos\documenti\models\base\Docume
         return isset($hints[$attribute]) ? $hints[$attribute] : null;
     }
 
-    public static function getEditFields()
+    public function getEditFields()
     {
-        $labels = self::attributeLabels();
+        $labels = $this->attributeLabels();
 
         return [
             [

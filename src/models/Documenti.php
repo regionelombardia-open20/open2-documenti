@@ -200,8 +200,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @inheritdoc
      */
     public function rules()
-    {
-        \yii\helpers\BaseFileHelper::$mimeMagicFile = '@vendor/open20/amos-documenti/src/models/mimeTypes.php';
+    {        
         $rules = ArrayHelper::merge(parent::rules(), [
             [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],           
             [['typeMainDocument'], 'integer'],
@@ -235,11 +234,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
             [['documentAttachments'],
                 'file',
-                'extensions' => (!empty($this->documentsModule))
-                    ? $this->documentsModule->whiteListFilesExtensions
-                    : '',
+//                'extensions' => (!empty($this->documentsModule))
+//                    ? $this->documentsModule->whiteListFilesExtensions
+//                    : '',
                 'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes))
+                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes'))
                     ? $this->documentsModule->mimeTypes
                     : '',                                    
                 'maxFiles' => 0,
@@ -251,11 +250,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['documentMainFile'],
                 'file',
                 //'skipOnEmpty' => true,
-                'extensions' => (!empty($this->documentsModule))
-                    ? $this->documentsModule->whiteListFilesExtensions
-                    : '',
+//                'extensions' => (!empty($this->documentsModule))
+//                    ? $this->documentsModule->whiteListFilesExtensions
+//                    : '',
                 'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes))
+                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes'))
                     ? $this->documentsModule->mimeTypes
                     : '',                                   
                 'maxFiles' => 1,
@@ -399,21 +398,16 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             ],
             'fileBehavior' => [
                 'class' => FileBehavior::class
-            ],
-            'SeoContentBehavior' => [
-                'class' => SeoContentBehavior::class,
-                'imageAttribute' => null,
-                'defaultOgType' => 'article',
-            ],
+            ],            
 //            'googleDrive' => [
 //                'class' => GoogleDriveBehavior::class
 //            ],
-
             'SeoContentBehavior' => [
                 'class' => SeoContentBehavior::class,
                 'titleAttribute' => 'titolo',
                 'descriptionAttribute' => 'extended_description',
                 'imageAttribute' => null,
+                'defaultOgType' => 'article',
             ]
 
         ]);

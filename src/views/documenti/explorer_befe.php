@@ -62,5 +62,4 @@ if (count($query) > 0) {
 <h2><?= AmosDocumenti::t('amosdocumenti', 'ESPLORA DOCUMENTI') ?></h2>
 <?php
 echo \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::widget(['isAlwaysVisible' => true]);
-?>
 

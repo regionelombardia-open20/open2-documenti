@@ -460,4 +460,5 @@ return [
     "al" => "to",
     '#loading' => 'Caricamento in corso...',
     '#titolo_spazi' => 'The title contains more adjacent spaces, correct the text.',
+    'Estensione' => 'Extension'
 ];

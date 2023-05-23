@@ -49,9 +49,9 @@ class UploaderImportList extends \open20\amos\documenti\models\base\UploaderImpo
     /**
      * @return array
      */
-    public static function getEditFields()
+    public function getEditFields()
     {
-        $labels = self::attributeLabels();
+        $labels = $this->attributeLabels();
 
         return [
             [

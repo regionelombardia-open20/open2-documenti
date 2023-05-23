@@ -24,5 +24,5 @@ echo \open20\amos\core\views\AmosGridView::widget([
             'format' => 'raw',
         ]
     ]
-])
-?>
+]);
+

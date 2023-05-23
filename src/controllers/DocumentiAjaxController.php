@@ -132,7 +132,7 @@ class DocumentiAjaxController extends Controller
             'download' => ['name' => AmosDocumenti::t('amosdocumenti', 'Scarica')],
             'sep3' => '---------',
             'import' => ['name' => AmosDocumenti::t('amosdocumenti', 'Importa Documenti')],
-            'sep3' => '---------',
+            'sep4' => '---------',
             'delete' => ['name' => AmosDocumenti::t('amosdocumenti', 'Rimuovi')],
         ];
 
