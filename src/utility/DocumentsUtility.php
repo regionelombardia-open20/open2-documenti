@@ -83,7 +83,7 @@ class DocumentsUtility extends BaseObject
                 'png' => 'icon icon-image icon-sm mdi mdi-file-image',
                 'jpeg' => 'icon icon-image icon-sm mdi mdi-file-image',
                 'svg' => 'icon icon-image icon-sm mdi mdi-file-image',
-                'pdf' => 'icon icon-pdf icon-sm mdi mdi-file-pdf',
+                'pdf' => 'icon icon-pdf icon-sm mdi mdi-file-pdf-box',
                 'docx' => 'icon icon-word icon-sm mdi mdi-file-word',
                 'doc' => 'icon icon-word icon-sm mdi mdi-file-word',
                 'ppt' => 'icon icon-powerpoint icon-sm mdi mdi-file-powerpoint',

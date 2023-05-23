@@ -2,6 +2,7 @@
 
 use open20\amos\attachments\components\AttachmentsInput;
 use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\Documenti;
 use yii\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 
@@ -45,9 +46,13 @@ JS;
 $this->registerJs($js);
 ?>
 
+<!-- Type main document -->
 <?= $form->field($model, 'typeMainDocument')->widget(\kartik\select2\Select2::class, [
     'data' => $model->getTypeMainDocument(),
-    'options' => ['id' => 'type-main-document-id', 'disabled' => !$model->isNewRecord]
+    'options' => [
+        'id' => 'type-main-document-id',
+        'disabled' => !$model->isNewRecord
+    ]
 ])->label(AmosDocumenti::t('amosdocumenti', 'tipo di documento')) ?>
 
 <?php if ($enabledGoogleDrive && !empty($model->drive_file_id)) { ?>
@@ -80,7 +85,7 @@ $this->registerJs($js);
 
         <div id="container-document-mainfile" class="col-xs-12 nop">
 
-            <div id="main-file-container" style="<?= $model->typeMainDocument == 1 ? '' : 'display:none' ?>">
+            <div id="main-file-container" style="<?= $model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_FILE ? '' : 'display:none' ?>">
                 <?= $form->field($model,
                     'documentMainFile')->widget(AttachmentsInput::classname(), [
                     'options' => [
@@ -100,7 +105,7 @@ $this->registerJs($js);
                     ->hint(AmosDocumenti::t('amosdocumenti', 'Rappresenta il documento principale.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
             </div>
 
-            <div id="link-document-container" style="<?= $model->typeMainDocument == 2 ? '' : 'display:none' ?>">
+            <div id="link-document-container" style="<?= $model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_LINK ? '' : 'display:none' ?>">
                 <?= $form->field($model, 'link_document')->textInput([
                     'maxlength' => true,
                     'placeholder' => AmosDocumenti::t('amosdocumenti', '#link_document_field_placeholder'),
@@ -111,10 +116,12 @@ $this->registerJs($js);
             </div>
             
             <?php if ($onlyofficeModule) : ?>
-            <div id="onlyoffice-document-type" style="<?= $model->typeMainDocument == 3 ? '' : 'display:none' ?>">
+            <div id="onlyoffice-document-type" style="<?= $model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_ONLYOFFICE ? '' : 'display:none' ?>">
                 <?= $form->field($model, 'onlyOfficeNewFile')->widget(\kartik\select2\Select2::class, [
                     'data' => $model->getOnlyOfficeNewFiles(),
-                    'options' => ['id' => 'onlyoffice-file-id']
+                    'options' => [
+                        'id' => 'onlyoffice-file-id'
+                    ]
                 ])->label(AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file'))
                 ?>
             </div>

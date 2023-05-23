@@ -97,6 +97,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     const IS_FOLDER = 1;
     const IS_DOCUMENT = 0;
 
+    // Main document types
+    const MAIN_DOCUMENT_TYPE_FILE = 1;
+    const MAIN_DOCUMENT_TYPE_LINK = 2;
+    const MAIN_DOCUMENT_TYPE_ONLYOFFICE = 3;
+
     /**
      * @var string $regola_pubblicazione Regola di pubblicazione
      */
@@ -146,6 +151,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
     public $titolodate;
 
+    /**
+     * @var integer $typeMainDocument
+     */
     public $typeMainDocument;
     
     /*
@@ -208,13 +216,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['documentMainFile'],
                 'required',
                 'when' => function ($model) {
-                    if ($model->typeMainDocument == 1 && empty($model->documentMainFile)) {
+                    if ($model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_FILE && empty($model->documentMainFile)) {
                         return (
                             !$this->documentsModule->documentsOnlyText
                             && (
                                 trim($model->link_document) == ''
                                 && empty($model->drive_file_id)
-                                && $model->typeMainDocument != 3
+                                && $model->typeMainDocument != self::MAIN_DOCUMENT_TYPE_ONLYOFFICE
                             )
                         );
                     }
@@ -271,7 +279,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['link_document'],
                 'required',
                 'when' => function ($model) {
-                    return $model->typeMainDocument == 2;
+                    return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_LINK;
                 },
                 'whenClient' => "function(attribute, value) {
                     return ("
@@ -284,8 +292,10 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             [['onlyOfficeNewFile'],
                 'required',
                 'when' => function ($model) {             
-                    return ($model->documentMainFile == 3 ? true : false);
-                },
+                    return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_ONLYOFFICE;
+                }, 'whenClient' => "function(attribute, value) {
+                        return ($('#type-main-document-id').val() == '3');
+                }",
                 'message' => AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file_required')
             ],
         ]);
@@ -1325,13 +1335,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     {
         $documentiModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
         $types = [
-               1 => AmosDocumenti::t('amosdocumenti', 'File'),
+               self::MAIN_DOCUMENT_TYPE_FILE => AmosDocumenti::t('amosdocumenti', 'File'),
            ];
         if(!$documentiModule->mainFileOnly){
-            $types[2] = AmosDocumenti::t('amosdocumenti', 'Link esterno');
+            $types[self::MAIN_DOCUMENT_TYPE_LINK] = AmosDocumenti::t('amosdocumenti', 'Link esterno');
         }
         if($this->documentsModule->getModuleOnlyOffice()){
-            $types[3] = AmosDocumenti::t('amosdocumenti', 'Only Office');
+            $types[self::MAIN_DOCUMENT_TYPE_ONLYOFFICE] = AmosDocumenti::t('amosdocumenti', 'Only Office');
         } 
         
         return $types;

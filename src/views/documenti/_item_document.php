@@ -23,7 +23,7 @@ use open20\amos\notificationmanager\forms\NewsWidget;
 /** @var AmosDocumenti $documentsModule */
 $documentsModule = AmosDocumenti::instance();
 $documentMainFile = $model->getDocumentMainFile();
-$modelViewUrl = $model->getFullViewUrl();
+$modelViewUrl = '/documenti/documenti/view?id='. $model->id;
 $document = $model->getDocumentMainFile();
 $documentPresent = ($document != null);
 $documentLinkPresent = (!empty($model->link_document));
@@ -73,23 +73,18 @@ if ($onlyofficeModule) {
 ?>
 
 <div class="document-item-container d-flex border-bottom py-4 w-100">
-
     <div class="info-doc">
         <div>
             <?php  if($iconoo) {?>
-               
                 <?= AmosIcons::show('mdi-layers-triple', ['class' => ' icon icon-layers-triple icon-sm mdi mdi-layers-triple'], 'mdi');?>
-
             <?php } ?>
             <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
             <span class="text-muted small"><?= $docExtension = strtoupper($document->type); ?>
             <?php if ($documentPresent): ?>
-
                 (<?= $model->documentMainFile->formattedSize ?>) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
              <?php endif; ?>
              </span>
 
-            <!-- TODO da finire e fare la parte per link documento esterno -->
             <?php
             if ($documentPresent) {
                 echo Html::tag('span', ((strlen($documentMainFile->name) > 80) ? substr($documentMainFile->name, 0, 75) . '[...]' : $documentMainFile->name) . '.' . $documentMainFile->type, ['class' => 'text-muted small']);

@@ -890,7 +890,7 @@ class DocumentiController extends CrudController
             $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
         
-        $this->model->typeMainDocument = 1;
+        $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_FILE;
 
         if ($this->model->load(Yii::$app->request->post())) {
             $fileId = \Yii::$app->request->post('fileid');
@@ -937,7 +937,7 @@ class DocumentiController extends CrudController
                      * solo in caso di creazione di un documento
                      * con Only Office
                      */
-                    if($this->model->typeMainDocument == 3)
+                    if($this->model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_ONLYOFFICE)
                         $this->model->uploadDefaultFile();
                     
                     /*************/
@@ -1082,10 +1082,10 @@ class DocumentiController extends CrudController
 
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
-        $this->model->typeMainDocument = 1;
+        $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_FILE;
         
         if (!empty($this->model->link_document)) {
-            $this->model->typeMainDocument = 2;
+            $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_LINK;
         }
         
         if ($this->documentIsFolder($this->model)) {
