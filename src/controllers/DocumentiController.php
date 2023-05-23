@@ -33,6 +33,7 @@ use open20\amos\documenti\AmosDocumenti;
 use open20\amos\admin\models\UserProfile;
 use open20\amos\community\models\Community;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\core\helpers\BreadcrumbHelper;
 use open20\amos\core\helpers\PositionalBreadcrumbHelper;
 use open20\amos\core\controllers\CrudController;
@@ -910,6 +911,10 @@ class DocumentiController extends CrudController
                     } else {
                         return ['success' => true];
                     }
+                    
+                    //salvo il path 
+                    $result = DocumentiCartellePath::generatePath($this->model,1,[]);
+                    DocumentiCartellePath ::savePath($result,$this->model->id);
 
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
@@ -1631,7 +1636,7 @@ class DocumentiController extends CrudController
                         'value' => function ($model) {
                             return Html::a(
                                 $model->createdUserProfile->nomeCognome,
-                                ['/admin/user-profile/view', 'id' => $model->createdUserProfile->id],
+                                ['/amosadmin/user-profile/view', 'id' => $model->createdUserProfile->id],
                                 [
                                     'title' => AmosDocumenti::t(
                                         'amosdocumenti',
@@ -1647,7 +1652,7 @@ class DocumentiController extends CrudController
                     //                        'attribute' => 'updatedUserProfile',
                     //                        'label' => AmosDocumenti::t('amosdocumenti', '#updated_by'),
                     //                        'value' => function($model){
-                    //                            return Html::a($model->updatedUserProfile->nomeCognome, ['/admin/user-profile/view', 'id' => $model->updatedUserProfile->id ], [
+                    //                            return Html::a($model->updatedUserProfile->nomeCognome, ['/amosadmin/user-profile/view', 'id' => $model->updatedUserProfile->id ], [
                     //                                'title' => AmosDocumenti::t('amosdocumenti', 'Apri il profilo di {nome_profilo}', ['nome_profilo' => $model->updatedUserProfile->nomeCognome])
                     //                            ]);
                     //                        },
@@ -1670,7 +1675,7 @@ class DocumentiController extends CrudController
                 'panelHeadingTemplate' => '<div class="pull-right">
                     </div>
                     <h3 class="panel-title">
-                        '.AmosDocumenti::t('amosdocuments','Versions').'
+                        '.AmosDocumenti::t('amosdocumenti','Versions').'
                     </h3>
                     <div class="clearfix"></div>',
                 'panel' => [

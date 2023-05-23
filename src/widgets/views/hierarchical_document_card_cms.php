@@ -56,7 +56,7 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                 <div class="categoryicon-top">
 
                     <?php
-                    if (!empty($widget->type)) { 
+                    if (!empty($widget->type)) {
                         if (in_array($widget->type, ['JPG', 'PNG', 'JPEG', 'SVG'])) :
                             ?>
                             <span class="icon icon-image icon-sm mdi mdi-file-image mr-1"></span>
@@ -72,6 +72,10 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                             <span class="icon icon-secondary icon-sm mdi mdi-folder-zip mr-1"></span>
                         <?php elseif (in_array($widget->type, ['FOLDER'])) : ?>
                             <span class="icon icon-folder icon-sm mdi mdi-folder mr-1"></span>
+                        <?php elseif ((in_array($widget->type, ['CSV']))) : ?>
+                            <span class="icon icon-black icon-sm mdi mdi-file-delimited"></span>
+                        <?php elseif ((in_array($widget->type, ['PPTX']))) : ?>
+                            <span class="icon icon-powerpoint icon-sm mdi mdi-file-powerpoint"></span>
                         <?php else : ?>
                             <span class="icon icon-secondary icon-sm mdi mdi-file-link mr-1"></span>
                         <?php
@@ -79,7 +83,7 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                     } else {
                         ?>
                             <span class="icon icon-secondary icon-sm mdi mdi-file-link mr-1"></span>
-                    <?php } 
+                    <?php }
                     ?>
 
                     <?php if (!empty($widget->dateSyncDrive)) : ?>
@@ -98,13 +102,8 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
 
                     <?php
                     if (!empty($widget->size)) :
-                        if ($widget->size > 1023) {
-                            $textSize = round(($widget->size / 1024), 2).' MB';
-                        } else {
-                            $textSize = $widget->size.' KB';
-                        }
                         ?>
-                        <span class="text text-capitalize">(<?= $textSize ?>)</span>
+                        <span class="text text-capitalize">(<?= $widget->size ?>)</span>
                     <?php endif ?>
 
                     <div class="info-doc-top-right ml-auto d-flex align-items-center">

@@ -38,7 +38,7 @@ class DocumentiCategorie extends \open20\amos\documenti\models\base\DocumentiCat
     public function rules()
     {
         return ArrayHelper::merge(parent::rules(), [
-            [['documentCategoryImage'], 'file', 'extensions' => 'jpeg, jpg, png, gif','maxFiles' => 1],
+            [['documentCategoryImage'], 'file', 'extensions' => 'jpeg, jpg, png, gif','maxFiles' => 1, 'mimeTypes'=>'image/*'],
             [['documentiCategoryRoles' ,'documentiCategoryCommunities','visibleToCommunityRole'], 'safe']
         ]);
     }

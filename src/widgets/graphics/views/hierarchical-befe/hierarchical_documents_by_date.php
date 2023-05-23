@@ -77,7 +77,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
 
         $this->registerJs("
             $('[data-toggle=\"tooltip\"]').tooltip();
-        
+
             var url = '/documenti/hierarchical-documents/render-hierarchical-documents-widget-befe-by-date?search=';
             $('#search').on('keyup', function(event){
 
@@ -148,7 +148,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                                         [
                                             'model' => $modelD,
                                             'type' => (!empty($mainDocument) ? $mainDocument->type : null),
-                                            'size' => (!empty($mainDocument) ? $mainDocument->size : null),
+                                            'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
                                             'actionModify' => '/documenti/documenti/update?id='.$modelD->id,
                                             'date' => $modelD->data_pubblicazione,
                                             'nameSurname' => $createdUserProfile->nomeCognome,

@@ -79,7 +79,8 @@ $this->registerJs($jsCount);
                     [
                         '/attachments/file/download/',
                         'id' => $document->id,
-                        'hash' => $document->hash
+                        'hash' => $document->hash,
+                        'download' => true
                     ],
                     [
                         'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
@@ -108,14 +109,14 @@ $this->registerJs($jsCount);
     </div>
     <div class="ml-auto d-flex doc-actions">
     <a href="#" title="Vedi dettaglio">
-        <?php 
+        <?php
         echo AmosIcons::show('settings', ['class' => 'icon-rounded'], 'am');
-        ?>    
+        ?>
      </a>
      <a href="#" title="Vedi dettaglio">
-        <?php 
+        <?php
         echo AmosIcons::show('search', ['class' => 'icon-rounded'], 'am');
-        ?>    
+        ?>
      </a>
     </div>
 </div>

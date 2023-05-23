@@ -64,7 +64,7 @@ class WidgetGraphicsHierarchicalDocumentsBefeCommunity extends WidgetGraphic
      * @var \yii\db\ActiveQuery $query
      */
     public $query = null;
-    
+
     /**
      * @var bool
      */
@@ -214,7 +214,7 @@ class WidgetGraphicsHierarchicalDocumentsBefeCommunity extends WidgetGraphic
         }
         $isSetCwh = $this->isSetCwh($moduleCwh, $classname);
         if ($isSetCwh) {
-            $query = $cwhActiveQuery->getQueryCwhAll();
+            $query = $cwhActiveQuery->getQueryCwhAll(null, null, true);
         }
         return $query;
     }
@@ -565,7 +565,7 @@ class WidgetGraphicsHierarchicalDocumentsBefeCommunity extends WidgetGraphic
             $linkOptions['data-pjax'] = '0';
             if (!is_null($model->getDocumentMainFile())) {
 
-                $linkOptions['href'] = '/attachments/file/download?id='.$model->getDocumentMainFile()->id.'&hash='.$model->getDocumentMainFile()->hash;
+                $linkOptions['href'] = '/attachments/file/download?id='.$model->getDocumentMainFile()->id.'&hash='.$model->getDocumentMainFile()->hash.'&download=true';
             }
             if (!empty($model->link_document)) {
                 $linkOptions['href']   = $model->link_document;

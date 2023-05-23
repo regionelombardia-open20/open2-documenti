@@ -88,7 +88,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
 
         $this->registerJs("
             $('[data-toggle=\"tooltip\"]').tooltip();
-        
+
             var url = '{$urlSearch}{$getJoin}search=';
             $('#search').on('keyup', function(event){
 
@@ -101,7 +101,27 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                         timeout: 15000,
                     });
                 }
-            });", \yii\web\View::POS_READY);
+            });
+            
+            $('.hierarchical-link').css('cursor', 'pointer');            
+            $('.hierarchical-link').on('click', function(event){
+                event.preventDefault();
+                $.pjax.reload({
+                    container: '#$toRefreshSectionId',
+                    url: $(this).attr('data-url'),                    
+                    push: false,
+                    replace: false,
+                    timeout: 15000,
+                });
+            });
+            
+            $(document).on('pjax:send', function() {
+                $('.hierarchical-link').css('cursor', 'wait');  
+            });
+            $(document).on('pjax:complete', function() {
+                $('.hierarchical-link').css('cursor', 'pointer');  
+            });
+            ", \yii\web\View::POS_READY);
         //        }
         //        else {
         //            $this->registerJs("
@@ -130,8 +150,8 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
             </div>
         </div>
         <div class="row hierarchical-widget">
-            
-            
+
+
             <?php if ($widget->enableSideBar == true) { ?>
             <div id="hierarchical-widget-address-bar-id" class="hierarchical-widget-address-bar col-md-4 col-xs-12 mx-2 mx-md-0">
                 <?php } else { ?>
@@ -145,6 +165,10 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                     <div id="hierarchical-widget-list-id" class="col-12 hierarchical-widget-list">
                         <?php } ?>
                         <div class="row" role="listbox" data-role="list-view">
+                            <?php if (($dataProviderFolders->count == 0) && ($dataProviderDocuments->count == 0)) {
+                                echo '<div class="col-12">' . AmosDocumenti::t('amosdocumenti', 'Nessun documento') . '</div>';
+                            } ?>
+
                             <?php if ($dataProviderFolders->count > 0) {
                                 ?>
                                 <?php foreach ($dataProviderFolders->getModels() as $modelF) {
@@ -153,10 +177,10 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                                     $relationCreated = CachedActiveQuery::instance($relationQuery);
                                     $relationCreated->cache(60);
                                     $createdUserProfile = $relationCreated->one();
-                                    
+
                                     $actionUrl = \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefe::getLinkOptions($modelF, $widget->categories, $widget->folder_id);
                                     ?>
-                                    
+
                                     <?=
                                     ItemDocumentCardWidget::widget(
                                         [
@@ -189,14 +213,14 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                                         [
                                             'model' => $modelD,
                                             'type' => (!empty($mainDocument) ? $mainDocument->type : null),
-                                            'size' => (!empty($mainDocument) ? $mainDocument->size : null),
+                                            'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
                                             'actionModify' => '/documenti/documenti/update?id=' . $modelD->id,
                                             'date' => $modelD->data_pubblicazione,
                                             'nameSurname' => $createdUserProfile->nomeCognome,
                                             'fileName' => (!empty($mainDocument) ? $mainDocument->name : ''),
                                             'allegatiNum' => $modelD->getFilesByAttributeName('documentAttachments')->count(),
                                             'title' => $modelD->titolo,
-                                            'actionView' => '/documenti/documenti/view?id=' . $modelF->id,
+                                            'actionView' => '/documenti/documenti/view?id=' . $modelD->id,
                                             'fileUrl' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefe::getLinkOptions($modelD),
                                             'link_document' => $modelD->link_document,
                                             'widthColumn' => ($widget->enableSideBar == true) ? 'col-sm-6 col-12' : 'col-md-4 col-sm-6',

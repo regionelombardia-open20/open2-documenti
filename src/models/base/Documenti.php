@@ -108,6 +108,8 @@ abstract class Documenti extends ContentModel
                 'titolo',
                 'sottotitolo',
             ], 'string', 'max' => 100],
+            ['titolo','match','pattern'=>'/\s{2,}/g','not' => true,
+                'message' =>  AmosDocumenti::t('amosdocumenti', "#titolo_spazi") ],
             [['descrizione_breve'], 'string', 'max' => 255],
             [['link_document'], 'string', 'max' => 255],
             [[

@@ -99,7 +99,8 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                                 $documentIconboxUrl = [
                                     '/attachments/file/download/',
                                     'id' => $documentInfo->id,
-                                    'hash' => $documentInfo->hash
+                                    'hash' => $documentInfo->hash,
+                                    'download' => true
                                 ];
                             }
                         }
@@ -120,7 +121,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                                 $documentIconboxUrl = $document->link_document;
                             }
                             ?>
-                            <?= Html::a('                              
+                            <?= Html::a('
                                     <div class="widget-iconbox-container">
                                         <div class="container-img">
                                             ' . AmosIcons::show($icon, ['class' => 'icon_widget_graph'], 'dash') . '
@@ -130,7 +131,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                                                 ' . $documentTitle . '
                                             </h2>
                                             <div class="box-widget-info-bottom">
-                                                <span> ' . ($documentInfoIsFile ? $documentInfo->size . ' Kb' : '') . '</span>
+                                                <span> ' . ($documentInfoIsFile ? $documentInfo->formattedSize : '') . '</span>
                                             </div>
                                         </div>
                                     </div>

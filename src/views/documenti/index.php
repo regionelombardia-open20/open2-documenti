@@ -89,30 +89,45 @@ if ($foldersEnabled) {
         'contentOptions' => [
             'headers' => $model->getAttributeLabel('titolo')
         ],
-        'format' => 'html',
+        'format' => 'raw',
         'value' => function ($model) use ($actionId) {
+        $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model);
+           if ($model->is_folder) { 
+                $options =   [
+                'title' => AmosDocumenti::t(
+                        'amosdocumenti',
+                        'Apri la cartella '
+                     ) . '"'.$stringa. $model->titolo . '"'
+                ];
+           }else{
+                $options =   [
+                'title' => AmosDocumenti::t(
+                        'amosdocumenti',
+                        'Scarica il documento '
+                     ) . '"'.$stringa. $model->titolo . '"'
+                ];
+           }
             /** @var Documenti $model */
             $title = $model->titolo;
+            $append = '';
             if ($model->is_folder) {
                 $url = [$actionId, 'parentId' => $model->id];
             } else {
                 $url = '';
                 $document = $model->getDocumentMainFile();
                 if ($document) {
+                    $append = ' ('.$document->formattedSize.')';
                     $url = $document->getUrl();
                 } else {
                     $url = $model->link_document;
+                    $options['target'] = '_blank';
                 }
             }
+
             return Html::a(
                 $title,
                 $url,
-                [
-                    'title' => AmosDocumenti::t(
-                            'amosdocumenti',
-                            'Scarica il documento'
-                        ) . '"' . $model->titolo . '"'
-                ]
+                $options
             );
         }
     ];

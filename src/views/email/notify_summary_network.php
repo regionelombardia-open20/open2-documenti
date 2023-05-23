@@ -13,6 +13,7 @@ use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\notificationmanager\utility\NotifyUtility;
 use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
+use open20\amos\notificationmanager\AmosNotify;
 
 /**
  * @var \open20\amos\admin\models\UserProfile $profile
@@ -21,7 +22,7 @@ use open20\amos\notificationmanager\widgets\ItemAndCardWidgetEmailSummaryWidget;
  */
 
 $colors = NotifyUtility::getColorNetwork($color);
-
+$notifyModule = AmosNotify::instance();
 ?>
 <?php foreach ($arrayModels as $model): ?>
     <?php

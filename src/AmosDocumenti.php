@@ -37,7 +37,7 @@ use open20\amos\core\interfaces\BreadcrumbInterface;
 class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface
 {
     /**
-     * 
+     *
      */
     public static $CONFIG_FOLDER = 'config';
 
@@ -49,12 +49,12 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $layout = 'main';
 
     /**
-     * 
+     *
      */
     public $name = 'Documenti';
 
     /**
-     * 
+     *
      */
     public $controllerNamespace = 'open20\amos\documenti\controllers';
 
@@ -103,6 +103,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx, odt';
 
     /**
+     * @var string List of the allowed mime types.
+     */
+    public $mimeTypes = '';
+    
+    /**
      * @var bool|false $hidePubblicationDate
      */
     public $hidePubblicationDate = false;
@@ -120,15 +125,15 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
-    public $defaultListViews = ['list', 'grid']; 
-    
+    public $defaultListViews = ['list', 'grid'];
+
     /**
      * @var array $viewPathEmailSummary
      */
     public $viewPathEmailSummary = [
         'open20\amos\documenti\models\Documenti' => '@vendor/open20/amos-documenti/src/views/email/notify_summary'
     ];
-    
+
     /**
      * @var array $viewPathEmailSummaryNetwork
      */
@@ -207,12 +212,12 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $documentsOnlyText If true the main document file and the external document link are not required at all.
      */
     public $documentsOnlyText = false;
-    
+
     /**
      * This param enables the search by tags
      * @var bool $searchByTags
      */
-    
+
     public $searchByTags = false;
 
     /**
@@ -221,7 +226,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableGoogleDrive = false;
 
     /**
-     * 
+     *
      */
     public $googleDriveConf = [
         'developerKey' => '',
@@ -244,34 +249,34 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $enableCatImgInDocView If true replace the document icon with the category image in the document view and lists.
      */
     public $enableCatImgInDocView = false;
-    
-    
+
+
     /**
      * @var bool $cmsSync
      */
     public $cmsSync = false;
-   
+
     /**
      *
-     * @var string 
+     * @var string
      */
     public $cmsBaseFolder = 'Documenti';
-    
+
     /**
      *
-     * @var boolean 
+     * @var boolean
      */
     public $enableAgid = false;
-    
+
     /**
      *
-     * @var boolean 
+     * @var boolean
      */
     public $requireModalMoveFile = true;
-    
+
     /**
      *
-     * @var boolean 
+     * @var boolean
      */
     public $openInFrontEnd = false;
 
@@ -317,17 +322,22 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool
      */
     public $hideSecondActionOnExploreDocuments = false;
-    
+
     /**
      * The ID of the default category pre-selected for the new News
      * @var integer
      */
     public $defaultCategory;
-    
+
     /**
      * @var int $explorerLastDocsToShow The number of documents to show in the documents explorer.
      */
     public $explorerLastDocsToShow = 3;
+
+    /**
+     * @var int $maxFileSize Maximum file size for upload. No limits if null.
+     */
+    public $maxFileSize = null;
 
     /**
      * @inheritdoc

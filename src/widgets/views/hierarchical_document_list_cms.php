@@ -57,8 +57,8 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
             <div class="row">
                 <div class="col-md-1 col-xs-12 icon-title-container d-flex align-items-center flex-wrap ">
                     <div class="categoryicon-top mr-2">
-                        <?php  
-                        if (!empty($widget->type)) { 
+                        <?php
+                        if (!empty($widget->type)) {
                             if (in_array($widget->type, ['JPG', 'PNG', 'JPEG', 'SVG'])) :
                                 ?>
                                 <span class="icon icon-image icon-sm mdi mdi-file-image mr-1"></span>
@@ -74,6 +74,10 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                                 <span class="icon icon-secondary icon-sm mdi mdi-folder-zip mr-1"></span>
                             <?php elseif (in_array($widget->type, ['FOLDER'])) : ?>
                                 <span class="icon icon-folder icon-sm mdi mdi-folder mr-1"></span>
+                             <?php elseif ((in_array($widget->type, ['CSV']))) : ?>
+                                <span class="icon icon-black icon-sm mdi mdi-file-delimited"></span>
+                            <?php elseif ((in_array($widget->type, ['PPTX']))) : ?>
+                                <span class="icon icon-powerpoint icon-sm mdi mdi-file-powerpoint"></span>
                             <?php else : ?>
                                 <span class="icon icon-secondary icon-sm mdi mdi-file-link mr-1"></span>
                             <?php
@@ -81,7 +85,7 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                         } else {
                             ?>
                                 <span class="icon icon-secondary icon-sm mdi mdi-file-link mr-1"></span>
-                        <?php } 
+                        <?php }
                         ?>
 
                         <?php if (!empty($widget->dateSyncDrive)) : ?>
@@ -127,7 +131,7 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                     if (!empty($widget->newPubblication)) :
                         ?>
 
-                        <?php 
+                        <?php
                         echo $this->render(
                             '@vendor/open20/amos-documenti/src/widgets/views/badge-new-publication'
                         );
@@ -136,8 +140,9 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                     <?php if ($widget->type != 'FOLDER') : ?>
                         <div class="documenti-list-info-container d-flex align-items-center flex-wrap small">
                                 <span class="font-weight-normal mr-1">
-                                    <span class="icon icon-info icon-sm mdi mdi-calendar-clock mr-1"></span>
-                                    <?= $date; ?>
+                                     <span class="icon icon-info icon-sm mdi mdi-calendar-clock mr-1"><?= $date; ?></span>
+                                     -
+                                    <span class="icon icon-info icon-sm mdi mdi-file-swap mr-1 text text-capitalize"><?= $widget->size ?></span>
                                 </span>
                                 <span class="descrizione-sintetica font-weight-normal mr-1">
                                     <?= $widgetDocumentModel->descrizione_breve; ?>
@@ -146,7 +151,7 @@ $widget->actionDelete = (!empty($widget->actionDelete) ? $widget->actionDelete :
                     <?php endif ?>
                 </div>
                 <!-- <div class="card-text text-sans-serif">< ?= $infoDoc ?></div> -->
-            
+
                 <div class="col-md-3 col-xs-12 info-cta-manage-container d-flex align-items-center ml-auto">
                     <a href="javascript:void(0)" data-toggle="tooltip" data-html="true" title="<?= $infoDoc ?>" class="info-link mr-3">
                         <span class="icon icon-info icon-sm mdi mdi-information-outline mr-1"></span>

@@ -18,7 +18,7 @@ use open20\amos\documenti\AmosDocumenti;
 /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
 $controller = Yii::$app->controller;
 $controller->setNetworkDashboardBreadcrumb();
-$this->title = $model->titolo;
+$this->title = \yii\helpers\Html::decode($model->titolo);
 $this->params['breadcrumbs'][] = ['label' => Yii::$app->session->get('previousTitle'), 'url' => Yii::$app->session->get('previousUrl')];
 $this->params['breadcrumbs'][] = AmosDocumenti::t('amosdocumenti', 'Aggiorna');
 ?>

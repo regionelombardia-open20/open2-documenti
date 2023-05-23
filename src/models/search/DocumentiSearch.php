@@ -17,6 +17,7 @@ use open20\amos\core\record\CmsField;
 use open20\amos\core\record\SearchResult;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\tag\models\EntitysTagsMm;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -34,6 +35,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     private $container;
     public $parentId;
     public $dataPubblicazioneAl;
+    public $ricerca_sottocartelle;
 
     public $data_pubblicazione_from;
     public $data_pubblicazione_to;
@@ -67,6 +69,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public function attributeLabels()
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
+            'ricerca_sottocartelle' => AmosDocumenti::t('amosdocumenti', 'Ricerca nelle sottocartelle'),
             'data_pubblicazione_from' => AmosDocumenti::t('amosdocumenti', 'Data da'),
             'data_pubblicazione_to' => AmosDocumenti::t('amosdocumenti', 'Data a'),
         ]);
@@ -77,7 +80,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
      */
     public function rules()
     {
-        $integer = ['id', 'primo_piano', 'hits', 'abilita_pubblicazione', 'updated_by', 'deleted_by', 'parent_id'];
+        $integer = ['id', 'primo_piano', 'hits', 'abilita_pubblicazione', 'updated_by', 'deleted_by', 'parent_id','ricerca_sottocartelle'];
         if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName']
                 === false)) {
             $integer[] = 'created_by';
@@ -85,7 +88,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return [
             [$integer, 'integer'],
             [['parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
-                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to'], 'safe'],
+                'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to','ricerca_sottocartelle'], 'safe'],
         ];
     }
 
@@ -201,7 +204,6 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             $query->andWhere(['primo_piano' => 1]);
         }
 
-
         //set the data provider
         $dataProvider = new ActiveDataProvider($dp_params);
         $dataProvider = $this->searchDefaultOrder($dataProvider);
@@ -223,17 +225,23 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 ]);
             }
         }
+
         //if you don't use the seach form, the recursive search is not active
-        if (!($this->load($params) && $this->validate())) {
-            //if you come from widget grphic LastDocuments Show also documents that are inside the folders
-            if ((!in_array($queryType, ['to-validate', 'created-by'])) && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
-                if (!$showAll) {
+        $this->load($params);
+        //if you come from widget grphic LastDocuments Show also documents that are inside the folders
+        if ((!in_array($queryType, ['to-validate', 'created-by'])) && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
+            if (!$showAll) {
+              if(!$params['DocumentiSearch']['ricerca_sottocartelle']){
                     $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
+                }else{
+                    $query->innerJoin(
+                        DocumentiCartellePath::tableName(),
+                        self::tableName().'.id = '.DocumentiCartellePath::tableName().'.id_doc_folder')
+                            ->andWhere([DocumentiCartellePath::tableName() . '.id_folder' => $this->parentId]);
                 }
             }
-            return $dataProvider;
         }
-
+            
         // recursive search
         if (!empty($this->parentId)) {
             /** @var Documenti $documentiModel */
@@ -275,6 +283,21 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //VarDumper::dump($query->createCommand()->rawSql,3,true);
         return $dataProvider;
+    }
+
+    
+    /**
+     * @param AmosModule $moduleCwh
+     * @param string $classname
+     * @return bool
+     */
+    private function isSetCwh($moduleCwh, $classname)
+    {
+        if (isset($moduleCwh) && in_array($classname, $moduleCwh->modelsEnabled)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

@@ -227,7 +227,7 @@ class DocumentsUtility extends BaseObject
     }
 
     /**
-     * 
+     *
      */
     public static function resetRoutesDocumentsExplorer()
     {
@@ -335,7 +335,7 @@ class DocumentsUtility extends BaseObject
             $linkOptions['data-pjax'] = '0';
             if (!is_null($model->getDocumentMainFile())) {
 
-                $linkOptions['href'] = '/attachments/file/download?id='.$model->getDocumentMainFile()->id.'&hash='.$model->getDocumentMainFile()->hash;
+                $linkOptions['href'] = '/attachments/file/download?id='.$model->getDocumentMainFile()->id.'&hash='.$model->getDocumentMainFile()->hash.'&download=true';
             }
             if (!empty($model->link_document)) {
                 $linkOptions['href']   = $model->link_document;
@@ -345,7 +345,7 @@ class DocumentsUtility extends BaseObject
 
         return $linkOptions;
     }
-    
+
     /**
      * @return bool|mixed
      */

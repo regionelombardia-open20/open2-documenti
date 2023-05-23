@@ -39,7 +39,6 @@ $modelViewUrl = $model->getFullViewUrl();
         ?>
         <span class="small uppercase"><?= AmosDocumenti::t('amosdocumenti', 'Cartella') ?></span>
 
-
         <div class="ml-auto doc-actions d-flex">
             <div>
                 <?= NewsWidget::widget(['model' => $model]); ?>
@@ -60,6 +59,14 @@ $modelViewUrl = $model->getFullViewUrl();
    
     <?= Html::a(Html::tag('p', htmlspecialchars($model->titolo), ['class' => 'h5 title-one-line']), $modelViewUrl, ['class' => 'link-list-title', 'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ').$model->titolo]) ?>
                 
+    <div class="small mb-2">
+        <?php $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model); 
+        echo AmosDocumenti::t(
+                    'amosdocumenti',
+                    'Percorso: '
+                    ).$stringa. $model->titolo
+                ?>
+    </div>
     <div class="small mb-2">
       
      <?= PublishedByWidget::widget([

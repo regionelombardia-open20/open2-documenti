@@ -118,11 +118,11 @@ $viewReportWidgets = (
                         'actionDelete' => '/documenti/documenti/delete?id=' . $model->id,
                         'modelValidatePermission' => 'DocumentValidate',
                     ];
-                    
+
                     if ($isFolder) {
                         $contextMenuWidgetConf['labelDeleteConfirm'] = AmosDocumenti::t('amosdocumenti', '#confirm_delete_folder');
                     }
-                    
+
                     echo ContextMenuWidget::widget($contextMenuWidgetConf);
                     ?>
                 </div>
@@ -180,22 +180,21 @@ $viewReportWidgets = (
                             } else {
                                 $name = $model->titolo;
                             }
-                            echo Html::a(
-                                $name,
-                                [
-                                    '/attachments/file/download/', 'id' => $document->id,
-                                    'hash' => $document->hash
-                                ],
-                                ['class' => 'filename ', 'data-toggle' => 'tooltip', 'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file')]
-                            );
-                            echo Html::tag(
-                                'span',
-                                (' ('
-                                    . $document->size % 1024) . ' Kb)',
-                                [
-                                    'class' => 'text-muted small'
-                                ]
-                            );
+                            if($model->documentMainFile) {
+                                echo Html::a(
+                                    $name,
+                                    $model->documentMainFile->getUrl(),
+                                    ['class' => 'filename ', 'data-toggle' => 'tooltip', 'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file')]
+                                );
+                                echo Html::tag(
+                                    'span',
+                                    (' ('
+                                        . $document->formattedSize) . ')',
+                                    [
+                                        'class' => 'text-muted small'
+                                    ]
+                                );
+                            }
                             
                             if ($model->drive_file_id) {
                                 echo Html::tag(
@@ -285,7 +284,7 @@ $viewReportWidgets = (
             ]) ?>
         </div>
     </div>
-    
+
     <?php if (!empty(\Yii::$app->getModule('tag'))) { ?>
         <div class="section-tags m-t-30" id="section-tags">
             <?= ListTagsWidget::widget([

@@ -38,7 +38,7 @@ return [
     '#article_plural' => 'i',
     '#article_singular' => 'il',
     '#attachments_field' => ' ',
-    '#attachments_field_hint' => 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta',
+    '#attachments_field_hint' => 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: ',
     '#attachments_title' => 'Allegati',
     '#BACK_TO_DOC_BTN' => 'Torna ai documenti',
     '#BACK_TO_DOC_STR' => "Clicca su 'torna ai documenti' per finire.",
@@ -99,6 +99,8 @@ return [
     'Crescente' => 'Crescente',
     'Dashboard' => 'Dashboard',
     'Data fine pubblicazione' => 'Data fine pubblicazione',
+    '#data_di_pubblicazione_al' => 'Data di pubblicazione al',
+    '#data_di_pubblicazione_dal' => 'Data di pubblicazione dal',
     'Data pubblicazione' => 'Data pubblicazione',
     'Da validare' => 'Da validare',
     '#DAVALIDARE_buttonLabel' => 'Richiedi pubblicazione',
@@ -219,7 +221,7 @@ return [
     'Id' => 'Id',
     'il' => 'il',
     '#image_field' => 'Documento',
-    '#image_field_hint' => 'Rappresenta il documento principale',
+    '#image_field_hint' => 'Rappresenta il documento principale.</br> Le estensioni accettate sono: ',
     'Immagine categoria' => 'Immagine categoria',
     'Immagine della categoria' => 'Immagine della categoria',
     'Immagine' => 'Immagine',
@@ -317,13 +319,13 @@ return [
     'sono obbligatori' => ' sono obbligatori',
     'Sottotitolo' => 'Sottotitolo',
     '#start_publication_date' => 'Data di inizio pubblicazione',
-    '#start_publication_date_hint' => 'Se vuota verrà impostata nel giorno e l\'ora di pubblicazione',
+    '#start_publication_date_hint' => 'Se vuota verrà impostata nel giorno di pubblicazione',
     'Stato' => 'Stato',
     '#SUMMARY' => 'Sommario',
     'Tabella' => 'Tabella',
     'Table' => 'Tabella',
     'Tag ID' => 'Tag ID',
-    '#tags_title' => 'Aree di interesse',
+    '#tag_title' => 'Aree di interesse',
     'Tag' => 'Tag',
     'Testo' => 'Testo',
     '#THE_DOCUMENT_HAS_BEEN' => 'Il documento è stato',
@@ -399,7 +401,7 @@ return [
     '#link_document_field' => 'Link ad un documento esterno',
     '#link_document_field_hint' => 'Limite max: 255 caratteri',
     '#main_document_required' => 'Caricare un documento oppure specificare un link ad un documento esterno negli appositi campi',
-    
+
     'Import Workspace' => 'Importa area di lavoro',
     'Upload files of great size' => 'Carica file di grandi dimensioni',
     '#choose_nodes_title' => "Nome dell'Area di lavoro",
@@ -408,7 +410,7 @@ return [
     '#choose_nodes_title_2' => 'Scelta delle Stanze',
     '#choose_nodes_description_2' => "Seleziona le Stanze di lavoro dall'elenco che desideri importare.<br><br>Nota: le voci non selezionate diventeranno automaticamente delle Cartelle",
     '#choose_nodes_tree' => 'Seleziona Stanze',
-    
+
     'DocumentiWorkflow/BOZZA' => 'Bozza',
     'DocumentiWorkflow/VALIDATO' => 'Validato',
     'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
@@ -419,13 +421,13 @@ return [
     'Gestisci' => 'Gestisci',
 
 
-    'object' => 'Oggetto', 
-    'extended_description' => "Descrizione estesa", 
-    'distribution_proscription' => "Licenza di distribuzione", 
-    'dates_and_intermediate_stages' => "Data e fasi intermedie", 
-    'further_information' => "Ulteriori informazioni", 
-    'regulatory_requirements' => "Riferimenti normativi", 
-    'protocol' => "Protocollo", 
+    'object' => 'Oggetto',
+    'extended_description' => "Descrizione estesa",
+    'distribution_proscription' => "Licenza di distribuzione",
+    'dates_and_intermediate_stages' => "Data e fasi intermedie",
+    'further_information' => "Ulteriori informazioni",
+    'regulatory_requirements' => "Riferimenti normativi",
+    'protocol' => "Protocollo",
     'help_box' => "Box d'aiuto",
     'start_date' => "Data inizio",
     'end_date' => "Data fine",
@@ -438,6 +440,7 @@ return [
     'author' => "Autore",
     'document_attachments' => "Allegati al documento",
     "#tag" => "Tassonomia argomenti",
+    '#tags_title' => 'Modalità di pubblicazione',
     "#beforeActionCtaLoginRegisterTitle" => "Clicca per accedere o registrarti alla piattaforma {platformName}",
     "#beforeActionCtaLogin" => "accedi alla piattaforma",
     "#beforeActionCtaLoginTitle" => "Clicca per accedere alla piattaforma {platformName}",
@@ -449,7 +452,10 @@ return [
     'Clicca e scopri tutti i documenti della piattaforma' => 'Clicca e scopri tutti i documenti della piattaforma',
     'e scopri ora tutti i documenti di' => 'e scopri ora tutti i documenti di',
     'Non sono presenti documenti' => 'Non sono presenti documenti',
-    
+
     '#sync_google_drive_folder' =>'Questa è una cartella sincronizzata con Google Drive',
-    '#google_drive_file' => 'Questo è un file presente su Google Drive'
+    '#google_drive_file' => 'Questo è un file presente su Google Drive',
+
+    '#loading' => 'Caricamento in corso...',
+    '#titolo_spazi' => 'Il titolo contiene più spazi attigui, correggere il testo.',
 ];

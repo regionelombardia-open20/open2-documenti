@@ -40,7 +40,7 @@ if (count($query) > 0) {
                         'typeView' => 'card',
                         'model' => $model,
                         'type' => (!empty($mainDocument) ? $mainDocument->type : null),
-                        'size' => (!empty($mainDocument) ? $mainDocument->size : null),
+                        'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
                         'actionModify' => '/documenti/documenti/update?id='.$model->id,
                         'date' => $model->data_pubblicazione,
                         'nameSurname' => $createdUserProfile->nomeCognome,

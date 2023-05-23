@@ -59,8 +59,8 @@ $this->registerJs($jsCount);
             <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
             <span class="text-muted small"><?= $docExtension = strtoupper($document->type); ?>
             <?php if ($documentPresent): ?>
-             
-                (<?= $model->documentMainFile->size % 1024 ?> Kb) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
+
+                (<?= $model->documentMainFile->formattedSize ?>) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
              <?php endif; ?>
              </span>
 
@@ -70,7 +70,7 @@ $this->registerJs($jsCount);
                 echo Html::tag('span', ((strlen($documentMainFile->name) > 80) ? substr($documentMainFile->name, 0, 75) . '[...]' : $documentMainFile->name) . '.' . $documentMainFile->type, ['class' => 'text-muted small']);
             } else {
                 if ($documentLinkPresent) {
-                    echo Html::tag('span',(AmosDocumenti::tHtml('amosdocumenti', 'File esterno')), ['class' => 'text-muted small']);
+                    echo Html::tag('span', (AmosDocumenti::tHtml('amosdocumenti', 'File esterno')), ['class' => 'text-muted small']);
                 }
             }
             ?>
@@ -78,33 +78,34 @@ $this->registerJs($jsCount);
         </div>
         <?php if ($documentLinkPresent) : ?>
             <?= Html::a(
-                Html::tag(
-                    'p',
-                    $modelTitleSpecialChars,
-                    ['class' => 'h5']
-                ),
+                $model->titolo,
                 $model->link_document,
                 [
-                    'class' => 'link-list-title',
+                    'class' => 'link-list-title h5',
+                    'target' => 'blank',
                     'title' => AmosDocumenti::t('amosdocumenti', 'Apri il link esterno al documento') . ' ' . $modelTitleSpecialChars
                 ]
             )
             ?>
         <?php else : ?>
             <?= Html::a(
-                Html::tag(
-                    'p',
-                    $modelTitleSpecialChars,
-                    ['class' => 'h5']
-                ),
+                $model->titolo,
                 $modelViewUrl,
                 [
-                    'class' => 'link-list-title',
+                    'class' => 'link-list-title h5',
                     'title' => AmosDocumenti::t('amosdocumenti', 'Apri la scheda del documento') . ' ' . $modelTitleSpecialChars
                 ]
             )
             ?>
         <?php endif; ?>
+        <p class="mb-0 m-t-5 text-muted">
+            <?php $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model); 
+                echo AmosDocumenti::t(
+                    'amosdocumenti',
+                    'Percorso: '
+                    ).$stringa. $model->titolo
+                ?>
+        </p>
         <?php if ($model->descrizione_breve) { ?>
             <p class="mb-0 m-t-5 text-muted">
                 <?= htmlspecialchars($model->descrizione_breve) ?>
@@ -124,41 +125,41 @@ $this->registerJs($jsCount);
                     [
                         '/attachments/file/download/',
                         'id' => $document->id,
-                        'hash' => $document->hash
+                        'hash' => $document->hash,
+                        'download' => true
                     ],
                     [
                         'title' => AmosDocumenti::t('amosdocumenti', 'Scarica il documento') . ' ' . $modelTitleSpecialChars,
                         'class' => 'm-r-10 small uppercase bold',
                     ]
                 );
-            } 
+            }
 
             ?>
 
-            <?php if ($documentPresent) : ?>
+            <?php if ($documentLinkPresent) {
+                echo Html::a(
+                    AmosDocumenti::t('amosdocumenti', '#detail'),
+                    $model->link_document,
+                    [
+                        'title' => AmosDocumenti::t('amosdocumenti', '#see_external_document_detail') . ' ' . $modelTitleSpecialChars,
+                        'class' => 'small m-r-10 uppercase bold',
+                        'target' => '_blank',
+                        'data-key' => $model->id
+                    ]
+                );
+            } else if ($documentPresent) { ?>
                 <?= Html::a(
                     AmosDocumenti::t('amosdocumenti', '#detail'),
-                    ($documentLinkPresent) ? $model->link_document : $modelViewUrl,
+                    $modelViewUrl,
                     [
                         'class' => 'small uppercase bold',
                         'title' => AmosDocumenti::t('amosdocumenti', '#see_document_detail') . ' ' . $modelTitleSpecialChars
                     ]
                 )
                 ?>
-            <?php else : ?>
-                <?php if ($documentLinkPresent) {
-                    echo Html::a(
-                        AmosDocumenti::t('amosdocumenti', '#detail'),
-                        $model->link_document,
-                        [
-                            'title' => AmosDocumenti::t('amosdocumenti', '#see_external_document_detail') . ' ' . $modelTitleSpecialChars,
-                            'class' => 'small m-r-10 uppercase bold',
-                            'target' => '_blank',
-                            'data-key' => $model->id
-                        ]
-                    );
-                } ?>
-            <?php endif; ?>
+            <?php } ?>
+
         </div>
     </div>
     <div class="ml-auto doc-actions d-flex">

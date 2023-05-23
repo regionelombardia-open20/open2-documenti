@@ -198,7 +198,7 @@ if (method_exists($controller, 'getManageLinks')) {
                                         [
                                             'model' => $modelD,
                                             'type' => (!empty($mainDocument) ? $mainDocument->type : null),
-                                            'size' => (!empty($mainDocument) ? $mainDocument->size : null),
+                                            'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
                                             'actionModify' => '/documenti/documenti/update?id=' . $modelD->id,
                                             'date' => $modelD->data_pubblicazione,
                                             'nameSurname' => $createdUserProfile->nomeCognome,
