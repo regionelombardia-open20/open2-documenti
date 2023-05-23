@@ -40,7 +40,7 @@ $notifyModule = AmosNotify::instance();
                                 'title' => $modelTitle
                             ]) ?>
                         </p>
-                        <p style="font-size:11px; color:#4b4b4b; font-weight:bold;font-family: sans-serif;"><?= Yii::$app->formatter->asDate($model->data_pubblicazione) ?></p>
+                        <p style="font-size:11px; color:#4b4b4b; font-weight:bold;font-family: sans-serif;"><?= Yii::$app->formatter->asDate($model->data_pubblicazione, 'yyyy-MM-dd') ?></p>
                         <p style="font-size:13px; color:#7d7d7d; padding:10px 0; font-family: sans-serif; font-weight:normal; margin:0; text-align: left;"><?= $model->getDescription(true) ?></p>
                     </td>
                 </tr>

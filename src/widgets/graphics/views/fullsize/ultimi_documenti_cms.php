@@ -32,6 +32,7 @@ use yii\web\View;
 /** @var AmosDocumenti $moduleDocumenti */
 $moduleDocumenti  = \Yii::$app->getModule(AmosDocumenti::getModuleName());
 $listaModels = $listaDocumenti->getModels();
+ModuleDocumentiAsset::register($this);
 
 ?>
 <?php

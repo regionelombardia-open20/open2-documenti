@@ -86,6 +86,7 @@ class DocumentsUtility extends BaseObject
                 'pdf' => 'icon icon-pdf icon-sm mdi mdi-file-pdf',
                 'docx' => 'icon icon-word icon-sm mdi mdi-file-word',
                 'doc' => 'icon icon-word icon-sm mdi mdi-file-word',
+                'ppt' => 'icon icon-powerpoint icon-sm mdi mdi-file-powerpoint',
                 'pptx' => 'icon icon-powerpoint icon-sm mdi mdi-file-powerpoint',
                 'xls' => 'icon icon-excel icon-sm mdi mdi-file-excel',
                 'xlsx' => 'icon icon-excel icon-sm mdi mdi-file-excel',
@@ -335,7 +336,7 @@ class DocumentsUtility extends BaseObject
             $linkOptions['data-pjax'] = '0';
             if (!is_null($model->getDocumentMainFile())) {
 
-                $linkOptions['href'] = '/attachments/file/download?id='.$model->getDocumentMainFile()->id.'&hash='.$model->getDocumentMainFile()->hash.'&download=true';
+                $linkOptions['href'] = $model->getDocumentMainFile()->getUrl('original',true);
             }
             if (!empty($model->link_document)) {
                 $linkOptions['href']   = $model->link_document;

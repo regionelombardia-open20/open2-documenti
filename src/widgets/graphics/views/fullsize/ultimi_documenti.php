@@ -96,12 +96,7 @@ $alwaysLinkToViewWidgetGraphicLastDocs = $moduleDocumenti->alwaysLinkToViewWidge
                             $documentIconboxTitle = AmosDocumenti::t('amosdocumenti', 'Apri');
                         } else {
                             if ($documentInfoIsFile) {
-                                $documentIconboxUrl = [
-                                    '/attachments/file/download/',
-                                    'id' => $documentInfo->id,
-                                    'hash' => $documentInfo->hash,
-                                    'download' => true
-                                ];
+                                $documentIconboxUrl = $documentInfo->getUrl('original',true);
                             }
                         }
                     }

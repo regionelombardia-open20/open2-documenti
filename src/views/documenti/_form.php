@@ -275,7 +275,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                     'maxFileCount' => 100, // Client max files
                                     'showPreview' => false,
                                 ],
-                            ])->label(AmosDocumenti::t('amosdocumenti', 'document_attachments'))->hint(AmosDocumenti::t('amosdocumenti', '#attachments_field_hint') . $documentsModule->whiteListFilesExtensions) ?>
+                            ])->label(AmosDocumenti::t('amosdocumenti', 'document_attachments'))
+                                ->hint(AmosDocumenti::t('amosdocumenti', 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
 
                             <?= AttachmentsList::widget([
                                 'model' => $model,
@@ -725,9 +726,10 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
                 <?php
                 if (\Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')) :
-                    if (Yii::$app->getModule('documenti')->params['site_publish_enabled']) : ?>
-
-                        <?php
+                    if (Yii::$app->getModule('documenti')->params['site_publish_enabled']) :
+                        if ($model->isNewRecord) {
+                            $model->primo_piano = 0;
+                        }
                         $primoPiano = '';
                         $primoPiano = Html::tag(
                             'div',
@@ -737,8 +739,8 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                     '1' => 'Si',
                                 ],
                                 [
-                                    'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : null,
-                                    'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
+                                    'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->primo_piano,
+//                                    'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
                                     'disabled' => false,
                                     'tabindex' => 0,
                                     'onchange' => '

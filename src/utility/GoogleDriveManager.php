@@ -19,7 +19,7 @@ use MongoDB\Driver\Exception\ExecutionTimeoutException;
 use yii\base\Component;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
-use yii\base\Model;
+use open20\amos\core\models\AmosModel as Model;
 use yii\base\BaseObject;
 use yii\di\NotInstantiableException;
 use yii\log\Logger;

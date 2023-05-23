@@ -308,8 +308,21 @@ class DocumentiController extends CrudController
      * @param int $id Document id.
      * @return \yii\web\Response
      */
-    public function actionValidateDocument($id)
+    public function actionValidateDocument($id, $uid = null)
     {
+        // check if the user is the right
+        if (($uid != null) && ($uid != Yii::$app->user->id)) {
+            Yii::$app->session->addFlash(
+                'danger',
+                AmosDocumenti::t(
+                    'amosdocumenti',
+                    '#you_are_not_authorized_for_this'
+                )
+            );
+
+            return $this->redirect(['/']);
+        }
+        
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
         $this->model = $documentiModel::findOne($id);
@@ -333,11 +346,26 @@ class DocumentiController extends CrudController
     }
 
     /**
-     * @param int $id Document id.
-     * @return \yii\web\Response
+     * 
+     * @param type $id
+     * @param type $udi
+     * @return type
      */
-    public function actionRejectDocument($id)
+    public function actionRejectDocument($id, $uid = null)
     {
+        // check if the user is the right
+        if (($uid != null) && ($uid != Yii::$app->user->id)) {
+            Yii::$app->session->addFlash(
+                'danger',
+                AmosDocumenti::t(
+                    'amosdocumenti',
+                    '#you_are_not_authorized_for_this'
+                )
+            );
+
+            return $this->redirect(['/']);
+        }
+        
         $modelClassname = $this->documentsModule->model('Documenti');
         $this->model = $modelClassname::findOne($id);
 
@@ -815,7 +843,8 @@ class DocumentiController extends CrudController
         $isAjaxRequest = null,
         $regolaPubblicazione = null,
         $parentId = null,
-        $to = null
+        $to = null,
+        $urlRedirect = null
     ) {
         $this->setUpLayout('form');
         $this->model = $this->documentsModule->createModel('Documenti');
@@ -918,6 +947,9 @@ class DocumentiController extends CrudController
 
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
+                    }
+                    if(!empty($urlRedirect)){
+                        return $this->redirect($urlRedirect);
                     }
                     if (!empty($to)) {
                         return $this->redirect($to);

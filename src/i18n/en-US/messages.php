@@ -10,6 +10,7 @@
  */
 
 return [
+    '#you_are_not_authorized_for_this' => 'You are not authorized to perform this operation',
     'Abilita commenti' => 'Enable comments',
     'Abilita pubblicazione' => 'Enable publication',
     'Abstract' => 'Abstract',
@@ -39,6 +40,7 @@ return [
     '#article_singular' => 'the',
         '#attachments_field' => ' ',
     '#attachments_field_hint' => 'Hold down the "CAPS" key while selecting files, to load more than one at a time.</br> The accepted extensions are:',
+    'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: {whiteListFilesExtensions}' => 'Hold down the "CAPS" key while selecting files, to load more than one at a time.</br> The accepted extensions are: {whiteListFilesExtensions}',
     '#attachments_title' => 'Attachments',
     '#BACK_TO_DOC_BTN' => 'Back to documents',
     '#BACK_TO_DOC_STR' => "Click on 'back to documents' to finish.",
@@ -218,6 +220,7 @@ return [
     'Id' => 'Id',
     'il' => 'on',
     '#image_field_hint' => 'Represents the main document.</br> The accepted extensions are: ',
+    'Rappresenta il documento principale.</br> Le estensioni accettate sono: {whiteListFilesExtensions}' => 'Represents the main document.</br> The accepted extensions are: {whiteListFilesExtensions}',
     '#image_field' => 'Image',
     'Immagine categoria' => 'Category picture',
     'Immagine della categoria' => 'Category picture',
@@ -444,7 +447,7 @@ return [
     "#beforeActionCtaLoginTitle" => "Click here to log in on the platform {platformName}",
     "#beforeActionSubtitleSectionGuest" => "To participate in the creation of new news, {ctaLoginRegister}",
     "#beforeActionSubtitleSectionLogged" => "",
-    "Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)" => "Do you want to show the document to all users (not registered included) ?",
+    "Vuoi rendere visibile il documento anche ad utenti non registrati (guest)" => "Do you want to show the document to all users (not registered included) ?",
     'Versions' => 'Versions',
     'Non ci sono documenti di tuo interesse da visualizzare!' => 'There are no documents of your interest to view!',
     'Clicca e scopri tutti i documenti della piattaforma' => 'Click and discover all documents of the platform',

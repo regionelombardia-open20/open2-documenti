@@ -122,12 +122,7 @@ $this->registerJs($jsCount);
             if ($documentPresent) {
                 echo Html::a(
                     AmosDocumenti::t('amosdocumenti', 'Scarica'),
-                    [
-                        '/attachments/file/download/',
-                        'id' => $document->id,
-                        'hash' => $document->hash,
-                        'download' => true
-                    ],
+                    $document->getUrl('original',true),
                     [
                         'title' => AmosDocumenti::t('amosdocumenti', 'Scarica il documento') . ' ' . $modelTitleSpecialChars,
                         'class' => 'm-r-10 small uppercase bold',

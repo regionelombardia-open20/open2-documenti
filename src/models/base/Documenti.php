@@ -166,7 +166,7 @@ abstract class Documenti extends ContentModel
             'descrizione' => AmosDocumenti::t('amosdocumenti', '#documents_description_field'),
             'metakey' => AmosDocumenti::t('amosdocumenti', 'Meta key'),
             'metadesc' => AmosDocumenti::t('amosdocumenti', 'Meta descrizione'),
-            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)?'),
+            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?'),
             'filemanager_mediafile_id' => AmosDocumenti::t('amosdocumenti', 'Documento pricipale'),
             'in_evidenza' => AmosDocumenti::t('amosdocumenti', 'In evidenza'),
             'hits' => AmosDocumenti::t('amosdocumenti', 'Visualizzazioni'),

@@ -76,12 +76,7 @@ $this->registerJs($jsCount);
             if ($documentPresent) {
                 echo Html::a(
                     AmosDocumenti::tHtml('amosdocumenti', 'Scarica'),
-                    [
-                        '/attachments/file/download/',
-                        'id' => $document->id,
-                        'hash' => $document->hash,
-                        'download' => true
-                    ],
+                    $document->getUrl('original',true),
                     [
                         'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
                         'class' => 'text-uppercase font-weight-semibold mr-2',
@@ -229,11 +224,7 @@ $this->registerJs($jsCount);
                         if ($documentPresent) {
                             echo Html::a(
                                 AmosDocumenti::tHtml('amosdocumenti', 'Scarica file'),
-                                [
-                                    '/attachments/file/download/',
-                                    'id' => $document->id,
-                                    'hash' => $document->hash
-                                ],
+                                $document->getUrl('original',true),
                                 [
                                     'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
                                     'class' => 'bk-btnImport pull-right btn btn-amministration-primary',

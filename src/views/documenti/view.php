@@ -147,27 +147,8 @@ $viewReportWidgets = (
                                 <?= $model->getAttributeLabel('documenti_categorie_id') . ': ' . '<span class="badge-document badge badge-pill">' . $documentCategory->titolo .'</span>' ?>
                             <?php endif; ?>
                         </div>
-                        <?php
-                        $docType = strtolower($document['type']);
-                        if ((in_array($docType, ['jpg', 'png', 'jpeg', 'svg']))) : ?>
-                            <span class="icon icon-image icon-sm mdi mdi-file-image"></span>
-                        <?php elseif ((in_array($docType, ['pdf']))) : ?>
-                            <span class="icon icon-pdf icon-sm mdi mdi-file-pdf"></span>
-                        <?php elseif ((in_array($docType, ['doc', 'docx']))) : ?>
-                            <span class="icon icon-word icon-sm mdi mdi-file-word"></span>
-                        <?php elseif ((in_array($docType, ['xls', 'xlsx']))) : ?>
-                            <span class="icon icon-excel icon-sm mdi mdi-file-excel"></span>
-                        <?php elseif ((in_array($docType, ['csv']))) : ?>
-                            <span class="icon icon-black icon-sm mdi mdi-file-delimited"></span>
-                        <?php elseif ((in_array($docType, ['pptx']))) : ?>
-                            <span class="icon icon-powerpoint icon-sm mdi mdi-file-powerpoint"></span>
-                        <?php elseif ((in_array($docType, ['txt', 'rtf']))) : ?>
-                            <span class="icon icon-black icon-sm mdi mdi-file-document"></span>
-                        <?php elseif ((in_array($docType, ['zip', 'rar']))) : ?>
-                            <span class="icon icon-link icon-sm mdi mdi-folder-zip"></span>
-                        <?php else : ?>
-                            <span class="icon icon-link icon-sm mdi mdi-file-link"></span>
-                        <?php endif; ?>
+                        <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
+
                     <?php endif; ?>
                     <div>
                         <?php

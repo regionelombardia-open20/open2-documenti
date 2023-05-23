@@ -10,6 +10,7 @@
  */
 
 return [
+    '#you_are_not_authorized_for_this' => 'Non sei autorizzato ad eseguire questa operazione',
     'Abilita commenti' => 'Abilita commenti',
     'Abilita pubblicazione' => 'Abilita pubblicazione',
     'Abstract' => 'Abstract',
@@ -446,7 +447,7 @@ return [
     "#beforeActionCtaLoginTitle" => "Clicca per accedere alla piattaforma {platformName}",
     "#beforeActionSubtitleSectionGuest" => "Per partecipare alla creazione di nuovi documenti, {ctaLoginRegister}",
     "#beforeActionSubtitleSectionLogged" => "",
-    'Vuoi rendere visibile la notizia anche ad utenti non registrati (guest)?' => 'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?',
+    'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?' => 'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?',
     'Versions' => 'Versioni',
     'Non ci sono documenti di tuo interesse da visualizzare!' => 'Non ci sono documenti di tuo interesse da visualizzare!',
     'Clicca e scopri tutti i documenti della piattaforma' => 'Clicca e scopri tutti i documenti della piattaforma',

@@ -15,6 +15,7 @@ use open20\amos\core\interfaces\ContentModelSearchInterface;
 use open20\amos\core\interfaces\SearchModelInterface;
 use open20\amos\core\record\CmsField;
 use open20\amos\core\record\SearchResult;
+use open20\amos\cwh\models\CwhConfig;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\DocumentiCartellePath;
@@ -556,6 +557,18 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         $query = $this->homepageDocumentsQuery($params);
         $this->applySearchFilters($query);
 
+        if (!empty($params["conditionSearch"])) {
+            $commands = explode(";", $params["conditionSearch"]);
+            foreach ($commands as $command) {
+                if (strpos($command, 'scope_community_id')) {
+                    $communityId = $this->extractCommunityIdFromCommand($command);
+                    $query = $this->cmsFilterScopeCommunity($query, $communityId);
+                }else{
+                    $query->andWhere(eval("return " . $command . ";"));
+                }
+            }
+        }
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'sort' => [
@@ -573,13 +586,47 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         } else {
             $query->limit($limit);
         }
-        if (!empty($params["conditionSearch"])) {
-            $commands = explode(";", $params["conditionSearch"]);
-            foreach ($commands as $command) {
-                $query->andWhere(eval("return " . $command . ";"));
+
+        return $dataProvider;
+    }
+
+
+    /**
+     * @param $command
+     * @return string|null
+     */
+    public function extractCommunityIdFromCommand($command)
+    {
+        $community_id = null;
+        $explode = explode('=>', $command);
+        if (count($explode) == 2) {
+            $community_id = trim($explode[1]);
+        }
+        return $community_id;
+    }
+
+    /**
+     * @param $query
+     * @param $community_id
+     * @return mixed|\yii\db\ActiveQuery
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function cmsFilterScopeCommunity($query, $community_id)
+    {
+        if ($community_id) {
+            $cwhConfig = CwhConfig::find()->andWhere(['tablename' => 'community'])->one();
+            if ($cwhConfig) {
+                $cwhActiveQuery = new \open20\amos\cwh\query\CwhActiveQuery(
+                    Documenti::className(),
+                    [
+                        'queryBase' => $query,
+                        'bypassScope' => false
+                    ]
+                );
+                $query = $cwhActiveQuery->getQueryCwhAll($cwhConfig->id, $community_id, false);
             }
         }
-        return $dataProvider;
+        return $query;
     }
 
     /**
@@ -591,6 +638,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     {
         if (\Yii::$app->user->isGuest) {
             $dataProvider = $this->cmsSearch($params, $limit);
+            $dataProvider->query->andWhere(['primo_piano' => true]);
         } else {
             $dataProvider = $this->searchOwnInterest($params, $limit);
         }

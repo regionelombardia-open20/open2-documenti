@@ -67,15 +67,16 @@ $this->registerJs($js); ?>
                     ],
                     'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
                         'maxFileCount' => 1,
-                        'showRemove' => false,
+                        'showRemove' => true,
                         'indicatorNew' => false,
                         'allowedPreviewTypes' => false,
                         'previewFileIconSettings' => false,
                         'overwriteInitial' => false,
-//                            'layoutTemplates' => false,
+                        //'layoutTemplates' => false,
                     ],
                     'enableGoogleDrive' => $enabledGoogleDrive,
-                ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))->hint(AmosDocumenti::t('amosdocumenti', '#image_field_hint').$documentsModule->whiteListFilesExtensions) ?>
+                ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))
+                    ->hint(AmosDocumenti::t('amosdocumenti', 'Rappresenta il documento principale.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
             </div>
 
             <div id="link-document-container" style="<?=$hideExternalLink?>">

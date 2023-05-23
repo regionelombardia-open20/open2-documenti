@@ -628,7 +628,7 @@ class WidgetGraphicsHierarchicalDocumentsBefe extends WidgetGraphic
             $linkOptions['data-pjax'] = '0';
             if (!is_null($model->getDocumentMainFile())) {
 
-                $linkOptions['href'] = '/attachments/file/download?id=' . $model->getDocumentMainFile()->id . '&hash=' . $model->getDocumentMainFile()->hash.'&download=true';
+                $linkOptions['href'] = $model->getDocumentMainFile()->getUrl('original',true);
             }
             if (!empty($model->link_document)) {
                 $linkOptions['href'] = $model->link_document;
