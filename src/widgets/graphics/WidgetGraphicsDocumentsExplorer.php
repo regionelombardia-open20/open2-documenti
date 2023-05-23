@@ -13,8 +13,6 @@ namespace open20\amos\documenti\widgets\graphics;
 
 use open20\amos\core\widget\WidgetGraphic;
 use open20\amos\documenti\AmosDocumenti;
-use open20\amos\documenti\models\search\DocumentiSearch;
-use open20\amos\notificationmanager\base\NotifyWidgetDoNothing;
 
 class WidgetGraphicsDocumentsExplorer extends WidgetGraphic
 {

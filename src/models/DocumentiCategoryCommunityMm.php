@@ -2,8 +2,6 @@
 
 namespace open20\amos\documenti\models;
 
-use yii\helpers\ArrayHelper;
-
 /**
  * This is the model class for table "documenti_category_community_mm".
  */

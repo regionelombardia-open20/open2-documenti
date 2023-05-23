@@ -17,7 +17,6 @@ use open20\amos\core\module\BaseAmosModule;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\components\PartsWizardDocumentiCreation;
 use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\models\search\DocumentiSearch;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;

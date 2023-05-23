@@ -14,16 +14,8 @@
  * @var View $this
  */
 
-use open20\amos\core\forms\WidgetGraphicsActions;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\documenti\AmosDocumenti;
-use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimeDocumenti;
-use yii\data\ActiveDataProvider;
-use yii\helpers\Html;
-use yii\web\View;
-use yii\widgets\Pjax;
-use open20\amos\documenti\assets\ModuleDocumentiAsset;
 
 \open20\amos\documenti\assets\ModuleDocumentiDocumentsExplorerAsset::register($this);
 

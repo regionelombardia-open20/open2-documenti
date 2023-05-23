@@ -66,9 +66,8 @@ JS;
 
 $this->registerJs($jsCount);
 
-
-$onlyofficeModule = \Yii::$app->getModule('onlyoffice');
-if($onlyofficeModule){
+$onlyofficeModule = AmosDocumenti::instance()->getModuleOnlyOffice();
+if ($onlyofficeModule) {
     $iconoo = $onlyofficeModule->isValidExtension($document->type) ? true : false ;
 }
 ?>

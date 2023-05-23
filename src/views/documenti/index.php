@@ -15,11 +15,10 @@ use open20\amos\core\utilities\ModalUtility;
 use open20\amos\core\views\DataProviderView;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\DocumentsOwlCarouselWidget;
-
-
 
 if ($currentView['name'] == 'expl') {
     echo $this->render('_explorer', []);
@@ -48,7 +47,6 @@ $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 $showCountDocumentRecursive = $controller->documentsModule->showCountDocumentRecursive;
 
 $parentId = \Yii::$app->request->get('parentId');
-//$this->params['subTitleSection'] = 'ciao';
 if (!empty($parentId)) {
     $folder = Documenti::findOne($parentId);
     if ($folder) {
@@ -99,20 +97,22 @@ if ($foldersEnabled) {
         ],
         'format' => 'raw',
         'value' => function ($model) use ($actionId) {
-        $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model);
-           if ($model->is_folder) { 
+            $stringa = DocumentiCartellePath::getPath($model);
+            if ($model->is_folder) { 
                 $options =   [
-                'title' => AmosDocumenti::t(
-                        'amosdocumenti',
-                        'Apri la cartella '
-                     ) . '"'.$stringa. $model->titolo . '"'
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Apri la cartella ')
+                        . '"'
+                        . $stringa
+                        . $model->titolo
+                        . '"'
                 ];
-           }else{
+            } else {
                 $options =   [
-                'title' => AmosDocumenti::t(
-                        'amosdocumenti',
-                        'Scarica il documento '
-                     ) . '"'.$stringa. $model->titolo . '"'
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Scarica il documento ')
+                    . '"'
+                    . $stringa
+                    . $model->titolo
+                    . '"'
                 ];
            }
             /** @var Documenti $model */
@@ -229,7 +229,9 @@ $columns['data_pubblicazione'] = [
     'attribute' => 'data_pubblicazione',
     'value' => function ($model) {
         /** @var Documenti $model */
-        return (is_null($model->data_pubblicazione)) ? AmosDocumenti::t('amosdocumenti', 'Subito') : Yii::$app->formatter->asDate($model->data_pubblicazione);
+        return is_null($model->data_pubblicazione)
+            ? AmosDocumenti::t('amosdocumenti', 'Subito')
+            : Yii::$app->formatter->asDate($model->data_pubblicazione);
     }
 ];
 
@@ -238,7 +240,9 @@ if (!$foldersEnabled) {
         'attribute' => 'data_rimozione',
         'value' => function ($model) {
             /** @var Documenti $model */
-            return (is_null($model->data_rimozione)) ? AmosDocumenti::t('amosdocumenti', 'Mai') : Yii::$app->formatter->asDate($model->data_rimozione);
+            return is_null($model->data_rimozione)
+                ? AmosDocumenti::t('amosdocumenti', 'Mai')
+                : Yii::$app->formatter->asDate($model->data_rimozione);
         }
     ];
 
@@ -246,7 +250,9 @@ if (!$foldersEnabled) {
         'attribute' => 'status',
         'value' => function ($model) {
             /** @var Documenti $model */
-            return ($model->hasWorkflowStatus() ? AmosDocumenti::t('amosdocumenti', $model->getWorkflowStatus()->getLabel()) : '--');
+            return $model->hasWorkflowStatus()
+                ? AmosDocumenti::t('amosdocumenti', $model->getWorkflowStatus()->getLabel())
+                : '--';
         }
     ];
 }

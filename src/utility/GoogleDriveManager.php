@@ -8,21 +8,11 @@
 
 namespace open20\amos\documenti\utility;
 
-
-use open20\amos\attachments\FileModule;
-use open20\amos\core\forms\editors\DateTime;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
-use Hypweb\Flysystem\GoogleDrive\GoogleDriveAdapter;
-use League\Flysystem\Filesystem;
-use MongoDB\Driver\Exception\ExecutionTimeoutException;
-use yii\base\Component;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 use open20\amos\core\models\AmosModel as Model;
-use yii\base\BaseObject;
-use yii\di\NotInstantiableException;
-use yii\log\Logger;
 
 class GoogleDriveManager extends Model
 {

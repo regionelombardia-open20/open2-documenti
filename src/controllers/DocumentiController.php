@@ -161,7 +161,7 @@ class DocumentiController extends CrudController
             parent::behaviors(),
             [
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,
@@ -294,18 +294,18 @@ class DocumentiController extends CrudController
         return $behaviors;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function actions()
-    {
+    // /**
+    //  * @inheritdoc
+    //  */
+    // public function actions()
+    // {
 
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-        ];
-    }
+    //     return [
+    //         'error' => [
+    //             'class' => 'yii\web\ErrorAction',
+    //         ],
+    //     ];
+    // }
 
     /**
      * @param int $id Document id.
@@ -546,8 +546,6 @@ class DocumentiController extends CrudController
      */
     public function getGridViewActionColumnsTemplate($actionId)
     {
-
-
         $actionColumnDefault = '{view}{update}{delete}';
         $actionColumnToValidate = '{validate}{reject}';
         $actionColumn = $actionColumnDefault;
@@ -1082,14 +1080,13 @@ class DocumentiController extends CrudController
         $moduleGroups = \Yii::$app->getModule('groups');
         $enableGroupNotification = $this->documentsModule->enableGroupNotification;
 
-
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
         $this->model->typeMainDocument = 1;
         
-        if(!empty($this->model->link_document))
+        if (!empty($this->model->link_document)) {
             $this->model->typeMainDocument = 2;
-        
+        }
         
         if ($this->documentIsFolder($this->model)) {
             $this->model->setScenario(Documenti::SCENARIO_FOLDER);

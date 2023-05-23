@@ -13,7 +13,6 @@ namespace open20\amos\documenti\controllers;
 
 use open20\amos\dashboard\controllers\base\DashboardController;
 
-use yii\helpers\Url;
 
 class DefaultController extends DashboardController
 {

@@ -9,18 +9,10 @@
  * @category   CategoryName
  */
 
-use open20\amos\attachments\components\AttachmentsList;
-use open20\amos\core\forms\ContextMenuWidget;
-use open20\amos\core\forms\ItemAndCardHeaderWidget;
-use open20\amos\core\forms\PublishedByWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\documenti\AmosDocumenti;
-use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\utility\DocumentsUtility;
-use kartik\select2\Select2;
-use yii\helpers\ArrayHelper;
-use yii\web\View;
 
 /**
  * @var yii\web\View $this

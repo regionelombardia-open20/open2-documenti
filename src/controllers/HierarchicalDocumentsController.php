@@ -15,15 +15,12 @@ use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\assets\ModuleDocumentiAsset;
-use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocuments;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 
 /**
  * Class HierarchicalDocumentsController

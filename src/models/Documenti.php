@@ -40,7 +40,6 @@ use yii\db\ActiveQuery;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
 use yii\log\Logger;
 use open20\amos\seo\interfaces\SeoModelInterface;
 use yii\helpers\Inflector;
@@ -174,7 +173,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             if ($this->documentsModule && $this->documentsModule->enableDocumentVersioning && !$this->is_folder) {
                 $this->version = 1;
             }
-            if (($this->scenario == self::SCENARIO_CREATE) || ($this->scenario == self::SCENARIO_DETAILS) || ($this->scenario == self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE) || ($this->scenario == self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE)) {
+            if (in_array($this->scenario, [
+                    self::SCENARIO_CREATE,
+                    self::SCENARIO_DETAILS,
+                    self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE,
+                    self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE
+                ])
+            ) {
                 $query = new Query();
                 if (!self::$categories) {
                     self::$categories = $query->from(DocumentiCategorie::tableName())->all();
@@ -184,6 +189,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                     $this->documenti_categorie_id = self::$categories[0]['id'];
                 }
             }
+
             if ($this->documentsModule->enableCategories && !empty($this->documentsModule->defaultCategory)) {
                 $this->documenti_categorie_id = $this->documentsModule->defaultCategory;
             }
@@ -195,17 +201,34 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      */
     public function rules()
     {
+        \yii\helpers\BaseFileHelper::$mimeMagicFile = '@vendor/open20/amos-documenti/src/models/mimeTypes.php';
         $rules = ArrayHelper::merge(parent::rules(), [
             [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],           
             [['typeMainDocument'], 'integer'],
+
             [['documentMainFile'],
                 'required',
                 'when' => function ($model) {
-                // pr($model->drive_file_id);die;
-                    return (!$this->documentsModule->documentsOnlyText && (trim($model->link_document) == '' && empty($model->drive_file_id) && $model->typeMainDocument != 3));
+                    if ($model->typeMainDocument == 1 && empty($model->documentMainFile)) {
+                        return (
+                            !$this->documentsModule->documentsOnlyText
+                            && (
+                                trim($model->link_document) == ''
+                                && empty($model->drive_file_id)
+                                && $model->typeMainDocument != 3
+                            )
+                        );
+                    }
+                    return false;
                 },
                 'whenClient' => "function(attribute, value) {
-                    return (" . (!$this->documentsModule->documentsOnlyText ? "true" : "false") . " && ($('#documenti-link_document').val() == '') && $('#drive-file-id').val() == '');
+                    if ($('#type-main-document-id').val() == '1') {
+                        $('#link-document-id').val('');
+                        return ("
+                            . (!$this->documentsModule->documentsOnlyText ? "true" : "false")
+                            . "&& " . (empty($this->getDocument()) ? "true" : "false")
+                            . " && $('#drive-file-id').val() == '');
+                    }
                 }",
                 'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
             ],
@@ -216,25 +239,29 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                     ? $this->documentsModule->whiteListFilesExtensions
                     : '',
                 'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes)) ? $this->documentsModule->mimeTypes : '',                                    
+                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes))
+                    ? $this->documentsModule->mimeTypes
+                    : '',                                    
                 'maxFiles' => 0,
                 'maxSize' => (!empty($this->documentsModule))
-                ? $this->documentsModule->maxFileSize
-                : null
+                    ? $this->documentsModule->maxFileSize
+                    : null
             ],
 
             [['documentMainFile'],
                 'file',
-                'skipOnEmpty' => true,
+                //'skipOnEmpty' => true,
                 'extensions' => (!empty($this->documentsModule))
                     ? $this->documentsModule->whiteListFilesExtensions
                     : '',
                 'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes)) ? $this->documentsModule->mimeTypes : '',                                   
+                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty(mimeTypes))
+                    ? $this->documentsModule->mimeTypes
+                    : '',                                   
                 'maxFiles' => 1,
                 'maxSize' => (!empty($this->documentsModule))
-                ? $this->documentsModule->maxFileSize
-                : null
+                    ? $this->documentsModule->maxFileSize
+                    : null
             ],
 
             [['link_document'], 'url', 'skipOnEmpty' => function ($model) {
@@ -242,6 +269,19 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             }
             ],
                     
+            [['link_document'],
+                'required',
+                'when' => function ($model) {
+                    return $model->typeMainDocument == 2;
+                },
+                'whenClient' => "function(attribute, value) {
+                    return ("
+                        . (!$this->documentsModule->documentsOnlyText ? "true" : "false")
+                        . " && ($('#type-main-document-id').val() == '2'));
+                }",
+                'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
+            ],
+
             [['onlyOfficeNewFile'],
                 'required',
                 'when' => function ($model) {             
@@ -346,31 +386,31 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     {
         return ArrayHelper::merge(parent::behaviors(), [
             'workflow' => [
-                'class' => SimpleWorkflowBehavior::className(),
+                'class' => SimpleWorkflowBehavior::class,
                 'defaultWorkflowId' => self::DOCUMENTI_WORKFLOW,
                 'propagateErrorsToModel' => true
             ],
             'workflowLog' => [
-                'class' => WorkflowLogFunctionsBehavior::className()
+                'class' => WorkflowLogFunctionsBehavior::class
             ],
             'NotifyBehavior' => [
-                'class' => NotifyBehavior::className(),
+                'class' => NotifyBehavior::class,
                 'conditions' => ['is_folder' => 0],
             ],
             'fileBehavior' => [
-                'class' => FileBehavior::className()
+                'class' => FileBehavior::class
             ],
             'SeoContentBehavior' => [
-                'class' => SeoContentBehavior::className(),
+                'class' => SeoContentBehavior::class,
                 'imageAttribute' => null,
                 'defaultOgType' => 'article',
             ],
 //            'googleDrive' => [
-//                'class' => GoogleDriveBehavior::className()
+//                'class' => GoogleDriveBehavior::class
 //            ],
 
             'SeoContentBehavior' => [
-                'class' => SeoContentBehavior::className(),
+                'class' => SeoContentBehavior::class,
                 'titleAttribute' => 'titolo',
                 'descriptionAttribute' => 'extended_description',
                 'imageAttribute' => null,
@@ -1289,11 +1329,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     
     public function getTypeMainDocument()
     {
+        $documentiModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
         $types = [
-            1 => AmosDocumenti::t('amosdocumenti', 'File'),
-            2 => AmosDocumenti::t('amosdocumenti', 'Link esterno'),
-        ];
-        
+               1 => AmosDocumenti::t('amosdocumenti', 'File'),
+           ];
+        if(!$documentiModule->mainFileOnly){
+            $types[2] = AmosDocumenti::t('amosdocumenti', 'Link esterno');
+        }
         if($this->documentsModule->getModuleOnlyOffice()){
             $types[3] = AmosDocumenti::t('amosdocumenti', 'Only Office');
         } 
@@ -1697,7 +1739,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         if (!empty($this->usePrettyUrl) && ($this->usePrettyUrl == true) && $this->hasMethod('getPrettyUrl')) {
             return 'documenti/documenti';
         }
-
+        // if ($this->is_folder == 1) {
+        //     return 'documenti/documenti/update';
+        // }
         return 'documenti/documenti/view';
     }
     /**

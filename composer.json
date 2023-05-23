@@ -27,7 +27,7 @@
         "raoul2000/yii2-workflow": "*",
         "raoul2000/yii2-workflow-view": "*",
         "yiidoc/yii2-redactor": "*",
-        "la-haute-societe/yii2-flysystem-google-drive" : "~1.0.0"
+        "open20/file-system": "*"
     },
     "config": {
         "process-timeout": 1800,

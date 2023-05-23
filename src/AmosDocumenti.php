@@ -29,13 +29,12 @@ use yii\helpers\ArrayHelper;
 use open20\amos\core\interfaces\CmsModuleInterface;
 use open20\amos\core\interfaces\BreadcrumbInterface;
 
-
 /**
  * Class AmosDocumenti
  * @package open20\amos\documenti
  */
-class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface
-{
+class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface {
+
     /**
      *
      */
@@ -47,10 +46,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * will be taken. If this is false, layout will be disabled within this module.
      */
     public $layout = 'main';
-    
-    
-    
-    
 
     /**
      *
@@ -66,7 +61,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool|false if document foldering is enabled or not
      */
     public $enableFolders = false;
-    
 
     /**
      * @var bool|true if document categories are enabled or not
@@ -105,13 +99,15 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var string List of the allowed extensions for the upload of files.
      */
-    public $whiteListFilesExtensions = 'csv, doc, docx, pdf, rtf, txt, xls, xlsx, odt';
+    public $whiteListFilesExtensions = 'csv,doc,docx,pdf,rtf,txt,xls,xlsx,odt';
 
     /**
      * @var string List of the allowed mime types.
      */
-    public $mimeTypes = '';
-    
+    public $mimeTypes = 'text/csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+	application/pdf,application/rtf,application/x-rtf,text/richtext,text/plain,application/vnd.ms-excel,application/x-excel,application/excel,
+	application/x-msexcel,application/vnd.ms-office,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.text,application/octet-stream';
+
     /**
      * @var bool|false $hidePubblicationDate
      */
@@ -186,11 +182,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableCategoriesForCommunity = false;
 
     /**
+     * @var bool force input file only for the document
+     */
+    public $mainFileOnly = false;
+
+    /**
      * @var bool
      */
     public $filterCategoriesByRole = false;
-
-
     public $showAllCategoriesForCommunity = true;
 
     /**
@@ -222,7 +221,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * This param enables the search by tags
      * @var bool $searchByTags
      */
-
     public $searchByTags = false;
 
     /**
@@ -240,7 +238,6 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         'appId' => "",
         'relativeRedirectUrl' => '',
         'relativePathCredential' => '',
-
         'emailServiceAccount' => '',
         'relativePathCredentialServiceAccount' => ''
     ];
@@ -255,13 +252,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      */
     public $enableCatImgInDocView = false;
 
-
     /**
      * @var bool $cmsSync
      */
     public $cmsSync = false;
-    
-    
+
     /**
      * @var bool $enableMoveDoc
      */
@@ -302,6 +297,12 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var type
      */
     public $hideSeoModule = false;
+
+    /**
+     * hide block on _form relative to tag module even if it is present
+     * @var type
+     */
+    public $hideInterestArea = false;
 
     /**
      * If enabled the routes "/documenti/documenti/own-interest-documents" and "/documenti/documenti/all-documents"
@@ -353,8 +354,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @inheritdoc
      */
-    public static function getModuleName()
-    {
+    public static function getModuleName() {
         return "documenti";
     }
 
@@ -362,16 +362,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
         return AmosDocumenti::instance()->model('DocumentiSearch');
     }
 
-    public static function getModuleIconName()
-    {
+    public static function getModuleIconName() {
         return 'file-text-o';
     }
 
     /**
      * @inheritdoc
      */
-    public function init()
-    {
+    public function init() {
         parent::init();
 
         Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers', __DIR__ . '/controllers/');
@@ -388,8 +386,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @inheritdoc
      */
-    public function getWidgetIcons()
-    {
+    public function getWidgetIcons() {
         return [
             WidgetIconAdminAllDocumenti::className(),
             WidgetIconAllDocumenti::className(),
@@ -404,8 +401,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @inheritdoc
      */
-    public function getWidgetGraphics()
-    {
+    public function getWidgetGraphics() {
         return [
             WidgetGraphicsHierarchicalDocuments::className(),
             WidgetGraphicsUltimiDocumenti::className(),
@@ -415,17 +411,16 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @inheritdoc
      */
-    protected function getDefaultModels()
-    {
+    protected function getDefaultModels() {
         return [
-            'Documenti' => __NAMESPACE__ . '\\' . 'models\Documenti',
-            'DocumentiSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiSearch',
-            'DocumentiCategorie' => __NAMESPACE__ . '\\' . 'models\DocumentiCategorie',
-            'DocumentiCategorieSearch' => __NAMESPACE__ . '\\' . 'models\search\DocumentiCategorieSearch',
-            'DocumentiCategoryCommunityMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryCommunityMm',
-            'DocumentiCategoryRolesMm' => __NAMESPACE__ . '\\' . 'models\DocumentiCategoryRolesMm',
-            'ReportNode' => __NAMESPACE__ . '\\' . 'models\ReportNode',
-            'UploaderImportList' => __NAMESPACE__ . '\\' . 'models\UploaderImportList',
+            'Documenti' => __NAMESPACE__ . '\models\Documenti',
+            'DocumentiSearch' => __NAMESPACE__ . '\models\search\DocumentiSearch',
+            'DocumentiCategorie' => __NAMESPACE__ . '\models\DocumentiCategorie',
+            'DocumentiCategorieSearch' => __NAMESPACE__ . '\models\search\DocumentiCategorieSearch',
+            'DocumentiCategoryCommunityMm' => __NAMESPACE__ . '\models\DocumentiCategoryCommunityMm',
+            'DocumentiCategoryRolesMm' => __NAMESPACE__ . '\models\DocumentiCategoryRolesMm',
+            'ReportNode' => __NAMESPACE__ . '\models\ReportNode',
+            'UploaderImportList' => __NAMESPACE__ . '\models\UploaderImportList',
         ];
     }
 
@@ -434,13 +429,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * the url from the user have started the content creation.
      * @return string
      */
-    public static function beginCreateNewSessionKey()
-    {
+    public static function beginCreateNewSessionKey() {
         return 'beginCreateNewUrl_' . self::getModuleName();
     }
 
-    public static function getModelClassName()
-    {
+    public static function getModelClassName() {
         return AmosDocumenti::instance()->model('Documenti');
     }
 
@@ -448,12 +441,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      *
      * @return string
      */
-    public function getFrontEndMenu($dept = 1)
-    {
+    public function getFrontEndMenu($dept = 1) {
         $menu = parent::getFrontEndMenu();
-        $app  = \Yii::$app;
+        $app = \Yii::$app;
         if (!$app->user->isGuest) {
-            $menu .= $this->addFrontEndMenu(AmosDocumenti::t('amosdocumenti','#menu_front_documenti'), AmosDocumenti::toUrlModule('/documenti/all-documents'),$dept);
+            $menu .= $this->addFrontEndMenu(AmosDocumenti::t('amosdocumenti', '#menu_front_documenti'), AmosDocumenti::toUrlModule('/documenti/all-documents'), $dept);
         }
         return $menu;
     }
@@ -461,7 +453,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @return array
      */
-    public function getIndexActions(){
+    public function getIndexActions() {
         return [
             'documenti/index',
             'documenti-categorie/index',
@@ -475,8 +467,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @return array
      */
-    public function defaultControllerIndexRoute()
-    {
+    public function defaultControllerIndexRoute() {
         return [
             'documenti' => '/documenti/documenti/own-interest-documents',
         ];
@@ -485,32 +476,34 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @return array
      */
-    public function defaultControllerIndexRouteSlogged()
-    {
+    public function defaultControllerIndexRouteSlogged() {
         return [
             'documenti' => '/documenti/documenti/all-documents',
         ];
     }
 
-
     /**
      * @return array
      */
-    public function getControllerNames(){
-        $names =  [
+    public function getControllerNames() {
+        $names = [
             'documenti' => self::t('amosdocumenti', "Documenti"),
-            'documenti-categorie'  => self::t('amosdocumenti', "Categorie documenti"),
+            'documenti-categorie' => self::t('amosdocumenti', "Categorie documenti"),
         ];
 
         return $names;
     }
-    
-    
-    public function getModuleOnlyOffice(){
-               
-        $moduleOnlyOffice = \Yii::$app->getModule('onlyoffice');        
-        
+
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public function getModuleOnlyOffice()
+    {
+        $moduleOnlyOffice = \Yii::$app->getModule('onlyoffice');
+
         return isset($moduleOnlyOffice) ? $moduleOnlyOffice : false;
-        
     }
+
 }

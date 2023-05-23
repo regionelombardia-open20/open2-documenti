@@ -686,9 +686,14 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
                 $moduleTag = \Yii::$app->getModule('tag');
                 isset($moduleTag) ? $showReceiverSection = true : null;
+                $hidden = '';
+                if(Yii::$app->getModule('documenti')->hideInterestArea == true){
+                        $hidden = 'hidden';
+                }
+				
                 ?>
                 <?php if ($showReceiverSection) : ?>
-                    <div class="col-xs-12 section-form">
+                    <div class="col-xs-12 section-form" <?=$hidden?>>
                         <div class="section-modalita-pubblicazione">
                             <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#tag_title'), ['class' => 'subtitle-form']) ?>
                             <div class="row">
@@ -768,7 +773,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                             '1' => 'Si',
                         ], [
                             'tabindex' => 0,
-                            'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : null,
+                            'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->in_evidenza,
                             'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
                             'disabled' => (isset($enableAgid) && true == $enableAgid) ? false : ($model->primo_piano == 1 ? false : true)
                         ]),

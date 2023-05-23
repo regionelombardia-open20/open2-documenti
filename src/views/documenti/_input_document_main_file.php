@@ -1,13 +1,14 @@
 <?php
 
 use open20\amos\attachments\components\AttachmentsInput;
-use \open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\AmosDocumenti;
 use yii\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 
 $enabledGoogleDrive = $module && $module->enableGoogleDrive;
-$onlyofficeModule = \Yii::$app->getModule('onlyoffice');
-if($onlyofficeModule){
+$onlyofficeModule = AmosDocumenti::instance()->getModuleOnlyOffice();
+
+if ($onlyofficeModule) {
 	$buttonDisalbe = !$onlyofficeModule->isValidExtension($model->documentMainFile->type) ? "disabled" : "" ;
 	$new_files = $onlyofficeModule->tipiGestibili;
 	$file_list = '';
@@ -42,11 +43,9 @@ $js = <<<JS
 JS;
 
 $this->registerJs($js);
-
-
 ?>
 
-<?= $form->field($model, 'typeMainDocument')->widget(\kartik\select2\Select2::className(), [
+<?= $form->field($model, 'typeMainDocument')->widget(\kartik\select2\Select2::class, [
     'data' => $model->getTypeMainDocument(),
     'options' => ['id' => 'type-main-document-id', 'disabled' => !$model->isNewRecord]
 ])->label(AmosDocumenti::t('amosdocumenti', 'tipo di documento')) ?>
@@ -111,13 +110,15 @@ $this->registerJs($js);
                 ?>
             </div>
             
+            <?php if ($onlyofficeModule) : ?>
             <div id="onlyoffice-document-type" style="<?= $model->typeMainDocument == 3 ? '' : 'display:none' ?>">
-                <?= $form->field($model, 'onlyOfficeNewFile')->widget(\kartik\select2\Select2::className(), [
+                <?= $form->field($model, 'onlyOfficeNewFile')->widget(\kartik\select2\Select2::class, [
                     'data' => $model->getOnlyOfficeNewFiles(),
                     'options' => ['id' => 'onlyoffice-file-id']
                 ])->label(AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file'))
                 ?>
             </div>
+            <?php endif; ?>
 
             <?php if (!empty($documento)): ?>
                 <?= $documento->filename ?>

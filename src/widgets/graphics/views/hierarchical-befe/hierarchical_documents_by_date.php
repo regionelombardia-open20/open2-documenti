@@ -8,20 +8,14 @@
  * @package    open20\amos\documenti\widgets\graphics\views
  * @category   CategoryName
  */
-use open20\amos\attachments\models\File;
-use open20\amos\core\forms\WidgetGraphicsActions;
-use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
+
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\assets\ModuleDocumentiHierarchyBefeAsset;
-use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
 use yii\data\ActiveDataProvider;
 use yii\web\View;
 use yii\widgets\Pjax;
 use open20\design\components\ItemDocumentCardWidget;
-use open20\amos\core\views\AmosGridView;
 use open20\amos\core\record\CachedActiveQuery;
 
 ModuleDocumentiHierarchyBefeAsset::register($this);

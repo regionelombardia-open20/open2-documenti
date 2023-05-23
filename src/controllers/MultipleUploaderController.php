@@ -11,8 +11,6 @@
 
 namespace open20\amos\documenti\controllers;
 
-use open20\amos\attachments\FileModule;
-use open20\amos\community\AmosCommunity;
 use open20\amos\community\exceptions\CommunityException;
 use open20\amos\community\models\base\CommunityType;
 use open20\amos\community\models\Community;
@@ -29,7 +27,6 @@ use open20\amos\documenti\models\UploaderImportList;
 use Yii;
 use yii\base\Exception;
 use yii\data\ActiveDataProvider;
-use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 

@@ -37,7 +37,6 @@ final class DocumentiCartellePath extends Record
         return 'documenti_cartelle_path';
     }
 
-
     /**
      * @inheritdoc
      */
@@ -48,25 +47,33 @@ final class DocumentiCartellePath extends Record
         ];
     }
     
-    /*
+    /**
      * funzione che crea il path dei documenti già inseriti a db
+     *
+     * @param [type] $doc
+     * @param [type] $level
+     * @param [type] $parent_array
+     * @return void
      */
-    
-    
-    
-    
     public static function generatePath($doc,$level,$parent_array){
-        if($doc){
-	    $parent_array[$doc->id] = $doc->parent_id;
+        if ($doc) {
+	        $parent_array[$doc->id] = $doc->parent_id;
             if($doc->parent_id){
                 $documento = Documenti::findOne($doc->parent_id);
                 $level++;
-                 return self::generatePath($documento,$level,$parent_array);
+                return self::generatePath($documento,$level,$parent_array);
             }
         }
+
         return $parent_array;
     }
 	
+    /**
+     *
+     * @param [type] $result
+     * @param [type] $doc_id
+     * @return void
+     */
     public static function savePath($result,$doc_id){
         $level = count($result);
         try{
@@ -89,6 +96,11 @@ final class DocumentiCartellePath extends Record
         }
     }
     
+    /**
+     *
+     * @param [type] $document
+     * @return void
+     */
     public static function getPath($document){
         $result = self::generatePath($document,self::START_LEVEL,[]);
         $stringa = self::PATH_SEPARATOR;
@@ -96,9 +108,17 @@ final class DocumentiCartellePath extends Record
         foreach ($result as $key => $value){
             if($value){
                 $path = Documenti::findOne($value);
-                $stringa.=StringHelper::truncate($path->titolo, self::MAX_CHARACTER, '...', null, false).self::PATH_SEPARATOR;
+                $stringa .= StringHelper::truncate(
+                    $path->titolo,
+                    self::MAX_CHARACTER,
+                    '...',
+                    null,
+                    false
+                )
+                .self::PATH_SEPARATOR;
             }
         }
+
         return $stringa;
     }
 

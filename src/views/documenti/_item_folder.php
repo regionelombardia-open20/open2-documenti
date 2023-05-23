@@ -11,11 +11,10 @@
 
 use open20\amos\core\forms\ContextMenuWidget;
 use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\forms\PublishedByWidget;
 use open20\amos\documenti\AmosDocumenti;
+use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\notificationmanager\forms\NewsWidget;
-
 
 /**
  * @var yii\web\View $this
@@ -23,8 +22,9 @@ use open20\amos\notificationmanager\forms\NewsWidget;
  */
 
 $modelViewUrl = $model->getFullViewUrl();
-
+$stringa = DocumentiCartellePath::getPath($model); 
 ?>
+
 <div class="document-item-container item-folder flexbox-column border-bottom py-4 w-100">
 
     <div class="flexbox align-item-center">
@@ -50,7 +50,6 @@ $modelViewUrl = $model->getFullViewUrl();
                     'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
                     'modelValidatePermission' => 'DocumentValidate',
                     'labelDeleteConfirm' => AmosDocumenti::t('amosdocumenti', '#confirm_delete_folder')
-                    //                    'mainDivClasses' => 'col-xs-1 nop'
                 ]) ?>
             </div>
 
@@ -60,24 +59,28 @@ $modelViewUrl = $model->getFullViewUrl();
     <?= Html::a(Html::tag('p', htmlspecialchars($model->titolo), ['class' => 'h5 title-one-line']), $modelViewUrl, ['class' => 'link-list-title', 'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ').$model->titolo]) ?>
                 
     <div class="small mb-2">
-        <?php $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model); 
-        echo AmosDocumenti::t(
-                    'amosdocumenti',
-                    'Percorso: '
-                    ).$stringa. $model->titolo
-                ?>
+        <?= AmosDocumenti::t('amosdocumenti', 'Percorso: ')
+            . $stringa
+            . $model->titolo
+        ?>
     </div>
     <div class="small mb-2">
       
      <?= PublishedByWidget::widget([
-                'model' => $model,
-                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '{category}' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
-            ]) ?>
+            'model' => $model,
+            'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '{category}' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
+        ]) ?>
     </div>
 
     <div>
-        <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Apri') , $modelViewUrl, ['class' => 'read-more d-inline mr-2 uppercase bold small', 'title' => AmosDocumenti::t('amosdocumenti', 'Apri la cartella ')]) ?>
-
+        <?= Html::a(
+            AmosDocumenti::t('amosdocumenti', 'Apri') ,
+            $modelViewUrl,
+            [
+                'class' => 'read-more d-inline mr-2 uppercase bold small',
+                'title' => AmosDocumenti::t('amosdocumenti', 'Apri la cartella ')
+            ]
+        )?>
     </div>
     
 </div>

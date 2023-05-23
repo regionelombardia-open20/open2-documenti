@@ -10,7 +10,6 @@
  */
 
 use open20\amos\core\helpers\Html;
-use open20\amos\cwh\base\ModelContentInterface;
 
 ?>
 <div style="border:1px solid #cccccc;padding:10px;margin-bottom: 10px;background-color: #ffffff;margin-top:20px">

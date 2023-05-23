@@ -9,14 +9,8 @@
  * @category   CategoryName
  */
 
-use open20\amos\attachments\models\File;
-use open20\amos\core\forms\WidgetGraphicsActions;
-use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\assets\ModuleDocumentiAsset;
-use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\graphics\WidgetGraphicsUltimiDocumenti;
 use yii\data\ActiveDataProvider;
 use yii\web\View;
