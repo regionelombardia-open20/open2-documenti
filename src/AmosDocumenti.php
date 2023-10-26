@@ -81,6 +81,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool $enableDocumentVersioning If true enable the versioning of the documents. The folders aren't versioned.
      */
     public $enableDocumentVersioning = false;
+    
+    
+    /**
+     * 
+     * @var bool $enableDragAndDrop If true enable the drag and drop of the file documents.
+     */
+    public $enableDragAndDrop = true;
 
     /**
      * @var array $defaultRequired - default required fields in document form
@@ -110,9 +117,14 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var string List of the allowed mime types.
      */
     public $mimeTypes = 'text/csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,
-	application/pdf,application/rtf,application/x-rtf,text/richtext,text/plain,application/vnd.ms-excel,application/x-excel,application/excel,
-	application/x-msexcel,application/vnd.ms-office,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.text,application/octet-stream';
+	application/pdf,application/rtf,text/rtf,application/x-rtf,text/richtext,text/plain,application/vnd.ms-excel,application/x-excel,application/excel,
+	application/x-msexcel,application/vnd.ms-office,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.text,application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
+    /**
+     * 
+     * @var bool $enableCheckMimeType
+     */
+    public $enableCheckMimeType = true;
     /**
      * @var bool|false $hidePubblicationDate
      */
@@ -265,7 +277,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var bool $enableMoveDoc
      */
-    public $enableMoveDoc = false;
+    public $enableMoveDoc = true;
 
     /**
      *
@@ -355,6 +367,21 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var int $maxFileSize Maximum file size for upload. No limits if null.
      */
     public $maxFileSize = null;
+
+    /**
+     * @var bool
+     */
+    public $enablePublishUnpublishFolder = true;
+
+    /**
+     * @var bool
+     */
+    public $showAllStatusesAllDocument = true;
+
+    /**
+     * @var int $truncateGetPath param for string truncation on and off in the getPath function in model DocumentiCartellePath
+     */
+    public $truncateGetPath = false;
 
     /**
      * @inheritdoc

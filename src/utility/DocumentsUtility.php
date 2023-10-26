@@ -10,6 +10,7 @@
 
 namespace open20\amos\documenti\utility;
 
+use open20\amos\community\models\Community;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\user\User;
@@ -376,4 +377,24 @@ class DocumentsUtility extends BaseObject
         }
         return $canCreate;
     }
+
+    /**
+     * @param $community
+     * @param $percorso
+     * @return mixed|string
+     */
+    public static function getPercorsoCommunity($community, $percorso) {
+            if (!is_null($community)){
+                $percorso = '/' . $community->name . $percorso;
+                $communityPadre = Community::findOne(['id' => $community->parent_id]);
+                self::getPercorsoCommunity($communityPadre, $percorso);
+            }
+            if (!is_null($community->parent_id)){
+                $communityPadre = Community::findOne(['id' => $community->parent_id]);
+                $percorso = '/' . $communityPadre->name . $percorso;
+
+            }
+        return $percorso;
+    }
+
 }

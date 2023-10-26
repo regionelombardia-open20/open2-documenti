@@ -42,7 +42,7 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
         $this->setLabel(AmosDocumenti::tHtml('amosdocumenti', '#documenti_widget_label_dashboard'));
         $this->setDescription(AmosDocumenti::t('amosdocumenti', '#documenti_widget_description_dashboard'));
         $this->setIcon('file-text-o');
-        $this->setUrl(['/documenti']);
+        $this->setUrl(['/documenti/documenti/all-documents']);
         $this->setCode('DOCUMENTI_MODULE');
         $this->setModuleName('documenti-dashboard');
         $this->setNamespace(__CLASS__);

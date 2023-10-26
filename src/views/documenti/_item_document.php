@@ -23,7 +23,7 @@ use open20\amos\notificationmanager\forms\NewsWidget;
 /** @var AmosDocumenti $documentsModule */
 $documentsModule = AmosDocumenti::instance();
 $documentMainFile = $model->getDocumentMainFile();
-$modelViewUrl = '/documenti/documenti/view?id='. $model->id;
+$modelViewUrl = $model->getFullViewUrl();
 $document = $model->getDocumentMainFile();
 $documentPresent = ($document != null);
 $documentLinkPresent = (!empty($model->link_document));
@@ -43,12 +43,12 @@ isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
 
 $controller = Yii::$app->controller;
 $moduleId = $controller->module->id;
-if($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId){
-    $additionalButtons[]  = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"),'#modalMove', [
-                        'class' => 'open-modalMove',
-                        'data-toggle' => 'modal',
-                        'data-id' => $model->id,
-                    ]);
+if ($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId) {
+    $additionalButtons[] = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"), '#modalMove', [
+        'class' => 'open-modalMove',
+        'data-toggle' => 'modal',
+        'data-id' => $model->id,
+    ]);
 }
 
 $jsCount = <<<JS
@@ -68,21 +68,21 @@ $this->registerJs($jsCount);
 
 $onlyofficeModule = AmosDocumenti::instance()->getModuleOnlyOffice();
 if ($onlyofficeModule) {
-    $iconoo = $onlyofficeModule->isValidExtension($document->type) ? true : false ;
+    $iconoo = $onlyofficeModule->isValidExtension($document->type) ? true : false;
 }
 ?>
 
 <div class="document-item-container d-flex border-bottom py-4 w-100">
     <div class="info-doc">
         <div>
-            <?php  if($iconoo) {?>
-                <?= AmosIcons::show('mdi-layers-triple', ['class' => ' icon icon-layers-triple icon-sm mdi mdi-layers-triple'], 'mdi');?>
+            <?php if ($iconoo) { ?>
+                <?= \open20\amos\core\icons\AmosIcons::show('mdi-layers-triple', ['class' => ' icon icon-layers-triple icon-sm mdi mdi-layers-triple'], 'mdi'); ?>
             <?php } ?>
             <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
             <span class="text-muted small"><?= $docExtension = strtoupper($document->type); ?>
-            <?php if ($documentPresent): ?>
-                (<?= $model->documentMainFile->formattedSize ?>) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
-             <?php endif; ?>
+                <?php if ($documentPresent): ?>
+                    (<?= $model->documentMainFile->formattedSize ?>) - <?= AmosDocumenti::tHtml('amosdocumenti', 'File principale:') ?>
+                <?php endif; ?>
              </span>
 
             <?php
@@ -118,24 +118,28 @@ if ($onlyofficeModule) {
             )
             ?>
         <?php endif; ?>
-        <p class="mb-0 m-t-5 text-muted">
-            <?php $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model); 
-                echo AmosDocumenti::t(
-                    'amosdocumenti',
-                    'Percorso: '
-                    ).$stringa. $model->titolo
-                ?>
-        </p>
+        <?php if ($model->status != \open20\amos\documenti\models\Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) { ?>
+            <i style='color:#777777'><?= "(" . AmosDocumenti::t('amosdocumenti', $model->status) . ")"; ?></i>
+        <?php } ?>
+
         <?php if ($model->descrizione_breve) { ?>
             <p class="mb-0 m-t-5 text-muted">
                 <?= htmlspecialchars($model->descrizione_breve) ?>
             </p>
         <?php } ?>
-        <div class="small mb-2 m-t-10">
+        <div class="small mb-0 m-t-10">
             <?= PublishedByWidget::widget([
                 'model' => $model,
-                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '{category}' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
+                'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '<label>Categoria:</label>&nbsp ' . ' <div><span class="nome-categoria"> ' . $documentCategory->titolo . '</span></div>' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
             ]) ?>
+        </div>
+        <div class="small mb-2">
+            <?php $stringa = \open20\amos\documenti\models\DocumentiCartellePath::getPath($model);
+            echo AmosDocumenti::t(
+                    'amosdocumenti',
+                    '<strong>Percorso:</strong> '
+                ) . $stringa . $model->titolo
+            ?>
         </div>
         <div>
             <?php
@@ -152,18 +156,7 @@ if ($onlyofficeModule) {
 
             ?>
 
-            <?php if ($documentLinkPresent) {
-                echo Html::a(
-                    AmosDocumenti::t('amosdocumenti', '#detail'),
-                    $model->link_document,
-                    [
-                        'title' => AmosDocumenti::t('amosdocumenti', '#see_external_document_detail') . ' ' . $modelTitleSpecialChars,
-                        'class' => 'small m-r-10 uppercase bold',
-                        'target' => '_blank',
-                        'data-key' => $model->id
-                    ]
-                );
-            } else if ($documentPresent) { ?>
+
                 <?= Html::a(
                     AmosDocumenti::t('amosdocumenti', '#detail'),
                     $modelViewUrl,
@@ -173,7 +166,6 @@ if ($onlyofficeModule) {
                     ]
                 )
                 ?>
-            <?php } ?>
 
         </div>
     </div>
@@ -187,7 +179,7 @@ if ($onlyofficeModule) {
                 'actionModify' => "/documenti/documenti/update?id=" . $model->id,
                 'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
                 'modelValidatePermission' => 'DocumentValidate',
-                 'additionalButtons' => $additionalButtons,
+                'additionalButtons' => $additionalButtons,
                 'mainDivClasses' => 'manage-documents'
             ]) ?>
         </div>

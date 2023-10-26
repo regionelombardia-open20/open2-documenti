@@ -39,8 +39,10 @@ $appController = Yii::$app->controller;
 /** @var AmosDocumenti $documentsModule */
 $documentsModule = AmosDocumenti::instance();
 $isFolder = $appController->documentIsFolder($model);
+$enableDragAndDrop = $documentsModule && $documentsModule->enableDragAndDrop;
 $enableCategories = $documentsModule->enableCategories;
 $enableVersioning = $appController->documentsModule->enableDocumentVersioning;
+$enablePublishUnpublishFolder = $appController->documentsModule->enablePublishUnpublishFolder;
 $isNewVersion = !empty(\Yii::$app->request->get('isNewVersion')) ? \Yii::$app->request->get('isNewVersion') : false;
 $offunusedfields = \Yii::$app->request->get('offunusedfields');
 $hideUnusedFields = $offunusedfields ? 'display:none' : '';
@@ -275,7 +277,9 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                     'maxFileCount' => 100, // Client max files
                                     'showPreview' => true,
                                     'showRemove' => true,
+                                    'allowedFileExtensions' => explode(',', $documentsModule->whiteListFilesExtensions)
                                 ],
+                                'enableDragAndDrop' => $enableDragAndDrop,
                             ])->label(AmosDocumenti::t('amosdocumenti', 'document_attachments'))
                                 ->hint(AmosDocumenti::t('amosdocumenti', 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
 
@@ -314,9 +318,9 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
                     <?php $categories = DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all();
                     $hideUnusedFieldsCategory = $hideUnusedFields;
-                    if(count($categories) != 1 && $offunusedfields){
+                    if (count($categories) != 1 && $offunusedfields) {
                         $hideUnusedFieldsCategory = '';
-                    }?>
+                    } ?>
                     <div style="<?= $hideUnusedFieldsCategory ?>">
                         <!-- AGID FIELD -->
                         <?php if ($enableAgid) : ?>
@@ -687,13 +691,13 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 $moduleTag = \Yii::$app->getModule('tag');
                 isset($moduleTag) ? $showReceiverSection = true : null;
                 $hidden = '';
-                if(Yii::$app->getModule('documenti')->hideInterestArea == true){
-                        $hidden = 'hidden';
+                if (Yii::$app->getModule('documenti')->hideInterestArea == true) {
+                    $hidden = 'hidden';
                 }
-				
+
                 ?>
                 <?php if ($showReceiverSection) : ?>
-                    <div class="col-xs-12 section-form" <?=$hidden?>>
+                    <div class="col-xs-12 section-form" <?= $hidden ?>>
                         <div class="section-modalita-pubblicazione">
                             <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#tag_title'), ['class' => 'subtitle-form']) ?>
                             <div class="row">
@@ -1019,15 +1023,16 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
             ];
         }
 
+        $enableDataConfirm = $enablePublishUnpublishFolder && !$model->is_folder;
+
         $closeButtonUrl = !empty(\Yii::$app->request->get('urlRedirect')) ? \Yii::$app->request->get('urlRedirect') : $appController->getFormCloseUrl($model);
         echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
-
             // parametri ereditati da verioni precedenti del widget WorkflowTransition
             'form' => $form,
             'model' => $model,
             'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
             'viewWidgetOnNewRecord' => true,
-
+            'enableDataConfirm' => $enableDataConfirm,
             'closeButton' => Html::a($closeButtonText, $closeButtonUrl, ['class' => 'btn btn-outline-primary']),
 
             // fisso lo stato iniziale per generazione pulsanti e comportamenti
@@ -1046,11 +1051,19 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);
 ?>
+<?php if ($enablePublishUnpublishFolder) { ?>
+    <div>
+        <?= $this->render('_modal_publish_folder', ['model' => $model]) ?>
+    </div>
+<?php } ?>
 <?php ActiveForm::end(); ?>
+
 
 <?php
 $script = <<< JS
 	$(document).ready(function(){
+        var execBeforeSubmit = 1; // Per chiamare un solo evento beforesubmit
+        
         $("#documenti_agid_content_type_id").ready(function(){
             if( $("#documenti_agid_content_type_id").val() && $("#documenti_agid_content_type_id").val().length != 0){
                 var url = "/documenti/documenti/get-documenti-agid-type-by-content-type";
@@ -1070,8 +1083,19 @@ $script = <<< JS
 
             ajaxPostCall(url, data, selectOptionDocumentiAgidType);
         });
+        
+        // Aggiunta del parametro nascosto per indicare al validatore che i file ci sono se caricati da databank (altrimenti non li vede)
+        $('#doc-form').on('beforeSubmit', function(e) {
+            if(execBeforeSubmit) {
+                execBeforeSubmit = 0;
+                e.preventDefault();
+                selected_file_ids = []; //manca la variabile è da errore, da fixare con il giro giusto
+                if('documentMainFile' in selected_file_ids){
+                    $('#mainDocumentNumber').val(selected_file_ids['documentMainFile'].length);
+                }
+            }
+        });
     });
-
 
     function selectOptionDocumentiAgidType(data){
         // remove old select options and set new select options

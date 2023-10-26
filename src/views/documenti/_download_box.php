@@ -68,6 +68,7 @@ $enableDocumentVersioning = $documentsModule->enableDocumentVersioning;
 if ($model->drive_file_id) {
     $this->registerJs($jsGoogleDrive);
 }
+$this->registerJs($js, \yii\web\View::POS_READY);
 ?>
 <div class="download-file">
    

@@ -19,10 +19,10 @@ class m220725_147900_fix_documenti_titolo_multiple_spaces extends Migration {
                 ->queryAll();
 
         foreach ($documenti as $doc) {
-            $titolo = preg_replace("/ {2,}/", " ", $doc->titolo);
+            $titolo = preg_replace("/ {2,}/", " ", $doc['titolo']);
             \Yii::$app->db->createCommand("UPDATE documenti SET titolo =:titolo WHERE id =:id")
                     ->bindValue(':titolo', $titolo)
-                    ->bindValue(':id', $doc->id)
+                    ->bindValue(':id', $doc['id'])
                     ->execute();
         }
     }

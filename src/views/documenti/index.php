@@ -50,7 +50,11 @@ $parentId = \Yii::$app->request->get('parentId');
 if (!empty($parentId)) {
     $folder = Documenti::findOne($parentId);
     if ($folder) {
-        $this->params['subTitleSection'] = '<span class="icon icon-folder icon-sm mdi mdi-folder "></span>'.ucfirst($folder->getTitle());
+        $statusFolder = '';
+        if ($model->status != \open20\amos\documenti\models\Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
+            $statusFolder = "<span style='color:#777777' class='m-l-5'><i> (". AmosDocumenti::t('amosdocumenti', $folder->status) . ") </i></span>";
+        }
+        $this->params['subTitleSection'] = '<span class="icon icon-folder icon-sm mdi mdi-folder "></span>'.ucfirst($folder->getTitle()).$statusFolder;
         $this->params['subTitleAdditionalClass'] = 'lead m-t-10';
 
     }
@@ -372,7 +376,7 @@ $actionColumns = [
             /** @var Documenti $model */
             $btn = '';
             
-            if (!$model->is_folder && Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model]) 
+            if (Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model]) 
                     && $documentsModule->enableMoveDoc 
                     ) {
                 $btn = \yii\helpers\Html::a(AmosIcons::show('swap'),'#modalMove', [

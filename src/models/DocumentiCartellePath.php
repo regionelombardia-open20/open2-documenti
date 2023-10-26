@@ -2,6 +2,7 @@
 
 namespace open20\amos\documenti\models;
 
+use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\core\record\Record;
 use yii\helpers\StringHelper;
@@ -104,21 +105,25 @@ final class DocumentiCartellePath extends Record
     public static function getPath($document){
         $result = self::generatePath($document,self::START_LEVEL,[]);
         $stringa = self::PATH_SEPARATOR;
+        $documenti = AmosDocumenti::Instance();
         ksort($result);
         foreach ($result as $key => $value){
             if($value){
                 $path = Documenti::findOne($value);
-                $stringa .= StringHelper::truncate(
-                    $path->titolo,
-                    self::MAX_CHARACTER,
-                    '...',
-                    null,
-                    false
-                )
-                .self::PATH_SEPARATOR;
+                if ($documenti->truncateGetPath) {
+                    $stringa .= StringHelper::truncate(
+                            $path->titolo,
+                            self::MAX_CHARACTER,
+                            '...',
+                            null,
+                            false
+                        )
+                        . self::PATH_SEPARATOR;
+                } else {
+                    $stringa .= $path->titolo . self::PATH_SEPARATOR;
+                }
             }
         }
-
         return $stringa;
     }
 

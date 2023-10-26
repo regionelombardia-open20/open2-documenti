@@ -22,6 +22,7 @@ use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\tag\models\EntitysTagsMm;
 use open20\amos\cwh\models\CwhPubblicazioniCwhNodiEditoriMm;
 use open20\amos\cwh\models\CwhPubblicazioni;
+use open20\amos\cwh\query\CwhActiveQuery;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
@@ -44,6 +45,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
     public $data_pubblicazione_to;
     public $extensions;
     public $genericText;
+    public $solo_in_evidenza;
 
     /**
      *
@@ -93,7 +95,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         return [
             [$integer, 'integer'],
             ['genericText', 'string'],
-            [['extensions', 'parentId', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
+            [['extensions', 'parentId', 'solo_in_evidenza', 'titolo', 'sottotitolo', 'descrizione_breve', 'descrizione', 'metakey', 'metadesc', 'data_pubblicazione', 'dataPubblicazioneAl',
                 'data_rimozione', 'documenti_categorie_id', 'created_at', 'updated_at', 'deleted_at', 'data_pubblicazione_from', 'data_pubblicazione_to', 'ricerca_sottocartelle'], 'safe'],
         ];
     }
@@ -155,15 +157,26 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
     public function getFoldersList($communityId, $id)
     {
-        $editorsNode = CwhPubblicazioniCwhNodiEditoriMm::find()->andWhere(['cwh_network_id' => $communityId])->all();
-        // $query = DocumentiSearch::find()->andWhere(['is_folder'=>1]);
-        $idList = [];
-        foreach ($editorsNode as $en) {
-            $pubblicazione = CwhPubblicazioni::findOne($en->cwh_pubblicazioni_id);
-            $content_id = $pubblicazione->content_id;
-            $idList[] = $content_id;
-        }
-        $data = DocumentiSearch::find()->andWhere(['is_folder' => 1])->andWhere(['id' => $idList])
+		
+		$documentiClassName = $this->documentsModule->model('Documenti');
+        
+		/** @var Documenti $documentiModel */
+            $documentiModel = $this->documentsModule->createModel('Documenti');
+            /** @var ActiveQuery $query */
+            $query          = $documentiModel::find()->distinct();
+			
+		$cwhActiveQuery = new CwhActiveQuery($documentiClassName, ['queryBase' => $query]);
+		$queryAll = $cwhActiveQuery->getQueryCwhAll(null, null, true);
+		$queryAll->andWhere(['is_folder' => 1])
+		->andWhere(['not', ['documenti.id' => $id]])
+		->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO]);
+		
+		$data = DocumentiSearch::find()->andWhere(['is_folder' => 1])->andWhere([
+                'in',
+                'id',
+                $queryAll->select('documenti.id')->asArray()->column()
+            
+		 ])
             ->andWhere(['not', ['id' => $id]])
             ->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
             ->asArray()->all();
@@ -212,18 +225,55 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
     }
 
+    public function additionalQueryTypes($query, $queryType, $cwhActiveQuery)
+    {
+        if ($queryType == 'all-in-all-statuses') {
+            if (\Yii::$app->getModule('cwh')) {
+                /** @var  $queryAll ActiveQuery */
+                $queryAll = $cwhActiveQuery->getQueryCwhAll(null, null, true);
+                $queryAll->select('documenti.id');
+
+                $cwhActiveQuery2 = clone $cwhActiveQuery;
+                $queryOwn = $cwhActiveQuery2->getQueryCwhOwn();
+                $queryOwn->select('documenti.id');
+
+                $cwhActiveQuery3 = clone $cwhActiveQuery;
+                $queryToValidate = $cwhActiveQuery3->getQueryCwhToValidate();
+                $queryToValidate->select('documenti.id');;
+
+                $subquery  = $queryAll->union($queryOwn)->union($queryToValidate)->all();
+                $ids = [];
+                foreach ($subquery as $doc){
+                    $ids []= $doc->id;
+                }
+                $query = Documenti::find()->andWhere(['documenti.id' => $ids]);
+            } else {
+                $query->andWhere(['OR',
+                    [static::tableName() . '.status' => $this->getValidatedStatus()],
+                    [static::tableName() . '.status' => $this->getToValidateStatus()],
+                    [static::tableName() . '.created_by' => Yii::$app->user->id],
+                ]);
+
+            }
+
+        }
+
+        return $query;
+    }
+
     /**
      * @inheritdoc
      */
     public function search($params, $queryType = null, $limit = null, $onlyDratfs = false, $showAll = false)
     {
-        $getParentId = (\Yii::$app instanceof \yii\web\Application) ? \Yii::$app->request->get('parentId') : null;
+        $getParentId = \Yii::$app->request->get('parentId');
         if ($getParentId) {
             $params['DocumentiSearch']['parentId'] = $getParentId;
         }
         $query = $this
             ->buildQuery($params, $queryType)
             ->limit($limit);
+
 
         /** Switch off notifications - method of NotifyRecord */
         $this->switchOffNotifications($query);
@@ -261,7 +311,7 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         //if you don't use the seach form, the recursive search is not active
         $this->load($params);
-        //if you come from widget grphic LastDocuments Show also documents that are inside the folders
+        //se non vengo da un widget grafico e l'action nn è da validare e  creato da
         if ((!in_array($queryType, ['to-validate', 'created-by'])) && !(!empty($params['fromWidgetGraphic']) && $params['fromWidgetGraphic'] == true)) {
             if (!$showAll) {
                 if (!$params['DocumentiSearch']['ricerca_sottocartelle']) {
@@ -274,6 +324,8 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
                 }
             }
         }
+        $query->andWhere([self::tableName() . '.parent_id' => $this->parentId]);
+
 
         // recursive search
         if (!empty($this->parentId)) {
@@ -313,8 +365,8 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
 
         $this->applySearchFilters($query);
         $this->getSearchQuery($query);
-
-        //VarDumper::dump($query->createCommand()->rawSql,3,true);
+//pr($query->createCommand()->rawSql);die;
+//        VarDumper::dump($query->createCommand()->rawSql,3,true);
         return $dataProvider;
     }
 
@@ -402,6 +454,11 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
             }
         }
         return $dataProvider;
+    }
+
+    public function searchAllInAllStatuses($params, $limit = null)
+    {
+        return $this->search($params, 'all-in-all-statuses', $limit);
     }
 
     /**
@@ -612,6 +669,9 @@ class DocumentiSearch extends Documenti implements SearchModelInterface, Content
         ]);
 
         $query->andWhere(['primo_piano' => 1]);
+
+        $query->andFilterWhere(['parent_id' => $this->parent_id]);
+        $query->andFilterWhere(['in_evidenza' => $this->solo_in_evidenza]);
 
         if ($params["withPagination"]) {
             $dataProvider->setPagination(['pageSize' => $limit]);

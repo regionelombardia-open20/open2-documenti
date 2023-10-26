@@ -199,6 +199,7 @@ return [
     'File esterno' => 'External file',
     'Scarica file principale' => 'Download main file',
     'Filemanager Mediafile ID' => 'Filemanager Mediafile ID',
+    '#file_mime_error' =>'The file does not have an allowed MIME type',
     '#files' => 'Files',
     '#FINISH' => 'Finish',
     '#folder_article_indefinite' => 'a',

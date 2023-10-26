@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -28,6 +29,7 @@ use open20\amos\documenti\i18n\grammar\DocumentsGrammar;
 use open20\amos\documenti\i18n\grammar\FoldersGrammar;
 use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
+use open20\amos\events\models\Event;
 use open20\amos\notificationmanager\behaviors\NotifyBehavior;
 use open20\amos\seo\behaviors\SeoContentBehavior;
 use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
@@ -61,12 +63,10 @@ use yii\helpers\Inflector;
  *
  * @package open20\amos\documenti\models
  */
+class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface, SeoModelInterface, ContentPublicationInteraface {
 
-class Documenti extends \open20\amos\documenti\models\base\Documenti implements ContentModelInterface, CommentInterface, ViewModelInterface, WorkflowMetadataInterface, ModelDocumentInterface, ModelImageInterface, NewsletterInterface, SeoModelInterface, ContentPublicationInteraface
-{
     // Workflow ID
     const DOCUMENTI_WORKFLOW = 'DocumentiWorkflow';
-
     // Workflow states IDS
     const DOCUMENTI_WORKFLOW_STATUS_BOZZA = 'DocumentiWorkflow/BOZZA';
     const DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE = 'DocumentiWorkflow/DAVALIDARE';
@@ -92,11 +92,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     const SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE = 'scenario_details_hide_pubblication_date';
     const SCENARIO_CREATE_HIDE_PUBBLICATION_DATE = 'scenario_create_hide_pubblication_date';
     const SCENARIO_UPDATE_HIDE_PUBBLICATION_DATE = 'scenario_update_hide_pubblication_date';
-
     // Is folder constants
     const IS_FOLDER = 1;
     const IS_DOCUMENT = 0;
-
     // Main document types
     const MAIN_DOCUMENT_TYPE_FILE = 1;
     const MAIN_DOCUMENT_TYPE_LINK = 2;
@@ -146,26 +144,25 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @var File[] $documentAttachments
      */
     private $documentAttachments;
-
     private static $categories;
-
     public $titolodate;
 
     /**
      * @var integer $typeMainDocument
      */
     public $typeMainDocument;
-    
+
     /*
      * usata per scegliere, se è abilitato OnlyOffice, quale tipo di file caricare
      */
     public $onlyOfficeNewFile;
 
+    public $mainDocumentNumber;
+
     /**
      * @inheritdoc
      */
-    public function init()
-    {
+    public function init() {
         parent::init();
 
         if ($this->isNewRecord) {
@@ -182,11 +179,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                 $this->version = 1;
             }
             if (in_array($this->scenario, [
-                    self::SCENARIO_CREATE,
-                    self::SCENARIO_DETAILS,
-                    self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE,
-                    self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE
-                ])
+                        self::SCENARIO_CREATE,
+                        self::SCENARIO_DETAILS,
+                        self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE,
+                        self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE
+                    ])
             ) {
                 $query = new Query();
                 if (!self::$categories) {
@@ -207,110 +204,90 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function rules()
-    {        
+    public function rules() {
         $rules = ArrayHelper::merge(parent::rules(), [
-            [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],           
-            [['typeMainDocument'], 'integer'],
-
-            [['documentMainFile'],
-                'required',
-                'when' => function ($model) {
-                    if ($model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_FILE && empty($model->documentMainFile)) {
-                        return (
-                            !$this->documentsModule->documentsOnlyText
-                            && (
-                                trim($model->link_document) == ''
-                                && empty($model->drive_file_id)
-                                && $model->typeMainDocument != self::MAIN_DOCUMENT_TYPE_ONLYOFFICE
-                            )
-                        );
-                    }
-                    return false;
-                },
-                'whenClient' => "function(attribute, value) {
+                    [['destinatari_pubblicazione', 'destinatari_notifiche', 'count_link_download'], 'safe'],
+                    [['typeMainDocument', 'mainDocumentNumber'], 'integer'],
+                    [['documentMainFile'],
+                        'required',
+                        'when' => function ($model) {
+                            if ($model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_FILE && empty($model->documentMainFile)) {
+                                return (
+                                    !$this->documentsModule->documentsOnlyText && (
+                                    trim($model->link_document) == '' && empty($model->drive_file_id) && $model->typeMainDocument != self::MAIN_DOCUMENT_TYPE_ONLYOFFICE
+                                    ) && (isset($model->mainDocumentNumber) && $model->mainDocumentNumber == 0)
+                                    );
+                            }
+                            return false;
+                        },
+                        'whenClient' => "function(attribute, value) {
                     if ($('#type-main-document-id').val() == '1') {
                         $('#link-document-id').val('');
                         return ("
-                            . (!$this->documentsModule->documentsOnlyText ? "true" : "false")
-                            . "&& " . (empty($this->getDocument()) ? "true" : "false")
-                            . " && $('#drive-file-id').val() == '');
+                        . (!$this->documentsModule->documentsOnlyText ? "true" : "false")
+                        . "&& " . (empty($this->getDocument()) ? "true" : "false")
+                        . " && $('#drive-file-id').val() == '');
                     }
                 }",
-                'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
-            ],
-
-            [['documentAttachments'],
-                'file',
-//                'extensions' => (!empty($this->documentsModule))
-//                    ? $this->documentsModule->whiteListFilesExtensions
-//                    : '',
-                'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes'))
-                    ? $this->documentsModule->mimeTypes
-                    : '',                                    
-                'maxFiles' => 0,
-                'maxSize' => (!empty($this->documentsModule))
-                    ? $this->documentsModule->maxFileSize
-                    : null
-            ],
-
-            [['documentMainFile'],
-                'file',
-                //'skipOnEmpty' => true,
-//                'extensions' => (!empty($this->documentsModule))
-//                    ? $this->documentsModule->whiteListFilesExtensions
-//                    : '',
-                'checkExtensionByMimeType' => true,
-                'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes'))
-                    ? $this->documentsModule->mimeTypes
-                    : '',                                   
-                'maxFiles' => 1,
-                'maxSize' => (!empty($this->documentsModule))
-                    ? $this->documentsModule->maxFileSize
-                    : null
-            ],
-
-            [['link_document'], 'url', 'skipOnEmpty' => function ($model) {
-                return $model->link_document == '';
-            }
-            ],
-                    
-            [['link_document'],
-                'required',
-                'when' => function ($model) {
-                    return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_LINK;
-                },
-                'whenClient' => "function(attribute, value) {
+                        'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
+                    ],
+                    [['documentAttachments'],
+                        'file',
+                      //  'extensions' => (!empty($this->documentsModule) ? $this->documentsModule->whiteListFilesExtensions : ''),
+                        'checkExtensionByMimeType' => $this->documentsModule->enableCheckMimeType,
+                        'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes')) ? $this->documentsModule->mimeTypes : '',
+                        'wrongMimeType' => AmosDocumenti::t('amosdocumenti', '#file_mime_error'),
+                        'maxFiles' => 0,
+                        'maxSize' => (!empty($this->documentsModule)) ? $this->documentsModule->maxFileSize : null
+                    ],
+                    [['documentMainFile'],
+                        'file',
+                        //'skipOnEmpty' => true,
+                     //   'extensions' => (!empty($this->documentsModule) ? $this->documentsModule->whiteListFilesExtensions : ''),
+                        'checkExtensionByMimeType' => $this->documentsModule->enableCheckMimeType,
+                        'mimeTypes' => (!empty($this->documentsModule) && $this->documentsModule->hasProperty('mimeTypes')) ? $this->documentsModule->mimeTypes : '',
+                        'wrongMimeType' => AmosDocumenti::t('amosdocumenti', '#file_mime_error'),
+                        'maxFiles' => 1,
+                        'maxSize' => (!empty($this->documentsModule)) ? $this->documentsModule->maxFileSize : null
+                    ],
+                    [['link_document'], 'url', 'skipOnEmpty' => function ($model) {
+                            return $model->link_document == '';
+                        }
+                    ],
+                    [['link_document'],
+                        'required',
+                        'when' => function ($model) {
+                            return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_LINK;
+                        },
+                        'whenClient' => "function(attribute, value) {
                     return ("
                         . (!$this->documentsModule->documentsOnlyText ? "true" : "false")
                         . " && ($('#type-main-document-id').val() == '2'));
                 }",
-                'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
-            ],
-
-            [['onlyOfficeNewFile'],
-                'required',
-                'when' => function ($model) {             
-                    return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_ONLYOFFICE;
-                }, 'whenClient' => "function(attribute, value) {
+                        'message' => AmosDocumenti::t('amosdocumenti', '#main_document_required')
+                    ],
+                    [['onlyOfficeNewFile'],
+                        'required',
+                        'when' => function ($model) {
+                            return $model->typeMainDocument == self::MAIN_DOCUMENT_TYPE_ONLYOFFICE;
+                        }, 'whenClient' => "function(attribute, value) {
                         return ($('#type-main-document-id').val() == '3');
                 }",
-                'message' => AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file_required')
-            ],
+                        'message' => AmosDocumenti::t('amosdocumenti', '#onlyoffice_type_file_required')
+                    ],
         ]);
 
         if ($this->scenario != self::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE && $this->scenario != self::SCENARIO_CREATE_HIDE_PUBBLICATION_DATE && $this->scenario != self::SCENARIO_UPDATE_HIDE_PUBBLICATION_DATE) {
             $rules = ArrayHelper::merge($rules, [
-                [['data_pubblicazione', /*'data_rimozione'*/], 'required'],
-                // ['data_pubblicazione', 'compare', 'compareAttribute' => 'data_rimozione', 'operator' => '<='],
-                // ['data_rimozione', 'compare', 'compareAttribute' => 'data_pubblicazione', 'operator' => '>='],
+                        [['data_pubblicazione', /* 'data_rimozione' */], 'required'],
+                            // ['data_pubblicazione', 'compare', 'compareAttribute' => 'data_rimozione', 'operator' => '<='],
+                            // ['data_rimozione', 'compare', 'compareAttribute' => 'data_pubblicazione', 'operator' => '>='],
             ]);
         }
 
         if ($this->data_pubblicazione != '' && $this->data_rimozione != '') {
             $rules = ArrayHelper::merge($rules, [
-                ['data_rimozione', 'compare', 'compareAttribute' => 'data_pubblicazione', 'operator' => '>='],
+                        ['data_rimozione', 'compare', 'compareAttribute' => 'data_pubblicazione', 'operator' => '>='],
             ]);
         }
 
@@ -320,25 +297,23 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return ArrayHelper::merge(parent::attributeLabels(), [
-            'documentMainFile' => AmosDocumenti::t('amosdocumenti', '#MAIN_DOCUMENT'),
+                    'documentMainFile' => AmosDocumenti::t('amosdocumenti', '#MAIN_DOCUMENT'),
         ]);
     }
 
     /**
      * @inheritdoc
      */
-    public function scenarios()
-    {
+    public function scenarios() {
 
         $parentScenarios = parent::scenarios();
         $scenarios = ArrayHelper::merge(
-            $parentScenarios,
-            [
-                self::SCENARIO_CREATE => $parentScenarios[self::SCENARIO_DEFAULT]
-            ]
+                        $parentScenarios,
+                        [
+                            self::SCENARIO_CREATE => $parentScenarios[self::SCENARIO_DEFAULT]
+                        ]
         );
         $scenarios[self::SCENARIO_DETAILS] = [
             'documentMainFile',
@@ -391,43 +366,40 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function behaviors()
-    {
+    public function behaviors() {
         return ArrayHelper::merge(parent::behaviors(), [
-            'workflow' => [
-                'class' => SimpleWorkflowBehavior::class,
-                'defaultWorkflowId' => self::DOCUMENTI_WORKFLOW,
-                'propagateErrorsToModel' => true
-            ],
-            'workflowLog' => [
-                'class' => WorkflowLogFunctionsBehavior::class
-            ],
-            'NotifyBehavior' => [
-                'class' => NotifyBehavior::class,
-                'conditions' => ['is_folder' => 0],
-            ],
-            'fileBehavior' => [
-                'class' => FileBehavior::class
-            ],            
+                    'workflow' => [
+                        'class' => SimpleWorkflowBehavior::class,
+                        'defaultWorkflowId' => self::DOCUMENTI_WORKFLOW,
+                        'propagateErrorsToModel' => true
+                    ],
+                    'workflowLog' => [
+                        'class' => WorkflowLogFunctionsBehavior::class
+                    ],
+                    'NotifyBehavior' => [
+                        'class' => NotifyBehavior::class,
+                        'conditions' => ['is_folder' => 0],
+                    ],
+                    'fileBehavior' => [
+                        'class' => FileBehavior::class
+                    ],
 //            'googleDrive' => [
 //                'class' => GoogleDriveBehavior::class
 //            ],
-            'SeoContentBehavior' => [
-                'class' => SeoContentBehavior::class,
-                'titleAttribute' => 'titolo',
-                'descriptionAttribute' => 'extended_description',
-                'imageAttribute' => null,
-                'defaultOgType' => 'article',
-            ]
-
+                    'SeoContentBehavior' => [
+                        'class' => SeoContentBehavior::class,
+                        'titleAttribute' => 'titolo',
+                        'descriptionAttribute' => 'extended_description',
+                        'imageAttribute' => null,
+                        'defaultOgType' => 'article',
+                    ]
         ]);
     }
 
     /**
      * @inheritdoc
      */
-    public function representingColumn()
-    {
+    public function representingColumn() {
         return [
             'titolo'
         ];
@@ -437,8 +409,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * The method returns true if this object is a folder
      * @return bool
      */
-    public function isFolder()
-    {
+    public function isFolder() {
         return ($this->is_folder == static::IS_FOLDER);
     }
 
@@ -446,16 +417,14 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * The method returns true if this object is a folder
      * @return bool
      */
-    public function isDocument()
-    {
+    public function isDocument() {
         return ($this->is_folder == static::IS_DOCUMENT);
     }
 
     /**
      * @inheritdoc
      */
-    public function getGridViewColumns()
-    {
+    public function getGridViewColumns() {
         return [
             'type' => [
                 'label' => AmosDocumenti::t('amosdocumenti', '#type'),
@@ -526,56 +495,49 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getToValidateStatus()
-    {
+    public function getToValidateStatus() {
         return self::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE;
     }
 
     /**
      * @inheritdoc
      */
-    public function getValidatedStatus()
-    {
+    public function getValidatedStatus() {
         return self::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
     }
 
     /**
      * @inheritdoc
      */
-    public function getDraftStatus()
-    {
+    public function getDraftStatus() {
         return self::DOCUMENTI_WORKFLOW_STATUS_BOZZA;
     }
 
     /**
      * @inheritdoc
      */
-    public function getValidatorRole()
-    {
+    public function getValidatorRole() {
         return 'VALIDATORE_DOCUMENTI';
     }
 
     /**
      * @inheritdoc
      */
-    public function getPluginWidgetClassname()
-    {
+    public function getPluginWidgetClassname() {
         return WidgetIconDocumentiDashboard::className();
     }
 
     /**
      * @inheritdoc
      */
-    public function getDocumentImage($onlyIconName = false)
-    {
+    public function getDocumentImage($onlyIconName = false) {
         return DocumentsUtility::getDocumentIcon($this, $onlyIconName);
     }
 
     /**
      * @inheritdoc
      */
-    public function getDocument()
-    {
+    public function getDocument() {
         return $this->getDocumentMainFile();
     }
 
@@ -583,8 +545,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * Getter for $this->documentMainFile;
      * @return File
      */
-    public function getDocumentMainFile()
-    {
+    public function getDocumentMainFile() {
         if (empty($this->documentMainFile)) {
             $this->documentMainFile = $this->hasOneFile('documentMainFile')->one();
         }
@@ -596,8 +557,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param File $doc
      * @return File
      */
-    public function setDocumentMainFile($doc)
-    {
+    public function setDocumentMainFile($doc) {
         return $this->documentMainFile = $doc;
     }
 
@@ -609,8 +569,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param bool $canCache
      * @return string
      */
-    public function getDocumentMainFileUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false)
-    {
+    public function getDocumentMainFileUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false) {
         $newsImage = $this->getDocumentMainFile();
         if (!is_null($newsImage)) {
             if ($protected) {
@@ -625,8 +584,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getDocumentUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false)
-    {
+    public function getDocumentUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false) {
         return $this->getDocumentMainFileUrl($size, $protected, $url, $absolute, $canCache);
     }
 
@@ -634,8 +592,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * Getter for $this->documentAttachments;
      * @return File[]
      */
-    public function getDocumentAttachments()
-    {
+    public function getDocumentAttachments() {
         if (empty($this->documentAttachments)) {
             $this->documentAttachments = $this->hasMultipleFiles('documentAttachments', 'sort')->one();
         }
@@ -646,40 +603,35 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param $attachments
      * @return File
      */
-    public function setDocumentAttachments($attachments)
-    {
+    public function setDocumentAttachments($attachments) {
         return $this->documentAttachments = $attachments;
     }
 
     /**
      * @inheritdoc
      */
-    public function isCommentable()
-    {
+    public function isCommentable() {
         return $this->comments_enabled;
     }
 
     /**
      * @inheritdoc
      */
-    public function getTitle()
-    {
+    public function getTitle() {
         return $this->titolo;
     }
 
     /**
      * @inheritdoc
      */
-    public function getShortDescription()
-    {
+    public function getShortDescription() {
         return $this->descrizione_breve;
     }
 
     /**
      * @inheritdoc
      */
-    public function getDescription($truncate)
-    {
+    public function getDescription($truncate) {
         $ret = $this->descrizione;
         if ($truncate) {
             $ret = $this->__shortText($this->descrizione, 200);
@@ -690,8 +642,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getStatsToolbar($disableLink = false)
-    {
+    public function getStatsToolbar($disableLink = false) {
         $panels = [];
         $count_comments = 0;
         return $panels;
@@ -716,35 +667,31 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getPublicatedFrom()
-    {
+    public function getPublicatedFrom() {
         return $this->data_pubblicazione;
     }
 
     /**
      * @inheritdoc
      */
-    public function getPublicatedAt()
-    {
+    public function getPublicatedAt() {
         return $this->data_rimozione;
     }
 
     /**
      * @inheritdoc
      */
-    public function getCategory()
-    {
+    public function getCategory() {
         return $this->hasOne(
-            $this->documentsModule->model('DocumentiCategorie'),
-            ['id' => 'documenti_categorie_id']
+                        $this->documentsModule->model('DocumentiCategorie'),
+                        ['id' => 'documenti_categorie_id']
         );
     }
 
     /**
      * @return DocumentsGrammar|mixed
      */
-    public function getGrammar()
-    {
+    public function getGrammar() {
         if ($this->is_folder) {
             return new FoldersGrammar();
         } else {
@@ -755,22 +702,20 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return array list of statuses that for cwh is validated
      */
-    public function getCwhValidationStatuses()
-    {
+    public function getCwhValidationStatuses() {
         return [$this->getValidatedStatus()];
     }
 
     /**
      * @return array
      */
-    public function getAllParents()
-    {
+    public function getAllParents() {
         $currentModel = $this;
         $parentsList = [];
         while (!is_null($currentModel->parent)) {
             $parentsList = array_merge(
-                [$currentModel->parent],
-                $parentsList
+                    [$currentModel->parent],
+                    $parentsList
             );
             $currentModel = $currentModel->parent;
         }
@@ -782,8 +727,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param array $children
      * @return array
      */
-    public function getAllChildrens($children = [])
-    {
+    public function getAllChildrens($children = []) {
         $currentModel = $this;
         $childrenList = $children;
 
@@ -801,14 +745,12 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         return $childrenList;
     }
 
-
     /**
      * Search all children recursively
      * @param array $children
      * @return array
      */
-    public function getAllChildrenFolder($children = [])
-    {
+    public function getAllChildrenFolder($children = []) {
         $currentModel = $this;
         $childrenList = $children;
 
@@ -830,8 +772,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * Search all document children recursively
      * @return array
      */
-    public function getAllDocumentChildrens()
-    {
+    public function getAllDocumentChildrens() {
         $arrayChildren = [];
         $children = $this->getAllChildrens();
         foreach ($children as $childId) {
@@ -843,15 +784,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             }
         }
         return array_values($arrayChildren);
-
     }
 
     /**
      * Search all document in the first level
      * @return array
      */
-    public function getDocumentChildrens()
-    {
+    public function getDocumentChildrens() {
         $arrayChildren = [];
         $children = $this->children;
         foreach ($children as $child) {
@@ -868,8 +807,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * It searches both documents and folders.
      * @return bool
      */
-    public function hasChildren()
-    {
+    public function hasChildren() {
         if ($this->isNewRecord || !$this->documentsModule->enableFolders) {
             return false;
         }
@@ -885,8 +823,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @return bool
      * @throws \yii\db\StaleObjectException
      */
-    public function deleteAllChildren($errorsByFlashMessages = true)
-    {
+    public function deleteAllChildren($errorsByFlashMessages = true) {
         $children = $this->children;
         foreach ($children as $child) {
             if ($child->isFolder()) {
@@ -900,11 +837,9 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
             $child->delete();
             if ($child->hasErrors()) {
                 if ($errorsByFlashMessages) {
-                    $errorMsg = ($child->isDocument()
-                            ? AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione del documento')
-                            : AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione della cartella')
-                        )
-                        . " '" . $childTitle . "'";
+                    $errorMsg = ($child->isDocument() ? AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione del documento') : AmosDocumenti::t('amosdocumenti', 'Errore durante la cancellazione della cartella')
+                            )
+                            . " '" . $childTitle . "'";
                     Yii::$app->getSession()->addFlash('danger', $errorMsg);
                 } else {
                     Yii::getLogger()->log("Errore durante la cancellazione del documento con id '$childId'", Logger::LEVEL_ERROR);
@@ -920,8 +855,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @return Documenti[]
      * @throws \yii\base\InvalidConfigException
      */
-    public function getAllDocumentVersions()
-    {
+    public function getAllDocumentVersions() {
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
 
@@ -946,8 +880,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return Documenti
      */
-    public function getLastOldDocumentVersion()
-    {
+    public function getLastOldDocumentVersion() {
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
         $query = new Query();
@@ -955,17 +888,16 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         $query->andWhere(['version_parent_id' => $this->id, 'deleted_at' => null]);
         $maxVersion = $query->max('version');
         $document = $documentiModel::find()->andWhere([
-            'version_parent_id' => $this->id,
-            'version' => $maxVersion
-        ])->one();
+                    'version_parent_id' => $this->id,
+                    'version' => $maxVersion
+                ])->one();
         return $document;
     }
 
     /**
      * @return bool
      */
-    public function makeNewDocumentVersion()
-    {
+    public function makeNewDocumentVersion() {
         // If the document versioning is disabled do the standard operations.
         if (!$this->documentsModule->enableDocumentVersioning || $this->is_folder || ($this->version == -1)) {
             return true;
@@ -998,8 +930,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @throws \Exception
      * @throws \yii\db\StaleObjectException
      */
-    public function deleteNewDocumentVersion()
-    {
+    public function deleteNewDocumentVersion() {
         try {
             $lastOldDocument = $this->getLastOldDocumentVersion();
             if (is_null($lastOldDocument)) {
@@ -1032,14 +963,13 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @throws \Exception
      * @throws \yii\db\StaleObjectException
      */
-    public function deleteThisDocumentMainFileRow()
-    {
+    public function deleteThisDocumentMainFileRow() {
         /** @var Documenti $documentiModel */
         $documentiModel = $this->documentsModule->createModel('Documenti');
         $file = File::findOne([
-            'model' => $this->documentsModule->model('Documenti'),
-            'attribute' => 'documentMainFile',
-            'item_id' => $this->id
+                    'model' => $this->documentsModule->model('Documenti'),
+                    'attribute' => 'documentMainFile',
+                    'item_id' => $this->id
         ]);
         //if file
         $ok = false;
@@ -1054,13 +984,12 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @throws \Exception
      * @throws \yii\db\StaleObjectException
      */
-    public function deleteThisDocumentAttachmentRows()
-    {
+    public function deleteThisDocumentAttachmentRows() {
         $files = File::find()->andWhere([
-            'model' => $this->documentsModule->model('Documenti'),
-            'attribute' => 'documentMainFile',
-            'item_id' => $this->id
-        ])->all();
+                    'model' => $this->documentsModule->model('Documenti'),
+                    'attribute' => 'documentMainFile',
+                    'item_id' => $this->id
+                ])->all();
         if (count($files) == 0) {
             return true;
         }
@@ -1079,12 +1008,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param Documenti $newDocument
      * @return bool
      */
-    public function duplicateDocumentMainFile($newDocument)
-    {
+    public function duplicateDocumentMainFile($newDocument) {
         $oldFile = File::findOne([
-            'model' => $this->documentsModule->model('Documenti'),
-            'attribute' => 'documentMainFile',
-            'item_id' => $this->id
+                    'model' => $this->documentsModule->model('Documenti'),
+                    'attribute' => 'documentMainFile',
+                    'item_id' => $this->id
         ]);
         if (is_null($oldFile)) {
             return true;
@@ -1097,13 +1025,12 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param Documenti $newDocument
      * @return bool
      */
-    public function duplicateDocumentAttachments($newDocument)
-    {
+    public function duplicateDocumentAttachments($newDocument) {
         $oldFiles = File::find()->andWhere([
-            'model' => $this->documentsModule->model('Documenti'),
-            'attribute' => 'documentAttachments',
-            'item_id' => $this->id
-        ])->all();
+                    'model' => $this->documentsModule->model('Documenti'),
+                    'attribute' => 'documentAttachments',
+                    'item_id' => $this->id
+                ])->all();
         if (count($oldFiles) == 0) {
             return true;
         }
@@ -1123,8 +1050,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param int $newDocumentId
      * @return bool
      */
-    private function duplicateOldFile($oldFile, $newDocumentId)
-    {
+    private function duplicateOldFile($oldFile, $newDocumentId) {
         $file = new File();
         $file->setAttributes($oldFile->attributes);
         $file->item_id = $newDocumentId;
@@ -1135,8 +1061,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return int
      */
-    public function getNextVersion()
-    {
+    public function getNextVersion() {
         $query = new Query();
         $query->from(self::tableName());
         $max = $this->version;
@@ -1151,16 +1076,14 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @return string
      * @throws \yii\base\InvalidConfigException
      */
-    public function getVersionInfo()
-    {
+    public function getVersionInfo() {
         return $this->getAttributeLabel('version') . ' ' . $this->version . ' - ' . Yii::$app->formatter->asDatetime($this->updated_at);
     }
 
     /**
      *
      */
-    public function setDetailScenario()
-    {
+    public function setDetailScenario() {
         $moduleNews = \Yii::$app->getModule(AmosDocumenti::getModuleName());
         if ($moduleNews && $moduleNews->hidePubblicationDate == true) {
             $this->setScenario(Documenti::SCENARIO_DETAILS_HIDE_PUBBLICATION_DATE);
@@ -1172,8 +1095,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return bool
      */
-    public function canValidate()
-    {
+    public function canValidate() {
         /** @var  $validatori array */
         $canValidate = false;
         $validatori = $this->validatori;
@@ -1191,40 +1113,35 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getMetadataLabelKey()
-    {
+    public function getMetadataLabelKey() {
         return ($this->is_folder ? 'labelFolder' : 'label');
     }
 
     /**
      * @inheritdoc
      */
-    public function getMetadataButtonLabelKey()
-    {
+    public function getMetadataButtonLabelKey() {
         return ($this->is_folder ? 'buttonLabelFolder' : 'buttonLabel');
     }
 
     /**
      * @inheritdoc
      */
-    public function getMetadataDescriptionKey()
-    {
+    public function getMetadataDescriptionKey() {
         return ($this->is_folder ? 'descriptionFolder' : 'description');
     }
 
     /**
      * @inheritdoc
      */
-    public function getMetadataButtonMessageKey()
-    {
+    public function getMetadataButtonMessageKey() {
         return 'message';
     }
 
     /**
      * @return array
      */
-    public function getStatusToRenderToHide()
-    {
+    public function getStatusToRenderToHide() {
 
         $statusToRender = [
             Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA => AmosDocumenti::t('amosdocumenti', 'Modifica in corso'),
@@ -1240,16 +1157,16 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         // if you are a community manager a validator/facilitator or ADMIN you Can publish directly
         if (Yii::$app->user->can('DocumentValidate', ['model' => $this]) || Yii::$app->user->can('ADMIN') || $isCommunityManager) {
             $statusToRender = ArrayHelper::merge(
-                $statusToRender,
-                [Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => AmosDocumenti::t('amosnews', 'Pubblicata')]
+                            $statusToRender,
+                            [Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => AmosDocumenti::t('amosnews', 'Pubblicata')]
             );
             $hideDraftStatus = [];
         } else {
             $statusToRender = ArrayHelper::merge(
-                $statusToRender,
-                [
-                    Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => AmosDocumenti::t('amosnews', 'Richiedi pubblicazione'),
-                ]
+                            $statusToRender,
+                            [
+                                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => AmosDocumenti::t('amosnews', 'Richiedi pubblicazione'),
+                            ]
             );
 
             $hideDraftStatus[] = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
@@ -1261,32 +1178,28 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getModelImage()
-    {
+    public function getModelImage() {
         return null;
     }
 
     /**
      * @inheritdoc
      */
-    public function getModelImageUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false)
-    {
+    public function getModelImageUrl($size = 'original', $protected = true, $url = '/img/img_default.jpg', $absolute = false, $canCache = false) {
         return "";
     }
 
     /**
      * @inheritdoc
      */
-    public function sendCommunication()
-    {
+    public function sendCommunication() {
         return !$this->is_folder;
     }
 
     /**
      * @param $status
      */
-    public function changeStatusFolderRecursive($status)
-    {
+    public function changeStatusFolderRecursive($status) {
         $children = $this->getAllChildrens();
         foreach ($children as $documentId) {
             $document = Documenti::findOne($documentId);
@@ -1295,20 +1208,16 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                     $document->status = $status;
                     $document->save(false);
                 } catch (WorkflowException $e) {
-
+                    
                 }
-
             }
         }
     }
 
-
-
     /**
      * @return array
      */
-    public function getDuplicateContentAttachmentsAttributes()
-    {
+    public function getDuplicateContentAttachmentsAttributes() {
         return [
             'documentMainFile' => DuplicateContentUtility::ATTACHMENT_SINGLE,
             'documentAttachments' => DuplicateContentUtility::ATTACHMENT_MULTI
@@ -1318,61 +1227,55 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @inheritdoc
      */
-    public function getWorkflowBaseStatusLabel()
-    {
+    public function getWorkflowBaseStatusLabel() {
         return AmosDocumenti::t('amosdocumenti', parent::getWorkflowBaseStatusLabel());
     }
 
     /**
      * @inheritdoc
      */
-    public function getWorkflowStatusLabel()
-    {
+    public function getWorkflowStatusLabel() {
         return AmosDocumenti::t('amosdocumenti', parent::getWorkflowStatusLabel());
     }
-    
-    public function getTypeMainDocument()
-    {
+
+    public function getTypeMainDocument() {
         $documentiModule = Yii::$app->getModule(AmosDocumenti::getModuleName());
         $types = [
-               self::MAIN_DOCUMENT_TYPE_FILE => AmosDocumenti::t('amosdocumenti', 'File'),
-           ];
-        if(!$documentiModule->mainFileOnly){
+            self::MAIN_DOCUMENT_TYPE_FILE => AmosDocumenti::t('amosdocumenti', 'File'),
+        ];
+        if (!$documentiModule->mainFileOnly) {
             $types[self::MAIN_DOCUMENT_TYPE_LINK] = AmosDocumenti::t('amosdocumenti', 'Link esterno');
         }
-        if($this->documentsModule->getModuleOnlyOffice()){
+        if ($this->documentsModule->getModuleOnlyOffice()) {
             $types[self::MAIN_DOCUMENT_TYPE_ONLYOFFICE] = AmosDocumenti::t('amosdocumenti', 'Only Office');
-        } 
-        
+        }
+
         return $types;
     }
-    
-    public function getOnlyOfficeNewFiles()
-    {
-       
-        $new_files = []; 
-        
+
+    public function getOnlyOfficeNewFiles() {
+
+        $new_files = [];
+
         $moduleOnlyOffice = $this->documentsModule->getModuleOnlyOffice();
-        if($moduleOnlyOffice){
+        if ($moduleOnlyOffice) {
             $new_files = $moduleOnlyOffice->tipiGestibili;
         }
-        
+
         return $new_files;
     }
 
     /**
      * @return string
      */
-    public function newsletterOrderByField()
-    {
+    public function newsletterOrderByField() {
         return 'data_pubblicazione';
     }
 
     /**
      * @return string
      */
-    public function newsletterPublishedStatus()
-    {
+    public function newsletterPublishedStatus() {
         return self::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
     }
 
@@ -1381,8 +1284,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param ActiveQuery $query
      * @return ActiveQuery
      */
-    public function newsletterSearchFilter($searchParam, $query)
-    {
+    public function newsletterSearchFilter($searchParam, $query) {
         $query->innerJoinWith('documentiCategorie');
 
         if ($searchParam) {
@@ -1395,32 +1297,28 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return string
      */
-    public function newsletterContentTitle()
-    {
+    public function newsletterContentTitle() {
         return $this->titolo;
     }
 
     /**
      * @return string
      */
-    public function newsletterContentTitleField()
-    {
+    public function newsletterContentTitleField() {
         return 'titolo';
     }
 
     /**
      * @return string
      */
-    public function newsletterContentStatusField()
-    {
+    public function newsletterContentStatusField() {
         return 'status';
     }
 
     /**
      * @return array
      */
-    public function newsletterContentGridViewColumns()
-    {
+    public function newsletterContentGridViewColumns() {
         return [
             [
                 'attribute' => 'titolo',
@@ -1463,8 +1361,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return array
      */
-    public function newsletterSelectContentsGridViewColumns()
-    {
+    public function newsletterSelectContentsGridViewColumns() {
         return [
             [
                 'attribute' => 'titolo',
@@ -1484,30 +1381,25 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         ];
     }
 
-
     /**
      * SeoModelInterface
      */
-    public function getSchema()
-    {
+    public function getSchema() {
         return null;
     }
-
 
     /**
      *
      * @inheritdoc
-     *
      * @param bool $insert
      * @param array $changedAttributes
+     *
      */
     public function afterSave($insert, $changedAttributes) {
         parent::afterSave($insert, $changedAttributes);
-        if($this->documentsModule->cmsSync)
-        {
+        if ($this->documentsModule->cmsSync) {
             $this->addStorageFile();
         }
-
     }
 
     /**
@@ -1516,8 +1408,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      */
     public function beforeDelete() {
 
-        if($this->documentsModule->cmsSync)
-        {
+        if ($this->documentsModule->cmsSync) {
             // find all attached files and delete them
             try {
                 if (!$this->is_folder) {
@@ -1525,7 +1416,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
                     if ($folderFiles) {
                         $folderFiles->is_deleted = true;
-                    $folderFiles->update();
+                        $folderFiles->update();
                     }
 
                     $file = File::findOne(['hash' => $this->hasOneFile('documentMainFile')->one()->hash]);
@@ -1545,7 +1436,6 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
     /**
      * Add a new file based on the source to the storage system.
-
      * @param integer $folderId The id of the folder where the file should be stored in. (Allegati Redazionali, id = 13).
      * @param boolean $isHidden Should the file visible in the filemanager or not.
      * @throws Exception if an error happens an exception is thrown.
@@ -1553,8 +1443,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     public function addStorageFile($folderId = 0, $isHidden = false) {
         try {
             $foldercms = $this->find()->where(['id' => $this->parent_id])->one();
-            if(is_null($foldercms))
-            {
+            if (is_null($foldercms)) {
                 $foldercms = $this->cmsFolderByConfigs();
             }
             if (!$this->is_folder) {
@@ -1568,7 +1457,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
                         $modelstorage = new StorageFile();
                     }
 
-                    $newName = implode([Inflector::slug($docMain->name) . '_' . sprintf('%s', hash('crc32b', uniqid($this->documentMainFile->name, true))), $docMain->type], '.');
+                    $newName = implode('.', [Inflector::slug($docMain->name) . '_' . sprintf('%s', hash('crc32b', uniqid($this->documentMainFile->name, true))), $docMain->type]);
                     $modelstorage->setAttributes([
                         'name_original' => $this->documentMainFile->name,
                         'name_new' => Inflector::slug($docMain->name),
@@ -1633,7 +1522,6 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
 
                 $this->folder_cms_id = $storageFolder->id;
                 $this->updateAttributes(['folder_cms_id' => $storageFolder->id]);
-
             }
         } catch (WorkflowException $e) {
             Yii::$app->session->addFlash('danger', $e->getMessage());
@@ -1647,8 +1535,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param int $folderId
      * @return \open20\amos\documenti\models\StorageFolder
      */
-    public function addStorageFolder($name, $folderId = 0)
-    {
+    public function addStorageFolder($name, $folderId = 0) {
         $condition = ['name' => $name, 'parent_id' => $folderId];
 
         $storageFolder = StorageFolder::findOne($condition);
@@ -1700,12 +1587,10 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      *
      * @return Documenti | null
      */
-    protected function cmsFolderByConfigs()
-    {
+    protected function cmsFolderByConfigs() {
         $folder = null;
 
-        if($this->documentsModule->cmsSync)
-        {
+        if ($this->documentsModule->cmsSync) {
             $documentiFolder = $this->addStorageFolder($this->documentsModule->cmsBaseFolder);
             $contentTypeFolder = $this->addStorageFolder($this->documentiAgidContentType->name, $documentiFolder->id);
             $storageFolder = $this->addStorageFolder($this->documentiAgidType->name, $contentTypeFolder->id);
@@ -1721,8 +1606,7 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
      * @param int $id
      * @return void
      */
-    public function getUserProfileByUserId($id = null)
-    {
+    public function getUserProfileByUserId($id = null) {
 
         return \open20\amos\admin\models\UserProfile::find()->andWhere(['user_id' => $id])->one();
     }
@@ -1730,16 +1614,14 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
     /**
      * @return bool
      */
-    public function sendNotification()
-    {
+    public function sendNotification() {
         return AmosDocumenti::instance()->documnetiModelsendNotification;
     }
 
     /**
      * @inheritdoc
      */
-    public function getViewUrl()
-    {
+    public function getViewUrl() {
         if (!empty($this->usePrettyUrl) && ($this->usePrettyUrl == true) && $this->hasMethod('getPrettyUrl')) {
             return 'documenti/documenti';
         }
@@ -1748,11 +1630,11 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         // }
         return 'documenti/documenti/view';
     }
+
     /**
      * @return string The url to view of this model
      */
-    public function getFullViewUrl()
-    {
+    public function getFullViewUrl() {
         if (!empty($this->usePrettyUrl) && ($this->usePrettyUrl == true) && $this->hasMethod('getPrettyUrl')) {
             return Url::toRoute(["/" . $this->getViewUrl() . "/" . $this->id . "/" . $this->getPrettyUrl()]);
         } else if (!empty($this->useFrontendView) && ($this->useFrontendView == true) && $this->hasMethod('getBackendobjectsUrl')) {
@@ -1762,41 +1644,125 @@ class Documenti extends \open20\amos\documenti\models\base\Documenti implements 
         }
     }
 
-
     /**
      * Show if the content is visible
      * used in particular to know if attachments file are visible
      * @return boolean
      */
-    public function isContentPublic(){
+    public function isContentPublic() {
         // isContentPublished si trova nel contentModel
         $ok = $this->isContentPublished();
-        if($this->primo_piano && $ok){
+        if ($this->primo_piano && $ok) {
             return true;
         }
         return false;
     }
-    
-    public function uploadDefaultFile(){
-        
+
+    public function uploadDefaultFile() {
+
         $module = \Yii::$app->getModule('attachments');
         $moduleOnlyOffice = $this->documentsModule->getModuleOnlyOffice();
-        
+
         $type_file = $this->onlyOfficeNewFile;
         $path = $moduleOnlyOffice->samplesPath;
         $filename = $moduleOnlyOffice->getFileSampleByType($type_file);
-        
+
         $userTempDir = $module->getUserDirPath('documentMainFile');
-        $file = \Yii::getAlias($path.$filename);               
-        $dest = $userTempDir.str_replace(' ','_',strtolower($this->titolo)).'.'.$type_file;
+        $file = \Yii::getAlias($path . $filename);
+        $dest = $userTempDir . str_replace(' ', '_', strtolower($this->titolo)) . '.' . $type_file;
         copy($file, $dest);
 
         foreach (\yii\helpers\FileHelper::findFiles($userTempDir) as $file) {
 
-            $module->attachFile($file,$this,'documentMainFile',true,false,false);
-
+            $module->attachFile($file, $this, 'documentMainFile', true, false, false);
         }
-      
     }
 
+    /**
+     * @param $getCount
+     * @return bool|int
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function unpublishFolder($getCount = false) {
+        $count = $this->unpublishFolderRecursive($this, 0, $getCount);
+        //tolgo uno perchè nel conteggio è presente la cartella di partenza
+        return $count - 1;
+    }
+
+    /**
+     * @param $model
+     * @return bool
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function unpublishFolderRecursive($model, $n, $getCount = false) {
+        $children = Documenti::find()
+                ->andWhere(['parent_id' => $model->id])
+                ->andWhere(['status' => Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO])
+                ->all();
+        if (empty($children)) {
+            $model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA;
+            if (!$getCount) {
+                $model->save(false);
+            }
+            return 1;
+        } else {
+            foreach ($children as $document) {
+                $i = $this->unpublishFolderRecursive($document, 0, $getCount);
+                $n = $n + $i;
+            }
+            if ($model->status == Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
+                $model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA;
+                if (!$getCount) {
+                    $model->save(false);
+                }
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    /**
+     * @return bool
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function publishAndUnpublishFolder($post, $getCount = false) {
+        if ($this->is_folder) {
+
+            if ($post) {
+                if (!empty($post['publishFolderType']) && $post['publishFolderType'] == 'unpublish') {
+                    $count = $this->unpublishFolder($getCount);
+                    if ($getCount) {
+                        return $count;
+                    }
+                    \Yii::$app->session->addFlash('success', AmosDocumenti::t('amosdocumenti', "La cartella è stata tolta dalla pubblicazione correttamente"));
+                    return true;
+                }
+                if (!empty($post['selectedDocuments'])) {
+                    $selectedDocuments = explode(',', $post['selectedDocuments']);
+                    $documenti = Documenti::find()
+                                    ->andWhere(['id' => $selectedDocuments])->all();
+                    $i = 0;
+
+                    if (!empty($post['publishFolderType'])) {
+                        if ($post['publishFolderType'] == 'publish') {
+                            $newStatus = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
+                        } else {
+                            $newStatus = Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE;
+                        }
+                        foreach ($documenti as $document) {
+                            $document->status = $newStatus;
+                            $document->save(false);
+                            $i++;
+                        }
+                        \Yii::$app->session->addFlash('success', AmosDocumenti::t('amosdocumenti', "La cartella e {n} documenti al suo interno sono stati pubblicati", [
+                                    'n' => $i
+                        ]));
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

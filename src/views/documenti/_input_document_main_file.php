@@ -7,6 +7,7 @@ use yii\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 
 $enabledGoogleDrive = $module && $module->enableGoogleDrive;
+$enableDragAndDrop = $module && $module->enableDragAndDrop;
 $onlyofficeModule = AmosDocumenti::instance()->getModuleOnlyOffice();
 
 if ($onlyofficeModule) {
@@ -98,13 +99,16 @@ $this->registerJs($js);
                         'allowedPreviewTypes' => false,
                         'previewFileIconSettings' => false,
                         'overwriteInitial' => false,
+                        'allowedFileExtensions' => explode(',', $documentsModule->whiteListFilesExtensions)
+
                         //'layoutTemplates' => false,
                     ],
+                        'enableDragAndDrop' => $enableDragAndDrop,
                     'enableGoogleDrive' => $enabledGoogleDrive,
                 ])->label(AmosDocumenti::t('amosdocumenti', '#image_field'))
                     ->hint(AmosDocumenti::t('amosdocumenti', 'Rappresenta il documento principale.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
             </div>
-
+            <?= $form->field($model, 'mainDocumentNumber')->hiddenInput(['id' => 'mainDocumentNumber'])->label(false) ?>
             <div id="link-document-container" style="<?= $model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_LINK ? '' : 'display:none' ?>">
                 <?= $form->field($model, 'link_document')->textInput([
                     'maxlength' => true,

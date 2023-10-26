@@ -201,6 +201,7 @@ return [
     'Scarica file principale' => 'Scarica file principale',
     'Filemanager Mediafile ID' => 'Filemanager Mediafile ID',
     '#files' => 'File',
+    '#file_mime_error' =>'Il file non ha un tipo MIME consentito',
     '#FINISH' => 'Fine',
     '#folder_article_indefinite' => 'una',
     '#folder_article_plural' => 'le',

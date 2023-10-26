@@ -90,7 +90,13 @@ class WidgetGraphicsCmsUltimiDocumenti extends WidgetGraphic
         /** @var DocumentiSearch $search */
         $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
         $search->setNotifier(new NotifyWidgetDoNothing());
-        $listaDocumenti = $search->lastDocuments($_GET, 3);
+        
+        $documentsModule = \Yii::$app->getModule(AmosDocumenti::getModuleName());
+        if($documentsModule->showAllStatusesAllDocument) {
+           $listaDocumenti = $search->searchAllInAllStatuses($_GET, 3); 
+        } else {
+            $listaDocumenti = $search->lastDocuments($_GET, 3);
+        }
         if (!empty($this->filterDocumentCategoryId)) {
             $listaDocumenti->query->andWhere([Documenti::tableName() . '.documenti_categorie_id' => $this->filterDocumentCategoryId]);
         }
