@@ -24,6 +24,8 @@ use yii\widgets\ActiveForm;
  * @var yii\web\View $this
  * @var open20\amos\documenti\models\search\DocumentiSearch $model
  * @var yii\widgets\ActiveForm $form
+ * @var array $queryParams
+ * @var $isTagContentsSearch bool
  */
 
 /** @var AmosTag $moduleTag */
@@ -36,12 +38,12 @@ $documentsModule = AmosDocumenti::instance();
 $documentiCategorieModel = $documentsModule->createModel('DocumentiCategorie');
 
 /** @var DocumentiController $controller */
-$controller = Yii::$app->controller;
+$controller = Yii::$app->params['customControllerObj'] ?: Yii::$app->controller;
 
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 $hideSearchPubblicationDates = $controller->documentsModule->hideSearchPubblicationDates;
 $hideSearchPubblicationFromTo = $controller->documentsModule->hideSearchPubblicationFromTo;
-
+$enableAnnualArchiving = $controller->documentsModule->enableAnnualArchiving;
 $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPanel']) || \Yii::$app->params['enableAutoOpenSearchPanel'] === true;
 ?>
 
@@ -49,19 +51,22 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
     <div class="col-xs-12"><p class="h3"><?= AmosDocumenti::tHtml('amosdocumenti', 'Cerca per') ?>:</p></div>
 
     <?php $form = ActiveForm::begin([
-        'action' => (isset($originAction) ? [$originAction] : ['index']),
+        'action' => (isset($originAction) ? [$originAction,
+            'currentView' => $queryParams['currentView'],
+            'parentId' => $queryParams['parentId'],
+        ] : ['index']),
         'method' => 'get',
     ]);
 
     echo Html::hiddenInput("enableSearch", $enableAutoOpenSearchPanel);
-    echo Html::hiddenInput("currentView", Yii::$app->request->getQueryParam('currentView'));
+    echo Html::hiddenInput("currentView", $queryParams['currentView']);
 
-    if (!is_null(Yii::$app->request->getQueryParam('parentId'))) {
-        echo Html::hiddenInput('parentId', Yii::$app->request->getQueryParam('parentId'));
+    if (!is_null($queryParams['parentId'])) {
+        echo Html::hiddenInput('parentId', $queryParams['parentId']);
     }
     ?>
 
-    <?= $form->field($model, 'parent_id')->hiddenInput(['value' => Yii::$app->request->getQueryParam('parentId')])->label(false) ?>
+    <?= $form->field($model, 'parent_id')->hiddenInput(['value' => $queryParams['parentId']])->label(false) ?>
     <div class="col-sm-6 col-lg-4">
         <?= $form->field($model, 'titolo') ?>
     </div>
@@ -163,31 +168,47 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
             ])->label(AmosDocumenti::t('amosdocumenti', "Estensione")) ?>
         </div>
     <?php endif; ?>
-
-
-    <?php if (isset($moduleTag) && in_array($documentsModule->model('Documenti'), $moduleTag->modelsEnabled) && $documentsModule->searchByTags && $moduleTag->behaviors): ?>
-        <div class="col-xs-12">
-            <?php
-            $params = \Yii::$app->request->getQueryParams();
-            echo \open20\amos\tag\widgets\TagWidget::widget([
-                'model' => $model,
-                'attribute' => 'tagValues',
-                'form' => $form,
-                'isSearch' => true,
-                'form_values' => isset($params[$model->formName()]['tagValues']) ? $params[$model->formName()]['tagValues'] : []
-            ]);
-            ?>
+    
+    <?php if ($enableAnnualArchiving): ?>
+        <div class="col-sm-6 col-lg-4">
+            <?= $form->field($model, 'year')->textInput(['maxlength' => true]) ?>
         </div>
     <?php endif; ?>
+
+
+    <?php
+    if (!$isTagContentsSearch) {
+        if (isset($moduleTag) && in_array($documentsModule->model('Documenti'), $moduleTag->modelsEnabled) && $documentsModule->searchByTags && $moduleTag->behaviors) { ?>
+            <div class="col-xs-12">
+                <?php
+                echo \open20\amos\tag\widgets\TagWidget::widget([
+                    'model' => $model,
+                    'attribute' => 'tagValues',
+                    'form' => $form,
+                    'isSearch' => true,
+                    'form_values' => isset($queryParams[$model->formName()]['tagValues']) ? $queryParams[$model->formName()]['tagValues'] : []
+                ]);
+                ?>
+            </div>
+        <?php }
+    } ?>
+
     <div class="col-sm-6 col-lg-4">
         <?= $form->field($model, 'ricerca_sottocartelle')->checkbox() ?>
     </div>
 
     <div class="col-xs-12">
         <div class="pull-right">
-            <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Annulla'), [Yii::$app->controller->action->id, 'currentView' => Yii::$app->request->getQueryParam('currentView')],
-                ['class' => 'btn btn-outline-primary']) ?>
-            <?= Html::submitButton(AmosDocumenti::tHtml('amosdocumenti', 'Cerca'), ['class' => 'btn btn-primary']) ?>
+            <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Annulla'),
+                [isset($originAction) ? $originAction : Yii::$app->controller->action->id, 'currentView' => $queryParams['currentView'], 'parentId' => $queryParams['parentId']],
+                [
+                    'class' => 'btn btn-outline-primary'
+                ]
+            ) ?>
+
+            <?= Html::submitButton(AmosDocumenti::tHtml('amosdocumenti', 'Cerca'), [
+                'class' => 'btn btn-primary',
+            ]); ?>
         </div>
     </div>
 

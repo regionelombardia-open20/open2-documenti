@@ -81,6 +81,7 @@ return [
     'Cerca ...' => 'Search ...',
     'Cerca' => 'Search',
     '#collapse_title' => 'Chiudi l’elenco delle versioni precedenti del documento',
+    '#options' => 'Other options',
     '#comments_enabled' => 'Is the news commentable?',
     '#comments_no' => 'No',
     '#comments_ok' => 'Yes',
@@ -158,7 +159,6 @@ return [
     '#documents_subtitle_field_placeholder' => 'Add a subtitle',
     '#documents_subtitle_field' => 'Subtitle',
     '#documents_text_placeholder' => 'Insert the text of the document',
-    '#documents_title_field_hint' => 'Max limit: 100 characters',
     '#documents_title_field_placeholder' => 'Add a title',
     '#documents_title_field' => 'Title',
     '#documents_wizard_page_title' => 'Create document',
@@ -414,10 +414,10 @@ return [
     '#choose_nodes_description_2' => "Seleziona le Stanze di lavoro dall'elenco che desideri importare.<br><br>Nota: le voci non selezionate diventeranno automaticamente delle Cartelle",
     '#choose_nodes_tree' => 'Seleziona Stanze',
 
-    'DocumentiWorkflow/BOZZA' => 'Bozza',
-    'DocumentiWorkflow/VALIDATO' => 'Validato',
-    'DocumentiWorkflow/DAVALIDARE' => 'Da Validare',
-    'DocumentiWorkflow/NONVALIDATO' => 'Non Validato',
+    'DocumentiWorkflow/BOZZA' => 'Draft',
+    'DocumentiWorkflow/VALIDATO' => 'Published',
+    'DocumentiWorkflow/DAVALIDARE' => 'In request for publication',
+    'DocumentiWorkflow/NONVALIDATO' => 'Not validated',
     'Open file' => 'Open file',
     '#menu_front_documenti' => 'Documents',
     'Nuova' => 'New',
@@ -459,4 +459,26 @@ return [
     '#google_drive_file' => 'Questo è un file presente su Google Drive',
     '#loading' => 'Caricamento in corso...',
     '#titolo_spazi' => 'The title contains more adjacent spaces, correct the text.',
+    
+    '#scheduled_settings' => 'Scheduled pubblication settings',
+    '#only_registered_users' => 'only registered users',
+    '#all_users' => 'all users',
+    '#tot_doc_found'=>'{0, plural, =1{# document found} other{# documents found}}', 
+    
+    '#annual_archiving_document' => 'Enable document annual archiving',
+    '#archiving_options' => 'Archiving options for this document',
+    '#annual_archiving_document_category' => 'Enable category document annual archiving',
+    
+    '#primo_piano_hint' => 'Scegli se rendere il documento fruibile anche da un\'utenza non registrata',
+    '#primo_piano_hint_folder' => 'Scegli se rendere la cartella fruibile anche da un\'utenza non registrata',
+    
+    '#evidenza_hint' => 'Il documento sarà visibile in apposite sezioni “vetrina” all\'interno delle pagine pubbliche',
+    '#evidenza_hint_folder' => 'la cartella sarà visibile in apposite sezioni “vetrina” all\'interno delle pagine pubbliche',
+    'Data di pubblicazione' => 'Publication date',
+    'Data di ultima modifica' => 'Last update date',
+    'Ultima modifica' => 'Last update',
+    'Caricato da' => 'Uploaded by',
+    'Data ultima modifica' => 'Last update date',
+    'Limite max: {x} caratteri' => 'Max limit: {x} characters',
+
 ];

@@ -101,6 +101,75 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
 //                }
 //            });", \yii\web\View::POS_READY);
 //        }
+
+        if ($widget->collapse) {
+            $this->registerJs("
+                const maxLevels = " . $widget->maxLevels . ";
+
+                const updateTree = function() {
+                    $('.hierarchical-element[data-level=0]').each(function() {
+                        const root = $(this).attr('data-root');
+                        const level = 0;
+
+                        let toCollapse;
+
+                        if ($(document).has(`.hierarchical-element[data-root=\${root}][data-active='active']`).length > 0) {
+                            toCollapse = false;
+                            $(this).find('.icon-arrow').removeClass('mdi-chevron-right');
+                            $(this).find('.icon-arrow').addClass('mdi-chevron-down');
+                        } else {
+                            toCollapse = true;
+                            $(this).find('.icon-arrow').removeClass('mdi-chevron-down');
+                            $(this).find('.icon-arrow').addClass('mdi-chevron-right');
+                        }
+
+                        for (let i = 1; i <= maxLevels; i++) {
+                            const element = $(`*[data-root=\${root}][data-level=\${parseInt(level)+i}]`);
+                            if (toCollapse)
+                                element.hide();
+                            else
+                                element.show();
+                        }
+                    });
+                }
+
+                $(document).on('pjax:success', function() {
+                    updateTree();
+                });
+
+                $(document).on('click', '.hierarchical-element .hierarchical-link span.icon-arrow', function(e) {
+                    e.preventDefault();
+
+                    let toCollapse;
+
+                    const root = $(e.target).parents('.hierarchical-element').attr('data-root');
+                    const level = $(e.target).parents('.hierarchical-element').attr('data-level');
+
+                    if ($(e.target).hasClass('mdi-chevron-down')) {
+                        toCollapse = true;
+                        $(e.target).removeClass('mdi-chevron-down');
+                        $(e.target).addClass('mdi-chevron-right');
+                    } else {
+                        toCollapse = false;
+                        $(e.target).addClass('mdi-chevron-down');
+                        $(e.target).removeClass('mdi-chevron-right');
+                    }
+
+                    for (let i = 1; i <= maxLevels; i++) {
+                        const element = $(`*[data-root=\${root}][data-level=\${parseInt(level)+i}]`);
+                        if (toCollapse)
+                            element.hide();
+                        else
+                            element.show();
+                    }
+
+                    return false;
+                });
+
+                updateTree();
+
+            ", \yii\web\View::POS_READY);
+        }
         ?>
 
 

@@ -23,13 +23,14 @@ return [
         //active the order
         'orderParams' => [
             'documenti' => [
-                'enable' => false,
+                'enable' => true,
                 'fields' => [
                     'titolo',
-                    'data_pubblicazione'
+                    //'data_pubblicazione',
+                    'updated_at',
                 ],
-                'default_field' => 'data_pubblicazione',
-                'order_type' => SORT_DESC
+                'default_field' => 'titolo',
+                'order_type' => SORT_ASC
             ]
         ],
     ]

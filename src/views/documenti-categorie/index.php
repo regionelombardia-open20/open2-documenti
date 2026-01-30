@@ -21,6 +21,7 @@ use open20\amos\documenti\AmosDocumenti;
 
 //$this->title = AmosDocumenti::t('amosdocumenti', '#page_title_documents_categories');
 //$this->params['breadcrumbs'][] = $this->title;
+$module = AmosDocumenti::instance();
 ?>
 <div class="documenti-categorie-index">
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -44,6 +45,24 @@ use open20\amos\documenti\AmosDocumenti;
             'sottotitolo',
             'descrizione_breve',
             'descrizione:ntext',
+            'enable_annual_archiving' => [
+                'attribute'=>'enable_annual_archiving',
+                'format' => 'raw',
+                'contentOptions'=>['class'=>'text-center'],
+                'value' => function ($model) {                                      
+                    return $model->enable_annual_archiving ? AmosDocumenti::t('amosdocumenti', 'SI') : AmosDocumenti::t('amosdocumenti', 'NO') ;
+                },
+                'visible'=>$module->enableAnnualArchiving,
+            ],
+            'enable_countdown_unpublishing' => [
+                'attribute'=>'enable_countdown_unpublishing',
+                'format' => 'raw',
+                'contentOptions'=>['class'=>'text-center'],
+                'value' => function ($model) {                                      
+                    return $model->enable_countdown_unpublishing ? AmosDocumenti::t('amosdocumenti', 'SI') : AmosDocumenti::t('amosdocumenti', 'NO') ;
+                },
+                'visible'=>$module->enableCountdownUnpublishing,
+            ],
             [
                 'class' => 'open20\amos\core\views\grid\ActionColumn',
             ],

@@ -17,7 +17,17 @@ use yii\widgets\ActiveForm;
  * @var yii\web\View $this
  * @var \open20\amos\documenti\models\search\DocumentiSearch $model
  * @var yii\widgets\ActiveForm $form
+ * @var array $queryParams
  */
+
+
+if (!empty($queryParams['DocumentiSearch']) && $queryParams['DocumentiSearch']['orderAttribute'] && $queryParams['DocumentiSearch']['orderType']) {
+    $queryParams['DocumentiSearch'] = \yii\helpers\ArrayHelper::merge($queryParams['DocumentiSearch'], [
+        'orderAttribute' => $queryParams['orderAttribute'],
+        'orderType' => $queryParams['orderType'],
+    ]);
+}
+
 ?>
 
 <div class="documenti-order element-to-toggle" data-toggle-element="form-order">
@@ -26,7 +36,11 @@ use yii\widgets\ActiveForm;
     </div>
 
     <?php $form = ActiveForm::begin([
-        'action' => Yii::$app->controller->action->id,
+        'action' => [isset($originAction) ? $originAction : Yii::$app->controller->action->id,
+            'currentView' => $queryParams['currentView'],
+            'parentId' => $queryParams['parentId'],
+            'DocumentiSearch' => $queryParams['DocumentiSearch']
+        ],
         'method' => 'get',
         'options' => [
             'class' => 'default-form'
@@ -50,9 +64,15 @@ use yii\widgets\ActiveForm;
 
     <div class="col-xs-12">
         <div class="pull-right">
-            <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Annulla'),[Yii::$app->controller->action->id, 'currentView' => Yii::$app->request->getQueryParam('currentView')],
-                ['class'=>'btn btn-secondary']) ?>
-            <?= Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Ordina'), ['class' => 'btn btn-navigation-primary']) ?>
+            <?= Html::a(AmosDocumenti::t('amosdocumenti', 'Annulla'),
+                [isset($originAction) ? $originAction : Yii::$app->controller->action->id, 'currentView' => $queryParams['currentView'], 'parentId' => $queryParams['parentId']],
+                [
+                    'class' => 'btn btn-secondary'
+                ]
+            ); ?>
+            <?= Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Ordina'), [
+                'class' => 'btn btn-navigation-primary'
+            ]); ?>
         </div>
     </div>
 

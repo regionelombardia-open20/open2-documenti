@@ -64,9 +64,9 @@ class DocumentiCategorie extends Record
         return [
             [['titolo'], 'required'],
             [['descrizione'], 'string'],
-            [['filemanager_mediafile_id', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
+            [['filemanager_mediafile_id', 'created_by', 'updated_by', 'deleted_by','enable_annual_archiving','enable_countdown_unpublishing','years_countdown_unpublishing'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
-            [['titolo', 'sottotitolo', 'descrizione_breve'], 'string', 'max' => 255]
+            [['titolo', 'sottotitolo', 'descrizione_breve'], 'string', 'max' => 255],          
         ];
     }
 
@@ -81,6 +81,9 @@ class DocumentiCategorie extends Record
             'descrizione_breve' => AmosDocumenti::t('amosdocumenti', 'Descrizione breve'),
             'descrizione' => AmosDocumenti::t('amosdocumenti', 'Descrizione'),
             'filemanager_mediafile_id' => AmosDocumenti::t('amosdocumenti', 'Immagine'),
+            'enable_annual_archiving' => AmosDocumenti::t('amosdocumenti', 'Arrchiviazione annuale'),
+            'enable_countdown_unpublishing' => AmosDocumenti::t('amosdocumenti', 'Rimozione pubblicazione programmata'),
+            'years_countdown_unpublishing' => AmosDocumenti::t('amosdocumenti', 'N° di anni'),
             'created_at' => AmosDocumenti::t('amosdocumenti', 'Creato il'),
             'updated_at' => AmosDocumenti::t('amosdocumenti', 'Aggiornato il'),
             'deleted_at' => AmosDocumenti::t('amosdocumenti', 'Cancellato il'),

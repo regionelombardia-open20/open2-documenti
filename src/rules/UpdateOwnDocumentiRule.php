@@ -44,8 +44,9 @@ class UpdateOwnDocumentiRule extends DefaultOwnContentRule
                     }
                 }
             }
-            if (!empty($model->getWorkflowStatus())) {
-                if (($model->getWorkflowStatus()->getId() == Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA || \Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) && $model->created_by == $user) {
+            if (!empty($model->getWorkflowStatus()) && !$model->lock_update) {
+                if (($model->getWorkflowStatus()->getId() == Documenti::DOCUMENTI_WORKFLOW_STATUS_BOZZA
+                        || \Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) && $model->created_by == $user) {
                     return true;
                 }
             }

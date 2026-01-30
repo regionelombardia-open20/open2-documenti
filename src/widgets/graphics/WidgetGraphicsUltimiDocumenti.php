@@ -16,7 +16,6 @@ use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
 use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\notificationmanager\base\NotifyWidgetDoNothing;
-use open20\amos\core\widget\WidgetAbstract;
 
 /**
  * Class WidgetGraphicsUltimiDocumenti
@@ -83,11 +82,15 @@ class WidgetGraphicsUltimiDocumenti extends WidgetGraphic
     protected function getDataProvider()
     {
         /** @var DocumentiSearch $search */
+        $documentsModule = AmosDocumenti::instance();
         $search = AmosDocumenti::instance()->createModel('DocumentiSearch');
         $search->setNotifier(new NotifyWidgetDoNothing());
         $listaDocumenti = $search->lastDocuments($_GET, 3);
         if (!empty($this->filterDocumentCategoryId)) {
             $listaDocumenti->query->andWhere([Documenti::tableName() . '.documenti_categorie_id' => $this->filterDocumentCategoryId]);
+        }
+        if($documentsModule->excludeFoldersInWGCmsUltimiDocumenti){
+            $listaDocumenti->query->andWhere(['is_folder' => 0]);
         }
         return $listaDocumenti;
     }

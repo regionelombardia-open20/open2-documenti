@@ -73,7 +73,7 @@ class DocumentiAjaxController extends Controller
                             'delete-model',
                             'delete-community',
                             'get-aree',
-                            'get-subcommunities',
+                            'get-subcommunities',                         
                         ],
                         'roles' => ['@']
                     ],
@@ -84,6 +84,13 @@ class DocumentiAjaxController extends Controller
                             'reset-sessions',
                         ],
                         'roles' => ['ADMIN']
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => [
+                            'file-explorer',                        
+                        ],
+                        'roles' => ['@','?']
                     ],
                 ]
             ],
@@ -975,6 +982,51 @@ class DocumentiAjaxController extends Controller
         }
 
         return Json::encode(false);
+    }
+    
+    public function actionFileExplorer()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $return = ['data'=>''];
+        
+        $params = Yii::$app->request->post('params',[]);
+        $folder = Yii::$app->request->post('id',null);
+        $post_filters = Yii::$app->request->post('filters',[]);
+        
+        $filters = [];
+        $ext = [];
+        foreach($post_filters as $filter){
+            $attribute = $filter['attribute'];
+            $value = $filter['value'];
+            
+            if($attribute == 'extensions'){
+                $ext[] = $value;
+                $value = $ext;
+            }
+            
+            $filters[$attribute] = $value;
+        }
+        
+        $array = [
+            'folder'=>$folder,
+            'filters'=>$filters
+        ];
+      
+        foreach($params as $param){
+            if($param['value'] === 'true')
+                $value = true;
+            else if($param['value'] === 'false')
+                $value = false;
+            else
+                $value = $param['value'];
+            
+            $array[$param['attribute']] = $value;
+        }
+        
+        $return['data'] = \open20\amos\documenti\widgets\FileExplorerWidget::widget($array);
+        
+        return $return;
     }
 
 }

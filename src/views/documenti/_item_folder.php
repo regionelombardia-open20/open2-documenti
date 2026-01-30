@@ -25,24 +25,39 @@ $moduleId = \Yii::$app->controller->id;
 $moduleCwh = \Yii::$app->getModule('cwh');
 isset($moduleCwh) ? $showReceiverSection = true : null;
 isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
+$queryParams = \Yii::$app->request->getQueryParams();
+$isTeamsDocument = !empty($model->msgraph_drive_item_id) ? true : false;
 
-if(  $moduleId == 'documenti') {
-	$modelViewUrl = \Yii::$app->urlManager->createAbsoluteUrl(['/documenti/documenti/'.\Yii::$app->controller->action->id,'parentId' => $model->id]);
-}else{
-	$modelViewUrl = \Yii::$app->urlManager->createAbsoluteUrl(['/documenti/documenti/all-documents','parentId' => $model->id]);
+
+if ($moduleId == 'documenti') {
+    $modelViewUrl = \Yii::$app->urlManager->createAbsoluteUrl([
+        '/documenti/documenti/' . \Yii::$app->controller->action->id,
+        'parentId' => $model->id,
+        'DocumentiSearch' => $queryParams['DocumentiSearch'],
+    ]);
+} else {
+    $modelViewUrl = \Yii::$app->urlManager->createAbsoluteUrl([
+        '/documenti/documenti/all-documents',
+        'parentId' => $model->id,
+        'DocumentiSearch' => $queryParams['DocumentiSearch'],
+    ]);
 }
-$stringa = DocumentiCartellePath::getPath($model); 
+$stringa = DocumentiCartellePath::getPath($model);
 
 
 $additionalButtons = [];
 
-if ($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId) {
+if ($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId && Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])) {
     $additionalButtons[] = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"), '#modalMove', [
         'class' => 'open-modalMove',
         'data-toggle' => 'modal',
         'data-id' => $model->id,
     ]);
 }
+
+$date = \Yii::$app->formatter->asDate($model->created_at, 'php:d mm yy');
+$contentScopesAvatar = \open20\amos\core\utilities\CwhUtility::getTargetsString($model);
+
 
 $jsCount = <<<JS
     $('.link-document-id').click(function() {
@@ -67,7 +82,7 @@ $this->registerJs($jsCount);
         <?php
         if ($model->drive_file_id) { ?>
             <span class="icon icon-folder icon-sm mdi mdi-folder-google-drive"></span>
-        <?php
+            <?php
         } else { ?>
             <span class="icon icon-folder icon-sm mdi mdi-folder"></span>
             <?php
@@ -80,15 +95,18 @@ $this->registerJs($jsCount);
                 <?= NewsWidget::widget(['model' => $model]); ?>
             </div>
             <div>
-                <?= ContextMenuWidget::widget([
-                    'model' => $model,
-                    'actionModify' => "/documenti/documenti/update?id=" . $model->id,
-                    'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
-                    'modelValidatePermission' => 'DocumentValidate',
-					'additionalButtons' => $additionalButtons,
-                    'labelDeleteConfirm' => AmosDocumenti::t('amosdocumenti', '#confirm_delete_folder')
-                ]) ?>
+                <?php if (!$isTeamsDocument) { ?>
+                    <?= ContextMenuWidget::widget([
+                        'model' => $model,
+                        'actionModify' => "/documenti/documenti/update?id=" . $model->id,
+                        'actionDelete' => "/documenti/documenti/delete?id=" . $model->id,
+                        'modelValidatePermission' => 'DocumentValidate',
+                        'additionalButtons' => $additionalButtons,
+                        'labelDeleteConfirm' => AmosDocumenti::t('amosdocumenti', '#confirm_delete_folder')
+                    ]) ?>
+                <?php } ?>
             </div>
+
 
         </div>
     </div>
@@ -96,33 +114,52 @@ $this->registerJs($jsCount);
     <?php
     $status = '';
     if ($model->status != \open20\amos\documenti\models\Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) { ?>
-        <?php  $status = "<small><i> (".AmosDocumenti::t('amosdocumenti', $model->status).")</i></small>"; ?>
-    <?php }?>
-    <?= Html::a(Html::tag('p', htmlspecialchars($model->titolo).$status , ['class' => 'h5 title-one-line']), $modelViewUrl, ['class' => 'link-list-title', 'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ').$model->titolo]) ?>
+        <?php $status = "<small><i> (" . AmosDocumenti::t('amosdocumenti', $model->status) . ")</i></small>"; ?>
+    <?php } ?>
+    <div class="flexbox align-item-center">
+
+        <?= Html::a(Html::tag('p', htmlspecialchars($model->titolo) . $status, ['class' => 'h5 title-one-line']),
+            $modelViewUrl,
+            [
+                'class' => 'link-list-title',
+                'title' => AmosDocumenti::t('amosdocumenti', 'Vai alla cartella ') . $model->titolo
+            ]
+        ); ?>
+        <?php if (!empty($contentScopesAvatar)) : ?>
+            <a href="javascript:void(0)" data-toggle="tooltip" title="<?= $contentScopesAvatar ?>">
+                <span class="icon icon-sm icon-secondary mdi mdi-account-supervisor-circle" role="img"
+                      aria-label="Documento in community"></span>
+                <span class="sr-only"><?= $contentScopesAvatar ?></span>
+            </a>
+        <?php endif; ?>
+    </div>
 
 
     <div class="small mb-0">
-      
-     <?= PublishedByWidget::widget([
+
+        <?= PublishedByWidget::widget([
             'model' => $model,
-            'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '{targetAdv}' . ((!$isFolder && $enableCategories) ? '{category}' : '') . (Yii::$app->user->can('ADMIN') ? '{status}' : '')
+            'layout' => (isset(\Yii::$app->params['hideListsContentCreatorName']) && (\Yii::$app->params['hideListsContentCreatorName'] === true) ? '' : '{publisher}') . '<div class="item"><label>il&nbsp</label><span>' . $date . ' </span></div>' . ((!$isFolder && $enableCategories) ? '{category}' : '')
         ]) ?>
     </div>
     <div class="small mb-2">
-        <?= AmosDocumenti::t('amosdocumenti', '<strong>Percorso:</strong> ')
-            . $stringa
-            . $model->titolo
+        <?php
+        if (!empty($model->parent_id)) {
+            echo AmosDocumenti::t('amosdocumenti', '<strong>Percorso:</strong> ')
+                . $stringa
+                . $model->titolo;
+        }
         ?>
     </div>
     <div>
         <?= Html::a(
-            AmosDocumenti::t('amosdocumenti', 'Apri') ,
+            AmosDocumenti::t('amosdocumenti', 'Apri'),
             $modelViewUrl,
             [
                 'class' => 'read-more d-inline mr-2 uppercase bold small',
                 'title' => AmosDocumenti::t('amosdocumenti', 'Apri la cartella ')
             ]
-        )?>
+        ) ?>
     </div>
-    
+
 </div>

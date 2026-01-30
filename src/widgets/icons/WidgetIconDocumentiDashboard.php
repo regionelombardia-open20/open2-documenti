@@ -10,6 +10,7 @@
 
 namespace open20\amos\documenti\widgets\icons;
 
+use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\dashboard\models\AmosUserDashboards;
@@ -44,10 +45,13 @@ class WidgetIconDocumentiDashboard extends WidgetIcon
         $this->setIcon('file-text-o');
         $this->setUrl(['/documenti/documenti/all-documents']);
         $this->setCode('DOCUMENTI_MODULE');
-        $this->setModuleName('documenti-dashboard');
+        $this->setModuleName('documenti');
         $this->setNamespace(__CLASS__);
 
-        if (!empty(Yii::$app->params['dashboardEngine']) && Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+        if(!empty(Yii::$app->params['twoColorIcons'])){
+            $this->setIconFramework(AmosIcons::TWOTONES);
+            $this->setIcon('file_copy');
+        }else if (!empty(Yii::$app->params['dashboardEngine']) && Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
             $paramsClassSpan = [];
         }
 

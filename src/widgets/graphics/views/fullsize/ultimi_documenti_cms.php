@@ -58,7 +58,7 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
 ?>
 <div class="widget-graphic-cms-bi-less card-<?= $modelLabel ?> container">
     <div class="page-header">
-    <?= $this->render(
+        <?= $this->render(
             "@vendor/open20/amos-layout/src/views/layouts/fullsize/parts/bi-less-plugin-header",
             [
                 'isGuest' => \Yii::$app->user->isGuest,
@@ -75,26 +75,41 @@ if (isset($moduleCwh) && !empty($moduleCwh->getCwhScope())) {
                 'hideCreate' => $moduleDocumenti->hideNewButtonInWGCmsUltimiDocumenti,
                 'urlCreate' => $urlCreate,
                 'manageLinks' => $manageLinks,
-                'canCreateCommunityWidget' => \Yii::$app->user->can('DOCUMENTI_CREATE'),
+                'canCreate' => \Yii::$app->user->can('DOCUMENTI_CREATE', ['model' => AmosDocumenti::instance()->createModel('Documenti')]),
             ]
         );
         ?>
     </div>
 
-    <div class="list-view">
-        <div>
-            <div class="" data-role="list-view">
-                <?php foreach ($listaModels as $singolodocumento) : ?>
-                    <div>
-                        <?php if($singolodocumento->is_folder){ ?>
-                        <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_folder", ['model' => $singolodocumento]); ?>
-                        <?php }else{ ?>
-                            <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_document", ['model' => $singolodocumento]); ?>
-                        <?php }?>
+    <?php
+    $moduleCommunity = (\Yii::$app->getModule('community'));
+    if ($moduleCommunity && $moduleCommunity->enableNewCommunityHeader) {
+        echo \open20\amos\core\views\IconView::widget([
+            'dataProvider' => $listaDocumenti,
+            'itemView' => '@vendor/open20/amos-documenti/src/views/documenti/_icon',
+            'itemOptions' => [
+                'role' => 'option',
+                'class' => 'card-icon-wrapper',
+            ],
+        ]);
+    } else {
 
-                    </div>
-                <?php endforeach ?>
+    ?>
+        <div class="list-view">
+            <div>
+                <div class="" data-role="list-view">
+                    <?php foreach ($listaModels as $singolodocumento) : ?>
+                        <div>
+                            <?php if ($singolodocumento->is_folder) { ?>
+                                <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_item_folder", ['model' => $singolodocumento]); ?>
+                            <?php } else { ?>
+                                <?= $this->render("@vendor/open20/amos-documenti/src/views/documenti/_icon", ['model' => $singolodocumento]); ?>
+                            <?php } ?>
+
+                        </div>
+                    <?php endforeach ?>
+                </div>
             </div>
         </div>
-    </div>
+    <?php } ?>
 </div>

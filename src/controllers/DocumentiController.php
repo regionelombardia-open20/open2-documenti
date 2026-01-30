@@ -11,12 +11,19 @@
 
 namespace open20\amos\documenti\controllers;
 
+use open20\amos\core\models\ModelsClassname;
+use open20\amos\core\models\UserActivityLog;
+use open20\amos\core\module\BaseAmosModule;
+use open20\amos\documenti\models\search\UserActivityDocLogSearch;
+use open20\amos\documenti\models\UserActivityDocLog;
 use open20\amos\documenti\widgets\icons\WidgetIconAllDocumenti;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumenti;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\data\ActiveDataProvider;
 use yii\helpers\Url;
 use yii\web\Response;
 use yii\base\Exception;
@@ -33,6 +40,7 @@ use open20\amos\documenti\AmosDocumenti;
 use open20\amos\admin\models\UserProfile;
 use open20\amos\community\models\Community;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\documenti\models\DocumentiCategorie;
 use open20\amos\documenti\models\DocumentiCartellePath;
 use open20\amos\core\helpers\BreadcrumbHelper;
 use open20\amos\core\helpers\PositionalBreadcrumbHelper;
@@ -43,6 +51,8 @@ use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\assets\ModuleDocumentiAsset;
 use open20\amos\documenti\models\DocumentiAgidContentType;
 use open20\amos\dashboard\controllers\TabDashboardControllerTrait;
+use open20\onlyoffice\models\GestioneTemplate;
+use yii\web\ForbiddenHttpException;
 
 /**
  * Class DocumentiController
@@ -75,6 +85,7 @@ class DocumentiController extends CrudController
      * @var string icon view based on widget document_explorer
      */
     public $viewExpl = null;
+    public $viewIcon = null;
 
     /**
      * @var AmosCwh $moduleCwh AmosCwh module reference
@@ -102,6 +113,12 @@ class DocumentiController extends CrudController
             $this->scope = $this->moduleCwh->getCwhScope();
         }
 
+        $this->viewIcon = [
+            'name' => 'icon',
+            'label' => AmosIcons::show('grid') . Html::tag('p', BaseAmosModule::tHtml('amoscore', 'Icons')),
+            'url' => '?currentView=icon'
+        ];
+
         $this->viewList = [
             'name' => 'list',
             'label' => AmosIcons::show('view-list') . Html::tag('p', AmosDocumenti::tHtml('amosdocumenti', 'Lista')),
@@ -121,10 +138,23 @@ class DocumentiController extends CrudController
         // ];
 
         $defaultViews = [
+            'icon' => $this->viewIcon,
             'list' => $this->viewList,
-            'grid' => $this->viewGrid,
+            //'grid' => $this->viewGrid,
             // 'expl' => $this->viewExpl,
         ];
+        if ($this->documentsModule->enableGridView) {
+            $defaultViews = ArrayHelper::merge(
+                $defaultViews, [
+                'grid' => $this->viewGrid,
+            ]);
+        }
+
+        if ($this->documentsModule->enableOnlyIconView) {
+            $defaultViews = [
+                'icon' => $this->viewIcon,
+            ];
+        }
 
         $availableViews = [];
         foreach ($this->documentsModule->defaultListViews as $view) {
@@ -149,6 +179,12 @@ class DocumentiController extends CrudController
                 $this->myCurrentView = $this->documentsModule->defaultView;
             }
         }
+
+        if ($this->documentsModule->enableOnlyIconView) {
+            $this->myCurrentView = 'icon';
+        }
+
+        //$this->view->params['containerFullWidth'] = true;
 
         parent::init();
     }
@@ -180,7 +216,8 @@ class DocumentiController extends CrudController
                                 'sync-doc-file',
                                 'is-google-drive-document-modified',
                                 'explore-documents',
-                                'move'
+                                'move',
+                                'expand-folder-documents',
                             ],
                             'roles' => [
                                 'LETTORE_DOCUMENTI',
@@ -197,6 +234,16 @@ class DocumentiController extends CrudController
                                 'onlyoffice-edit'
                             ],
                             'roles' => ['CREATORE_DOCUMENTI', 'AMMINISTRATORE_DOCUMENTI', 'FACILITATORE_DOCUMENTI']
+                        ],
+                        [
+                            'allow' => true,
+                            'actions' => [
+                                'history-log',
+                                'detail-log',
+                            ],
+                            'roles' => [
+                                WidgetIconDocumentiDaValidare::class,
+                            ]
                         ],
                         [
                             'allow' => true,
@@ -254,7 +301,10 @@ class DocumentiController extends CrudController
                                 'go-to-view-folder',
                                 'go-to-update-folder',
                                 'insert-document-content-type',
-                                'get-documenti-agid-type-by-content-type'
+                                'get-documenti-agid-type-by-content-type',
+                                'get-category-annual-archiving',
+                                'get-unpublishing-date',
+                                'template-by-tipo'
                             ],
                             'roles' => ['@']
                         ],
@@ -270,19 +320,20 @@ class DocumentiController extends CrudController
             ]
         );
 
-
         if ($this->documentsModule->openInFrontEnd) {
             $behaviors['access']['rules'][] = [
                 'allow' => true,
                 'actions' => [
-                    ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'all-documents'
-                        : 'nothing'),
+                    ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'all-documents' : 'nothing'),
                     ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'index' : 'nothingindex'),
-                    ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'view' : 'nothingread')
+                    ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'view' : 'nothingread'),
+                    ((!empty(\Yii::$app->params['befe']) && \Yii::$app->params['befe'] == true) ? 'expand-folder-documents' : 'nothing-expand-folder-documents')
                 ],
                 'matchCallback' => function ($rule, $action) {
-                    if (in_array($action->id, ['all-documents', 'index'])) return true;
-                    if ($action->id != 'view') return false;
+                    if (in_array($action->id, ['all-documents', 'index', 'expand-folder-documents']))
+                        return true;
+                    if ($action->id != 'view')
+                        return false;
                     $id = (!empty(\Yii::$app->request->get()['id']) ? Yii::$app->request->get()['id'] : null);
                     if (!empty($id)) {
                         $model = Documenti::findOne($id);
@@ -304,7 +355,6 @@ class DocumentiController extends CrudController
     //  */
     // public function actions()
     // {
-
     //     return [
     //         'error' => [
     //             'class' => 'yii\web\ErrorAction',
@@ -471,8 +521,7 @@ class DocumentiController extends CrudController
                         foreach ($listaProfili as $userId) {
                             /** @var DocumentiNotifichePreferenze $preferenzaDocumenti */
                             $preferenzaDocumenti = new DocumentiNotifichePreferenze();
-                            $preferenzaDocumenti->documento_parent_id = (empty($documentRecord->version_parent_id) ? $documentRecord->id
-                                : $documentRecord->version_parent_id);
+                            $preferenzaDocumenti->documento_parent_id = (empty($documentRecord->version_parent_id) ? $documentRecord->id : $documentRecord->version_parent_id);
                             $preferenzaDocumenti->user_id = $userId;
                             $preferenzaDocumenti->save(false);
                         }
@@ -485,8 +534,7 @@ class DocumentiController extends CrudController
                         foreach ($listaGruppi as $groupId) {
                             /** @var DocumentiNotifichePreferenze $preferenzaDocumenti */
                             $preferenzaDocumenti = new DocumentiNotifichePreferenze();
-                            $preferenzaDocumenti->documento_parent_id = (empty($documentRecord->version_parent_id) ? $documentRecord->id
-                                : $documentRecord->version_parent_id);
+                            $preferenzaDocumenti->documento_parent_id = (empty($documentRecord->version_parent_id) ? $documentRecord->id : $documentRecord->version_parent_id);
                             $preferenzaDocumenti->group_id = $groupId;
                             $preferenzaDocumenti->save(false);
                         }
@@ -625,8 +673,7 @@ class DocumentiController extends CrudController
 
             $ctaLoginRegister = Html::a(
                 $labelLink,
-                isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ? \Yii::$app->params['linkConfigurations']['loginLinkCommon']
-                    : \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login',
+                isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ? \Yii::$app->params['linkConfigurations']['loginLinkCommon'] : \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login',
                 [
                     'title' => $titleLink
                 ]
@@ -639,7 +686,6 @@ class DocumentiController extends CrudController
                     ['platformName' => \Yii::$app->name, 'ctaLoginRegister' => $ctaLoginRegister]
                 )
             );
-
         } else {
             $titleSection = AmosDocumenti::t('amosdocumenti', 'Documenti');
             $labelLinkAll = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');
@@ -689,12 +735,35 @@ class DocumentiController extends CrudController
         return true;
     }
 
-
     /**
      * Set a view param used in \open20\amos\core\forms\CreateNewButtonWidget
      */
     private function setCreateNewBtnLabel()
     {
+
+        $moduleCommunity = \Yii::$app->getModule('community');
+        $moduleCwh = \Yii::$app->getModule('cwh');
+        if (!empty($moduleCwh) && !empty($moduleCommunity)) {
+            $scope = $moduleCwh->getCwhScope();
+            if (isset($scope['community'])) {
+                $scopeCommunityId = $scope['community'];
+                $modelCommunity = \open20\amos\community\models\Community::findOne($scopeCommunityId);
+                if ($modelCommunity && $modelCommunity->msgraph_channel_id) {
+                    if ($modelCommunity->isCommunityManager(Yii::$app->user->id)) {
+
+                        $urlUpdateDocument = '/community/ms-teams/import-document?id=' . $scopeCommunityId . '&urlRedirect=' . \Yii::$app->request->absoluteUrl;
+                    }
+                }
+            }
+        }
+        $btnUpdateDocumentsTeams = null;
+        if (!empty($urlUpdateDocument)) {
+            $btnUpdateDocumentsTeams = Html::a(AmosIcons::show('refresh'), $urlUpdateDocument, [
+                'class' => 'btn btn-secondary',
+                'title' => AmosDocumenti::t('amosdocumenti', 'Sincronizza documenti teams')
+            ]);
+        }
+
         //        $hideWidard = $this->documentsModule->hideWizard;
         $parentId = null;
         $btnNewFolder = '';
@@ -728,7 +797,8 @@ class DocumentiController extends CrudController
                 $documentiModel = $this->documentsModule->createModel('Documenti');
                 $parent = $documentiModel::findOne($parentId);
                 if (!is_null($parent)) {
-                    $url = [$this->action->id, 'parentId' => $parent->parent_id];
+                    $searchParams = Yii::$app->request->getQueryParams()['DocumentiSearch'];
+                    $url = [$this->action->id, 'parentId' => $parent->parent_id, 'DocumentiSearch' => $searchParams];
                     $btnBack = Html::a(
                         Html::tag('span', '', ['class' => 'mdi mdi-arrow-left']) .
                         AmosDocumenti::tHtml('amosdocumenti', 'Livello superiore'),
@@ -760,6 +830,10 @@ class DocumentiController extends CrudController
                 $layout = $btnBack;
                 if (!$isDriveFolder) {
                     $layout .= "{buttonCreateNew}" . $btnNewFolder;
+//                    if(!empty($btnUpdateDocumentsTeams)){
+//                        pr('dentro');
+//                        $layout = $btnUpdateDocumentsTeams.$layout;
+//                    }
                 }
             }
 
@@ -770,8 +844,12 @@ class DocumentiController extends CrudController
         }
 
         Yii::$app->view->params['createNewBtnParams'] = $createNewBtnParams;
+        $additionalButtons = [$btnBack];
+        if (!empty($btnUpdateDocumentsTeams)) {
+            $additionalButtons = ArrayHelper::merge($additionalButtons, [$btnUpdateDocumentsTeams]);
+        }
         Yii::$app->view->params['additionalButtons'] = [
-            'htmlButtons' => [$btnBack]
+            'htmlButtons' => $additionalButtons
         ];
     }
 
@@ -794,8 +872,7 @@ class DocumentiController extends CrudController
         if (!empty(\Yii::$app->request->get('isNewVersion')) && \Yii::$app->request->get('isNewVersion') == 1) {
             $isNewVersion = true;
         }
-        if ($this->documentsModule->enableDocumentVersioning && !$model->isNewRecord && !is_null($model->version) && ($model->version
-                > 1) && $isNewVersion) {
+        if ($this->documentsModule->enableDocumentVersioning && !$model->isNewRecord && !is_null($model->version) && ($model->version > 1) && $isNewVersion) {
             return ['/documenti/documenti/delete-new-document-version', 'id' => (!is_null($model) ? $model->id : $this->model->id)];
         } else {
             return Yii::$app->session->get('previousUrl');
@@ -809,8 +886,7 @@ class DocumentiController extends CrudController
     public function getFormCloseLabel($model)
     {
         $label = '';
-        if ($this->documentsModule->enableDocumentVersioning && !$model->isNewRecord && !is_null($model->version) && ($model->version
-                > 1)) {
+        if ($this->documentsModule->enableDocumentVersioning && !$model->isNewRecord && !is_null($model->version) && ($model->version > 1)) {
             $label = AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION');
         }
         return $label;
@@ -827,6 +903,10 @@ class DocumentiController extends CrudController
     {
         $this->model = $this->findModel($id);
         $isFolder = $this->model->isFolder();
+        if($this->model->version_parent_id){
+            $model = $this->model->versionParent;
+        }
+        UserActivityDocLog::registerLog(AmosDocumenti::t('amosdocumenti', "Documento visualizzato"), $model, Documenti::LOG_TYPE_VIEW_DOC, $model->version, \Yii::$app->user->id);
 
         if ($isFolder) {
             if ($this->documentsModule->enableExploreDocumentsInIndex == true && $this->scope) {
@@ -835,11 +915,47 @@ class DocumentiController extends CrudController
             return $this->redirect(['all-documents', 'parentId' => $this->model->id]);
         }
 
-        return $this->render('view',
+        return $this->render(
+            'view',
             [
                 'model' => $this->model,
                 'isFolder' => $isFolder
-            ]);
+            ]
+        );
+    }
+
+    public function actionTemplateByTipo()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $ids = Yii::$app->request->post('depdrop_parents');
+        if (empty($ids)) {
+            return ['output' => '', 'selected' => ''];
+        }
+        $out = [];
+        list($idTipoStr) = $ids;
+        if (empty($idTipoStr)) {
+            return ['output' => '', 'selected' => ''];
+        }
+
+        $moduleOnlyOffice = \open20\onlyoffice\Module::instance();
+
+        if (!array_key_exists($idTipoStr, $moduleOnlyOffice->tipiGestibiliToTipiTemplate)) {
+            return ['output' => '', 'selected' => ''];
+        }
+        $idTipo = $moduleOnlyOffice->tipiGestibiliToTipiTemplate[$idTipoStr];
+
+        // GestioneTemplate::find()->select(['id', 'nome'])->andWhere(['tipo' => 1])->orderBy('nome')->asArray()->all(), 'id', 'nome')
+        foreach ((GestioneTemplate::find()
+            ->andWhere(['tipo' => $idTipo])
+            ->select(['id', 'nome'])->orderBy('nome')
+            ->asArray()->all()) as $datiArr) {
+            $out[] = [
+                'id' => $datiArr['id'],
+                'name' => $datiArr['nome'],
+            ];
+        }
+        return ['output' => $out, 'selected' => ''];
     }
 
     /**
@@ -896,13 +1012,50 @@ class DocumentiController extends CrudController
             $this->model->status = Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO;
         }
 
-        $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_FILE;
+        $this->model->type = Documenti::MAIN_DOCUMENT_TYPE_FILE;
+
+        if ($this->documentsModule->enableAnnualArchiving) {
+            $this->model->enable_annual_archiving = 1;
+            $this->model->year = date('Y', strtotime($this->model->data_pubblicazione));
+
+            if ($this->documentsModule->enableCategories) {
+                $categories = DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all();
+                if (count($categories) == 1) {
+                    $firstCategory = array_pop($categories);
+                    $this->model->enable_annual_archiving = $firstCategory->enable_annual_archiving;
+                }
+            }
+        }
+
+        if ($this->documentsModule->enableCountdownUnpublishing) {
+
+            $this->model->enable_countdown_unpublishing = 1;
+
+            $years = $this->documentsModule->yearsCountdownUnpublishing;
+            $this->model->data_rimozione = date('Y-m-d', strtotime("+$years years", strtotime($this->model->data_pubblicazione)));
+
+            if ($this->documentsModule->enableCategories) {
+                $categories = DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all();
+                if (count($categories) == 1) {
+                    $firstCategory = array_pop($categories);
+                    if ($firstCategory->enable_countdown_unpublishing)
+                        $years = $firstCategory->years_countdown_unpublishing;
+                    $this->model->data_rimozione = date('Y-m-d', strtotime("+$years years", strtotime($this->model->data_pubblicazione)));
+                }
+            }
+        }
 
         if ($this->model->load(Yii::$app->request->post())) {
             $fileId = \Yii::$app->request->post('fileid');
             $GoogleDriveManager = null;
             if (!empty($fileId)) {
                 $GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model]);
+            }
+
+            if ($this->model->enable_annual_archiving == 0) {
+                $this->model->year = null;
+                $this->model->date_start_archiving = null;
+                $this->model->stop_archiving = null;
             }
 
             if ($this->model->validate()) {
@@ -936,6 +1089,13 @@ class DocumentiController extends CrudController
                     $validateOnSave = false;
                 }
 
+                if ($this->documentsModule->enableCountdownUnpublishing && $this->model->enable_countdown_unpublishing) {
+
+                    if (empty($this->model->data_rimozione)) {
+                        $this->model->data_rimozione = $this->model->getUnpublishingDate();
+                    }
+                }
+
 
                 if ($this->model->save($validateOnSave)) {
 
@@ -943,10 +1103,15 @@ class DocumentiController extends CrudController
                      * solo in caso di creazione di un documento
                      * con Only Office
                      */
-                    if ($this->model->typeMainDocument == Documenti::MAIN_DOCUMENT_TYPE_ONLYOFFICE)
-                        $this->model->uploadDefaultFile();
+                    if ($this->model->type == Documenti::MAIN_DOCUMENT_TYPE_ONLYOFFICE) {
+                        if (!empty($this->model->idTemplate)) {
+                            $this->model->uploadTemplate($this->model->idTemplate);
+                        } else {
+                            $this->model->uploadDefaultFile();
+                        }
+                    }
 
-                    /*************/
+                    /*                     * ********** */
 
                     if (!empty($GoogleDriveManager)) {
                         $GoogleDriveManager->shareWithUser($fileId);
@@ -968,6 +1133,11 @@ class DocumentiController extends CrudController
                     $result = DocumentiCartellePath::generatePath($this->model, 1, []);
                     DocumentiCartellePath::savePath($result, $this->model->id);
 
+                    // Setto la categoria dell'allegato principale come quella del documento se abilitata la feature
+                    if ($this->documentsModule->enableAutomaticDocumentMainFileCategory) {
+                        DocumentsUtility::categorizeMainDocumentAttachment($this->model);
+                    }
+
                     if ($enableGroupNotification && !empty($moduleGroups)) {
                         $this->sendNotificationEmail();
                     }
@@ -977,7 +1147,7 @@ class DocumentiController extends CrudController
                     if (!empty($to)) {
                         return $this->redirect($to);
                     }
-                    $this->redirectOnCreate($this->model);
+                    return $this->redirectOnCreate($this->model);
                 } else {
                     if ((!isset($isAjaxRequest)) || (isset($isAjaxRequest) && $isAjaxRequest = false)) {
                         Yii::$app->getSession()->addFlash(
@@ -1042,7 +1212,17 @@ class DocumentiController extends CrudController
         $this->model = $this->findModel($id);
         $ok = $this->model->makeNewDocumentVersion();
         $this->model->status = $this->model->getWorkflowSource()->getWorkflow(Documenti::DOCUMENTI_WORKFLOW)->getInitialStatusId();
+        $this->model->doNotLog = true;
+        $this->model->lock_update = 0;
         $this->model->save(false);
+        if ($ok) {
+            $event = new \yii\base\Event([
+                'sender' => $this->model,
+            ]);
+            // Triggera l'evento definito nella costante del modello
+            $this->model->trigger(Documenti::EVENT_NEW_VERSION_CREATED, $event);
+        }
+
         $url = ['update', 'id' => $this->model->id, 'isNewVersion' => 1];
         if (!$ok) {
             $url = Yii::$app->session->get(AmosDocumenti::beginCreateNewSessionKey());
@@ -1077,8 +1257,9 @@ class DocumentiController extends CrudController
      *
      * @param integer $id
      * @param bool|false $backToEditStatus Save the model with status Editing in progress before form rendering
-     * @return string
+     * @return string|\yii\web\Response
      * @throws \yii\web\NotFoundHttpException
+     * @throws InvalidConfigException
      */
     public function actionUpdate($id, $backToEditStatus = false)
     {
@@ -1088,10 +1269,13 @@ class DocumentiController extends CrudController
 
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
-        $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_FILE;
 
-        if (!empty($this->model->link_document)) {
-            $this->model->typeMainDocument = Documenti::MAIN_DOCUMENT_TYPE_LINK;
+        if (empty($this->model->type)) {
+            $this->model->type = Documenti::MAIN_DOCUMENT_TYPE_FILE;
+        }
+
+        if (empty($this->model->type) && !empty($this->model->link_document)) {
+            $this->model->type = Documenti::MAIN_DOCUMENT_TYPE_LINK;
         }
 
         if ($this->documentIsFolder($this->model)) {
@@ -1101,7 +1285,6 @@ class DocumentiController extends CrudController
         }
 
         if (Yii::$app->request->post()) {
-//            pr(\Yii::$app->request->post());
             $previousStatus = $this->model->status;
             if ($this->model->load(Yii::$app->request->post())) {
                 $GoogleDriveManager = null;
@@ -1109,7 +1292,23 @@ class DocumentiController extends CrudController
                 if (!empty($fileId)) {
                     $GoogleDriveManager = new \open20\amos\documenti\utility\GoogleDriveManager(['model' => $this->model]);
                 }
+
+                if ($this->model->enable_annual_archiving == 0) {
+                    $this->model->year = null;
+                    $this->model->date_start_archiving = null;
+                    $this->model->stop_archiving = null;
+                }
+
                 if ($this->model->validate()) {
+
+
+                    if ($this->documentsModule->enableCountdownUnpublishing && $this->model->enable_countdown_unpublishing) {
+
+                        if (empty($this->model->data_rimozione)) {
+                            $this->model->data_rimozione = $this->model->getUnpublishingDate();
+                        }
+                    }
+
                     if ($this->model->save()) {
                         if (!empty($GoogleDriveManager)) {
                             $GoogleDriveManager->shareWithUser($fileId);
@@ -1118,6 +1317,7 @@ class DocumentiController extends CrudController
 
                         if (!(empty($this->model->documentMainFile))) {
                             $this->model->link_document = '';
+                            $this->model->doNotLog = true;
                             $this->model->save();
                         }
                         $this->model->publishAndUnpublishFolder(\Yii::$app->request->post());
@@ -1131,6 +1331,12 @@ class DocumentiController extends CrudController
                                 $this->sendNotificationEmail();
                             }
                         }
+
+                        // Setto la categoria dell'allegato principale come quella del documento se abilitata la feature
+                        if ($this->documentsModule->enableAutomaticDocumentMainFileCategory) {
+                            DocumentsUtility::categorizeMainDocumentAttachment($this->model);
+                        }
+
                         return $this->redirectOnUpdate($this->model, $previousStatus);
                     } else {
                         Yii::$app->getSession()->addFlash(
@@ -1278,7 +1484,6 @@ class DocumentiController extends CrudController
         return $this->standardDelete();
     }
 
-
     public function actionMove()
     {
 
@@ -1289,7 +1494,7 @@ class DocumentiController extends CrudController
             $this->model->parent_id = $parentId;
             if ($parentId == 0)
                 $this->model->parent_id = null;
-            if ($this->model->save()) {
+            if ($this->model->save(false)) {
                 Yii::$app->getSession()->addFlash(
                     'success',
                     AmosDocumenti::tHtml('amosdocumenti', 'Documento spostato correttamente')
@@ -1340,7 +1545,6 @@ class DocumentiController extends CrudController
         $this->view->params['titleSection'] = $this->view->title;
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_created_by_me'));
 
-
         if (empty($this->getCurrentView())) {
             $this->setCurrentView($this->getAvailableView('list'));
         }
@@ -1348,7 +1552,6 @@ class DocumentiController extends CrudController
 
         $this->setUpLayout('list');
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
-
 
         return $this->render(
             'index',
@@ -1446,6 +1649,7 @@ class DocumentiController extends CrudController
 
         $params = Yii::$app->request->getQueryParams();
         if (!is_null($parentId)) { //set parent Id to filter documents within a folder
+            $this->setModelObj($this->findModel($parentId));
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);
@@ -1477,7 +1681,6 @@ class DocumentiController extends CrudController
         $this->setUpLayout('list');
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
 
-
         return $this->render(
             'index',
             [
@@ -1496,6 +1699,7 @@ class DocumentiController extends CrudController
      *
      * @param int|null $parentId - id of document folder
      * @return string
+     * @throws InvalidConfigException
      */
     public function actionAllDocuments($currentView = null, $parentId = null)
     {
@@ -1511,7 +1715,6 @@ class DocumentiController extends CrudController
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);
-
 
             if (isset($parentId) && !is_null($folder->parent_id)) {
                 $this->view->params['breadcrumbs'][] = ['label' => Yii::t('amosdocumenti', 'Tutti i documenti'), 'url' => ['index']];
@@ -1529,19 +1732,7 @@ class DocumentiController extends CrudController
             ];
         }
 
-        if($this->documentsModule->showAllStatusesAllDocument) {
-            $dataProvider = $this->getModelSearch()->searchAllInAllStatuses(
-                Yii::$app->request->getQueryParams()
-            );
-        } else {
-            $dataProvider = $this->getModelSearch()->searchAll(
-                Yii::$app->request->getQueryParams()
-            );
-        }
-
-        if (\Yii::$app->user->isGuest) {
-            $dataProvider->query->andWhere(['primo_piano' => 1]);
-        }
+        $dataProvider = $this->modelSearch->searchAllDocuments(Yii::$app->request->getQueryParams());
 
         $this->setDataProvider($dataProvider);
 
@@ -1557,7 +1748,6 @@ class DocumentiController extends CrudController
         \Yii::$app->params['titleSection'] = $this->view->title;
 
         $this->view->params['bulletCount'] = $this->model->getBullet(\open20\amos\core\record\Record::BULLET_TYPE_ALL, true);
-
 
         if (!\Yii::$app->user->isGuest) {
             $this->view->params['titleSection'] = AmosDocumenti::t('amosdocumenti', 'Tutti i documenti');
@@ -1592,7 +1782,6 @@ class DocumentiController extends CrudController
         return false;
     }
 
-
     public function actionExploreDocuments()
     {
         if ($this->documentsModule->enableExploreDocumentsInIndex != true || !$this->scope) {
@@ -1601,7 +1790,9 @@ class DocumentiController extends CrudController
 
 
         Url::remember();
-
+        \Yii::$app->controller->view->params['forceBreadcrumbs'][] = [
+            'label' => AmosDocumenti::t('amosdocumenti', 'Documenti'),
+        ];
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', 'Documenti'));
         $this->setListViewsParams();
 
@@ -1626,27 +1817,38 @@ class DocumentiController extends CrudController
      */
     public function actionAdminAllDocuments($currentView = null, $parentId = null)
     {
-        Url::remember();
+        $previousDocumentParentIds = $this->getParentsFromPreviousDocument();
 
-        if (empty($currentView)) {
-            $currentView = reset($this->documentsModule->defaultListViews);
-        }
+        Url::remember();
 
         if (!is_null($parentId)) { //set parent Id to filter documents within a folder
             $modelSearch = $this->getModelSearch();
             $modelSearch->parentId = $parentId;
             $this->setModelSearch($modelSearch);
         }
-        $this->setDataProvider($this->getModelSearch()->searchAdminAll(Yii::$app->request->getQueryParams()));
+
+        $dataProvider = $this->modelSearch->searchAdminAll(Yii::$app->request->getQueryParams());
+        $this->setDataProvider($dataProvider);
 
         $this->setTitleAndBreadcrumbs(AmosDocumenti::t('amosdocumenti', '#page_title_all_admin'));
-        $this->setCurrentView($this->getAvailableView($this->myCurrentView));
+
+        //$this->setCurrentView($this->getAvailableView($this->myCurrentView));
+        // Force only grid view
+        //$this->setCurrentView($this->getAvailableView('grid'));
+        // $this->setAvailableViews(['grid' => $this->viewGrid]);
+
         $this->setListViewsParams();
 
         $this->setUpLayout('list');
-        $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
 
+        $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
+        // $this->view->params['containerFullWidth'] = true;
         $this->view->title = 'Amministra documenti';
+
+        if (empty($this->getCurrentView())) {
+            $this->setCurrentView($this->getAvailableView('grid'));
+        }
+
 
         return $this->render(
             'index',
@@ -1656,7 +1858,8 @@ class DocumentiController extends CrudController
                 'currentView' => $this->getCurrentView(),
                 'availableViews' => $this->getAvailableViews(),
                 'url' => ($this->url) ? $this->url : null,
-                'parametro' => ($this->parametro) ? $this->parametro : null
+                'parametro' => ($this->parametro) ? $this->parametro : null,
+                'previousDocumentParentIds' => $previousDocumentParentIds
             ]
         );
     }
@@ -1810,6 +2013,49 @@ class DocumentiController extends CrudController
         }
     }
 
+    /**
+     * @param string $view
+     * @return string
+     * @throws \Exception
+     */
+    public function actionExpandFolderDocuments($view = '_subFolderGridView')
+    {
+        $expandRowKey = \Yii::$app->request->post('expandRowKey');
+        // Params from original action
+        $actionId = Yii::$app->request->post('actionId');
+        $queryParams = Yii::$app->request->post('queryParams');
+        $queryParams = is_null($queryParams) ? [] : $queryParams;
+        $previousDocumentParentIds = Yii::$app->request->post('previousDocumentParentIds');
+
+        $modelSearch = $this->modelSearch;
+        $modelSearch->parentId = $expandRowKey;
+
+        switch ($actionId) {
+            case 'own-interest-documents':
+                $dataProvider = $modelSearch->searchOwnInterest($queryParams);
+                break;
+            case 'to-validate-documents':
+                $dataProvider = $modelSearch->searchToValidateDocuments($queryParams);
+                break;
+            case 'admin-all-documents':
+                $dataProvider = $modelSearch->searchAdminAll($queryParams);
+                break;
+            default:
+                $dataProvider = $modelSearch->searchAllDocuments($queryParams);
+                break;
+        }
+
+        $dataProvider->pagination = false;
+
+        \Yii::$app->request->setQueryParams(['aid' => $expandRowKey]);
+
+        return Yii::$app->controller->renderAjax($view, [
+            'dataProvider' => $dataProvider,
+            'actionId' => $actionId,
+            'previousDocumentParentIds' => $previousDocumentParentIds
+        ]);
+    }
+
     public function sendNotificationEmail()
     {
         $idGroupsToMail = [];
@@ -1938,7 +2184,6 @@ class DocumentiController extends CrudController
         } else {
             return $this->redirect('/documenti/documenti/own-documents');
         }
-
     }
 
     /**
@@ -2076,7 +2321,8 @@ class DocumentiController extends CrudController
         for ($i = 0; $i < $depth; $i++) {
             $folder = substr($fileHash, $i * 3, 2);
             $path .= $folder;
-            if ($i != $depth - 1) $path .= DIRECTORY_SEPARATOR;
+            if ($i != $depth - 1)
+                $path .= DIRECTORY_SEPARATOR;
         }
 
         return $path;
@@ -2294,7 +2540,41 @@ class DocumentiController extends CrudController
         $this->model->detachBehaviors();
         $this->model->count_link_download = $this->model->count_link_download + 1;
         $this->model->save(false);
+        UserActivityDocLog::registerLog(AmosDocumenti::t('amosdocumenti', "Documento scaricato"), $this->model, Documenti::LOG_TYPE_DOWNLOAD_DOC, $this->model->version, \Yii::$app->user->id);
         return true;
+    }
+
+    public function actionGetCategoryAnnualArchiving()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        $response = true;
+        $id = Yii::$app->request->post('id', 0);
+        $model = DocumentiCategorie::findOne(['id' => $id]);
+        if ($model)
+            $response = (bool)$model->enable_annual_archiving;
+
+        return ['value' => $response];
+    }
+
+    public function actionGetUnpublishingDate()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
+        $response = $module->enableCountdownUnpublishing;
+        $years = $module->yearsCountdownUnpublishing;
+
+        $id = Yii::$app->request->post('id', 0);
+        $from_date = Yii::$app->request->post('from', '');
+
+        $model = DocumentiCategorie::findOne(['id' => $id]);
+        if ($model) {
+            $years = $model->years_countdown_unpublishing;
+        }
+
+        $date = (new \DateTime($from_date))->modify("+$years years")->format('Y-m-d');
+        $date_format = (new \DateTime($from_date))->modify("+$years years")->format('d-m-Y');
+        return ['response' => $response, 'value' => $date, 'value_format' => $date_format, 'years' => $years];
     }
 
     /**
@@ -2375,7 +2655,6 @@ class DocumentiController extends CrudController
                 $model_documenti_agid_content_type->name = $value;
 
                 $model_documenti_agid_content_type->save();
-
 
                 if (strcmp($value, 'Bandi') == 0) {
 
@@ -2631,7 +2910,6 @@ class DocumentiController extends CrudController
                 'deleted_at' => null
             ])->all();
 
-
         $select_option = '<option value="">Seleziona ...</option>';
 
         foreach ($documenti_agid_types as $key => $documenti_agid_type) {
@@ -2652,6 +2930,11 @@ class DocumentiController extends CrudController
     {
         Url::remember();
 
+        if (!Yii::$app->getUser()->can('DOCUMENTI_UPDATE', ['model' => $this->model])) {
+            throw new ForbiddenHttpException(Yii::t('amosdocumenti', 'Non sei autorizzato a visualizzare questa pagina'));
+            //$redirectToUpdatePage = true;
+        }
+
         $this->setUpLayout('form');
         $this->model = $this->findModel($id);
         if (empty($this->model->documentMainFile)) {
@@ -2660,7 +2943,6 @@ class DocumentiController extends CrudController
                 AmosDocumenti::t('amosdocumenti', 'Prima di poter visualizzare il documento salvare')
             );
             return $this->redirect(['update', 'id' => $id]);
-
         }
 
         return $this->render(
@@ -2723,6 +3005,14 @@ class DocumentiController extends CrudController
                 'label' => AmosDocumenti::t('amosdocumenti', 'Da validare'),
                 'url' => '/documenti/documenti/to-validate-documents'
             ];
+
+            if ($module->enableLogDocumentActivity) {
+                $links[] = [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Storico log'),
+                    'label' => AmosDocumenti::t('amosdocumenti', 'Storico log'),
+                    'url' => '/documenti/documenti/history-log'
+                ];
+            }
         }
 
         if (\Yii::$app->user->can(\open20\amos\news\widgets\icons\WidgetIconAdminAllNews::class)) {
@@ -2731,8 +3021,18 @@ class DocumentiController extends CrudController
                 'label' => AmosDocumenti::t('amosdocumenti', 'Amministra'),
                 'url' => '/documenti/documenti/admin-all-documents'
             ];
+            $moduleOnlyOffice = \Yii::$app->getModule('onlyoffice');
+            if ($moduleOnlyOffice) {
+                $links[] = [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Gestisci template'),
+                    'label' => AmosDocumenti::t('amosdocumenti', 'Gestisci template'),
+                    'url' => '/onlyoffice/gestione-template/index'
+                ];
+            }
+
+
         }
-        if (\Yii::$app->user->can(WidgetIconDocumentiCategorie::class)) {
+        if ($module->enableCategories && \Yii::$app->user->can(WidgetIconDocumentiCategorie::class)) {
             $links[] = [
                 'title' => AmosDocumenti::t('amosdocumenti', 'Visualizza le categorie dei documenti'),
                 'label' => AmosDocumenti::t('amosdocumenti', 'Categorie'),
@@ -2740,6 +3040,33 @@ class DocumentiController extends CrudController
             ];
         }
         return $links;
+    }
+
+    public function actionHistoryLog()
+    {
+        $this->setUpLayout('list');
+        $params = \Yii::$app->request->get();
+        $modelSearch = new UserActivityDocLogSearch();
+        $dataProvider = $modelSearch->search($params);
+        return $this->render('history-log', ['dataProvider' => $dataProvider, 'modelSearch' => $modelSearch]);
+    }
+
+    /**
+     * @param $id
+     * @return string
+     */
+    public function actionDetailLog($id)
+    {
+//        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $docLog = UserActivityDocLog::findOne($id);
+        if($docLog){
+            $modelClassname = ModelsClassname::find()->andWhere(['id' => $docLog->models_classname_id])->one();
+            $classDoc = $modelClassname->classname;
+            $document = $classDoc::findOne($docLog->record_id);
+
+           $dataProvider = new ActiveDataProvider(['query' => $docLog->getChangesLog()]) ;
+        }
+        return $this->renderPartial('_content_history_detail', ['dataProvider' => $dataProvider, 'model' => $document]);
     }
 
 
@@ -2786,7 +3113,6 @@ class DocumentiController extends CrudController
             return $this->redirect($redirect);
         } else {
             return $this->redirect(['/documenti/documenti/index']);
-
         }
     }
 
@@ -2795,10 +3121,11 @@ class DocumentiController extends CrudController
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionModalPublishFolderAjax($id = null, $page = null){
-        if(!empty($id)) {
+    public function actionModalPublishFolderAjax($id = null, $page = null)
+    {
+        if (!empty($id)) {
             $this->model = $this->findModel($id);
-        }else {
+        } else {
             $this->model = new Documenti();
         }
         return $this->renderPartial('_modal_publish_folder_grid', ['model' => $this->model, 'page' => $page]);
@@ -2809,14 +3136,38 @@ class DocumentiController extends CrudController
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionModalUnpublishFolderAjax($id = null){
-        if(!empty($id)) {
+    public function actionModalUnpublishFolderAjax($id = null)
+    {
+        if (!empty($id)) {
             $this->model = $this->findModel($id);
-        }else {
+        } else {
             $this->model = new Documenti();
         }
         return $this->renderPartial('_modal_publish_folder_unpublish', ['model' => $this->model]);
     }
 
+    /**
+     * If the user comes from the update of a document, get parent id from the document if exists.
+     * Method useful to auto expand folders in gridview when user comes from update of a document.
+     * @return array
+     */
+    public function getParentsFromPreviousDocument()
+    {
+        $previousDocumentParentIds = [];
+        if (Url::previous() && strpos(Url::previous(), 'documenti/documenti/update') !== false) {
+            $previousUrlParsed = parse_url(Url::previous(), PHP_URL_QUERY);
+            parse_str($previousUrlParsed, $previousUrlParams);
+            if (isset($previousUrlParams['id'])) {
+                $document = Documenti::findOne($previousUrlParams['id']);
+                if ($document && !empty($document->parent_id)) {
+                    $allParents = $document->getAllParents();
+                    foreach ($allParents as $parent) {
+                        $previousDocumentParentIds[] = $parent->id;
+                    }
+                }
+            }
+        }
+        return $previousDocumentParentIds;
+    }
 
 }

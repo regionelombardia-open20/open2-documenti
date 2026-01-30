@@ -22,6 +22,9 @@ use open20\agid\organizationalunit\models\AgidOrganizationalUnit;
  * This is the base-model class for table "documenti".
  *
  * @property integer $id
+ * @property integer $type
+ * @property string $msgraph_drive_item_id
+ * @property string $msgraph_channel_id
  * @property string $titolo
  * @property string $sottotitolo
  * @property string $descrizione_breve
@@ -44,6 +47,7 @@ use open20\agid\organizationalunit\models\AgidOrganizationalUnit;
  * @property integer $version_parent_id
  * @property string $link_document
  * @property integer $drive_file_id
+ * @property integer $lock_update
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -60,6 +64,8 @@ use open20\agid\organizationalunit\models\AgidOrganizationalUnit;
  */
 abstract class Documenti extends ContentModel
 {
+    const FIELD_TITOLO_MAX_LENGTH = 100;
+
     /**
      * @var AmosDocumenti $documentsModule
      */
@@ -104,14 +110,17 @@ abstract class Documenti extends ContentModel
                 'metadesc',
                 'author'
             ], 'string'],
+            [['year'], 'string', 'max' => 4],
             [[
                 'titolo',
+            ], 'string', 'max' => !empty(\Yii::$app->params['amosDocumentiFieldTitleMaxLength']) ? \Yii::$app->params['amosDocumentiFieldTitleMaxLength'] : self::FIELD_TITOLO_MAX_LENGTH],
+            [[
                 'sottotitolo',
             ], 'string', 'max' => 100],
             ['titolo','match','pattern'=>'/\s{2,}/g','not' => true,
                 'message' =>  AmosDocumenti::t('amosdocumenti', "#titolo_spazi") ],
-            [['descrizione_breve'], 'string', 'max' => 255],
-            [['link_document'], 'string', 'max' => 255],
+            [['descrizione_breve', 'msgraph_drive_item_id', 'msgraph_channel_id'], 'string', 'max' => 255],
+            [['link_document'], 'string', 'max' => 2550],
             [[
                 'primo_piano',
                 'filemanager_mediafile_id',
@@ -128,7 +137,11 @@ abstract class Documenti extends ContentModel
                 'version',
                 'version_parent_id',
                 'folder_cms_id',
-                'file_cms_id'
+                'file_cms_id',
+                'enable_annual_archiving',
+                'stop_archiving',
+                'enable_countdown_unpublishing',
+                'lock_update'
             ], 'integer'],
             [[
                 'data_pubblicazione',
@@ -139,7 +152,8 @@ abstract class Documenti extends ContentModel
                 'status',
                 'comments_enabled',
                 'drive_file_id',
-                'drive_file_modified_at'
+                'drive_file_modified_at',
+                'date_start_archiving',
             ], 'safe'],
             [ $required, 'required'],
 
@@ -166,9 +180,9 @@ abstract class Documenti extends ContentModel
             'descrizione' => AmosDocumenti::t('amosdocumenti', '#documents_description_field'),
             'metakey' => AmosDocumenti::t('amosdocumenti', 'Meta key'),
             'metadesc' => AmosDocumenti::t('amosdocumenti', 'Meta descrizione'),
-            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Vuoi rendere visibile il documento anche ad utenti non registrati (guest)?'),
+            'primo_piano' => AmosDocumenti::t('amosdocumenti', 'Mostra documento'),
             'filemanager_mediafile_id' => AmosDocumenti::t('amosdocumenti', 'Documento pricipale'),
-            'in_evidenza' => AmosDocumenti::t('amosdocumenti', 'In evidenza'),
+            'in_evidenza' => AmosDocumenti::t('amosdocumenti', 'Documento in evidenza'),
             'hits' => AmosDocumenti::t('amosdocumenti', 'Visualizzazioni'),
             'abilita_pubblicazione' => AmosDocumenti::t('amosdocumenti', 'Abilita pubblicazione'),
             'data_pubblicazione' => AmosDocumenti::t('amosdocumenti', '#start_publication_date'),
@@ -200,6 +214,14 @@ abstract class Documenti extends ContentModel
             'end_date' => AmosDocumenti::t('amosdocumenti', 'end_date'),
             'help_box' => AmosDocumenti::t('amosdocumenti', 'help_box'),
             'author' => AmosDocumenti::t('amosdocumenti', 'author'),
+            'year' => AmosDocumenti::t('amosdocumenti', 'year'),
+            'date_start_archiving' => AmosDocumenti::t('amosdocumenti', 'date_start_archiving'),
+            'stop_archiving' => AmosDocumenti::t('amosdocumenti', 'stop_archiving'),
+
+            // Order fields labels
+            'documenti.titolo' => AmosDocumenti::t('amosdocumenti', '#documents_title_field'),
+            'documenti.data_pubblicazione' => AmosDocumenti::t('amosdocumenti', 'Data di pubblicazione'),
+            'documenti.updated_at' => AmosDocumenti::t('amosdocumenti', 'Data di ultima modifica'),
         ]);
     }
 

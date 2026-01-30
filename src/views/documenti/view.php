@@ -18,6 +18,8 @@ use open20\amos\core\forms\ListTagsWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
+use open20\amos\core\utilities\CurrentUser;
+use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
 use yii\web\View;
 use open20\onlyoffice\widgets\EditorWidget;
 use yii\helpers\Url;
@@ -47,10 +49,16 @@ isset($moduleCwh) ? $showReceiverSection = true : null;
 isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
 
 $moduleId = $controller->module->id;
-if($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId){
-    $additionalButtons[]  = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"),'#modalMove', [
+if ($documentsModule->enableMoveDoc && $scope['community'] && $documentsModule::getModuleName() == $moduleId) {
+    $additionalButtons[] = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Sposta"), '#modalMove', [
         'class' => 'open-modalMove',
         'data-toggle' => 'modal',
+        'data-id' => $model->id,
+    ]);
+}
+if ($documentsModule->enableLogDocumentActivity && \Yii::$app->user->can(WidgetIconDocumentiDaValidare::class))  {
+    $additionalButtons[] = \yii\helpers\Html::a(AmosDocumenti::t('amoscommunity', "Storico log"), ['/documenti/documenti/history-log','UserActivityDocLogSearch[id]' => $model->id], [
+        'class' => '',
         'data-id' => $model->id,
     ]);
 }
@@ -95,6 +103,7 @@ $this->registerJs($jsCount);
 
 $primoPiano = '';
 $inEvidenza = '';
+$isTeams = $model->msgraph_drive_item_id ? true : false;
 
 if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
     echo \open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget::widget([
@@ -105,6 +114,7 @@ if ($model->status != Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
     ]);
 }
 
+
 /** @var \open20\amos\report\AmosReport $reportModule */
 $reportModule = Yii::$app->getModule('report');
 $viewReportWidgets = (
@@ -112,10 +122,10 @@ $viewReportWidgets = (
     && in_array($model->className(), $reportModule->modelsEnabled)
 );
 
-if($documentsModule->enableMoveDoc){
-        echo $this->render('_move_document', [
-            'parentId' => $model->parent_id,
-    ]); 
+if ($documentsModule->enableMoveDoc) {
+    echo $this->render('_move_document', [
+        'parentId' => $model->parent_id,
+    ]);
 
 }
 ?>
@@ -125,10 +135,27 @@ if($documentsModule->enableMoveDoc){
         <div class="col-xs-12 header-widget">
             <?= ItemAndCardHeaderWidget::widget([
                 'model' => $model,
+                'publicationDateNotPresent' => true,
+                'showPrevalentPartnership' => true,
+
+                'showPrevalentPartnershipAndTargets' => false,
+                'enableLink' => !(CurrentUser::isPlatformGuest()),
                 'publicationDateField' => 'data_pubblicazione',
-                'showPrevalentPartnershipAndTargets' => true,
+                'absoluteUrlAvatar' => true,
+
+
             ]) ?>
             <div class="more-info-content">
+                <?php
+                if ($model->canShowCommentsNotificationBellWidget()) {
+                    // Comments notification bell widget
+                    echo \open20\amos\comments\widgets\CommentsBellNotificationWidget::widget([
+                        'modelClassname' => $model->modelClassName,
+                        'modelId' => $model->id,
+                        'buttonClass' => $viewReportWidgets ? 'btn btn-outline-tertiary m-r-10' : ''
+                    ]);
+                }
+                ?>
                 <?php if ($viewReportWidgets) : ?>
                     <?= \open20\amos\report\widgets\ReportDropdownWidget::widget([
                         'model' => $model,
@@ -169,7 +196,7 @@ if($documentsModule->enableMoveDoc){
                     <?php else : ?>
                         <div class="col-xs-12 nop">
                             <?php if ($documentsModule->showCategoriesInView) : ?>
-                                <?= $model->getAttributeLabel('documenti_categorie_id') . ': ' . '<span class="badge-document badge badge-pill">' . $documentCategory->titolo .'</span>' ?>
+                                <?= $model->getAttributeLabel('documenti_categorie_id') . ': ' . '<span class="badge-document badge badge-pill">' . $documentCategory->titolo . '</span>' ?>
                             <?php endif; ?>
                         </div>
                         <?= \open20\amos\documenti\utility\DocumentsUtility::getDocumentIcon($model); ?>
@@ -177,6 +204,7 @@ if($documentsModule->enableMoveDoc){
                     <?php endif; ?>
                     <div>
                         <?php
+
                         if (!is_null($document)) {
                             $docName = $document->name;
                             if ($docName) {
@@ -186,12 +214,15 @@ if($documentsModule->enableMoveDoc){
                             } else {
                                 $name = $model->titolo;
                             }
-                            if($model->documentMainFile) {
-                                echo Html::a(
-                                    $name,
-                                    $model->documentMainFile->getUrl(),
-                                    ['class' => 'filename ', 'data-toggle' => 'tooltip', 'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file')]
-                                );
+                            if ($model->documentMainFile) {
+                                echo Html::a($name, $model->documentMainFile->getUrl(), [
+                                    'class' => 'filename ',
+                                    'data-toggle' => 'tooltip',
+                                    'title' => AmosDocumenti::t('amosdocumenti', 'Scarica file'),
+                                    'target' => '_blank',
+                                    //'download' => true,
+                                    'id' => 'link-document-id'
+                                ]);
                                 echo Html::tag(
                                     'span',
                                     (' ('
@@ -201,7 +232,7 @@ if($documentsModule->enableMoveDoc){
                                     ]
                                 );
                             }
-                            
+
                             if ($model->drive_file_id) {
                                 echo Html::tag(
                                     'em',
@@ -221,6 +252,11 @@ if($documentsModule->enableMoveDoc){
                                     );
                                 }
                             }
+                        } else if (is_null($document) && empty($model->link_document)) {
+                            echo Html::tag(
+                                'em',
+                                AmosDocumenti::t('amosdocumenti', 'Documento testuale')
+                            );
                         } else if ($model->is_folder && $model->drive_file_id) {
                             echo Html::tag(
                                 'em',
@@ -257,57 +293,67 @@ if($documentsModule->enableMoveDoc){
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="download-box m-t-30">
-                    <?php echo $this->render('_download_box', [
-                        'model' => $model,
-                        'isFolder' => $isFolder,
-                        'controller' => \Yii::$app->controller,
-                        'showNewVersionButton' => true
-                    ]) ?>
-                </div>
+                <?php if ($documentsModule->enableAnnualArchiving): ?>
+                    <div class="archiving text-right">
+                        <?= $model->getArchiving(true) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!$isTeams) { ?>
+                    <div class="download-box m-t-30">
+                        <?php echo $this->render('_download_box', [
+                            'model' => $model,
+                            'isFolder' => $isFolder,
+                            'controller' => \Yii::$app->controller,
+                            'showNewVersionButton' => true
+                        ]) ?>
+                    </div>
+                <?php } ?>
             </div>
         </div>
 
-        <?php 
-            $onlyofficeModule = Yii::$app->getModule('onlyoffice');
-            $modelUserProfile = \open20\amos\admin\models\UserProfile::find()
+        <?php
+        $onlyofficeModule = Yii::$app->getModule('onlyoffice');
+        $modelUserProfile = \open20\amos\admin\models\UserProfile::find()
             ->andWhere(['user_id' => Yii::$app->user->id])
             ->one();
-			
-            if($onlyofficeModule && $onlyofficeModule->isValidExtension($model->documentMainFile->type)): ?>
-                <div class="open-office m-t-20">
-                    <?= EditorWidget::widget([
-							'urlFile' => $model->documentMainFile->getWebUrl('original', true, false),
-							'keyFile' => $model->documentMainFile->hash,
-							'nameFile' => $model->documentMainFile->name . '.' . strtolower($model->documentMainFile->type),
-							'options' => [
-								'iframeHeight' => '700px',
-								'fileTypeAuto' => strtolower($model->documentMainFile->type),
-								'documentTypeAuto' => true,
-							],
-							'configForJs' => [
-								'documentType' => $onlyofficeModule->getDocumentTypeByExtension($model->documentMainFile->type,true),
-								'editorConfig' => [
-									'mode' => 'view',
-									'callbackUrl' => Url::to(['/documenti/onlyoffice/callback-api'], true),
-									'customization' => [
-										'forcesave' => false, 
-									],
-									
-									'user' => [
-										'id' => Yii::$app->user->id,
-										'name' => ((!empty($modelUserProfile)) ? $modelUserProfile->nomeCognome : ''),
-									],
-								],
-							]
-						]) ?>
-                </div>
+
+        if ($onlyofficeModule && $onlyofficeModule->isValidExtension($model->documentMainFile->type)): ?>
+            <div class="open-office m-t-20">
+                <?= EditorWidget::widget([
+                    'urlFile' => $model->documentMainFile->getWebUrl('original', true, false),
+                    'keyFile' => $model->documentMainFile->hash,
+                    'nameFile' => $model->documentMainFile->name . '.' . strtolower($model->documentMainFile->type),
+                    'options' => [
+                        'iframeHeight' => '700px',
+                        'fileTypeAuto' => strtolower($model->documentMainFile->type),
+                        'documentTypeAuto' => true,
+                    ],
+                    'configForJs' => [
+                        'documentType' => $onlyofficeModule->getDocumentTypeByExtension($model->documentMainFile->type, true),
+                        'editorConfig' => [
+                            'mode' => 'view',
+                            'callbackUrl' => Url::to(['/documenti/onlyoffice/callback-api'], true),
+                            'customization' => [
+                                'forcesave' => false,
+                            ],
+
+                            'user' => [
+                                'id' => Yii::$app->user->id,
+                                'name' => ((!empty($modelUserProfile)) ? $modelUserProfile->nomeCognome : ''),
+                            ],
+                        ],
+                    ]
+                ]) ?>
+            </div>
         <?php endif; ?>
-        
-        <div class="document-description m-t-20">
-            <p class="text-uppercase"><strong><?= AmosDocumenti::t('amosdocumenti', 'descrizione_breve'); ?></strong></p>
-            <?= $model->descrizione_breve; ?>
-        </div>
+
+        <?php if (!empty($model->descrizione_breve)): ?>
+            <div class="document-description m-t-20">
+                <p class="text-uppercase">
+                    <strong><?= AmosDocumenti::t('amosdocumenti', 'descrizione_breve'); ?></strong></p>
+                <?= $model->descrizione_breve; ?>
+            </div>
+        <?php endif; ?>
         <div class="document-description m-t-20">
             <p class="text-uppercase"><strong><?= $model->getAttributeLabel('descrizione'); ?></strong></p>
             <?= $model->descrizione; ?>
@@ -357,4 +403,5 @@ if($documentsModule->enableMoveDoc){
             ?>
         </div>
     </div>
+
 </div>

@@ -78,6 +78,7 @@ final class DocumentiCartellePath extends Record
     public static function savePath($result,$doc_id){
         $level = count($result);
         try{
+            DocumentiCartellePath::deleteAll(['id_doc_folder' => $doc_id]);
             foreach ($result as $key => $value){
                 $documentoPath = new DocumentiCartellePath();
                 $documentoPath->id_doc_folder = $doc_id;

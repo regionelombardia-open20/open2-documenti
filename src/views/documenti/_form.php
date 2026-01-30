@@ -26,6 +26,7 @@ use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use open20\amos\core\forms\editors\Select;
 use open20\agid\organizationalunit\models\AgidOrganizationalUnitContentType;
+use kartik\widgets\SwitchInput;
 
 /**
  * @var yii\web\View $this
@@ -46,11 +47,14 @@ $enablePublishUnpublishFolder = $appController->documentsModule->enablePublishUn
 $isNewVersion = !empty(\Yii::$app->request->get('isNewVersion')) ? \Yii::$app->request->get('isNewVersion') : false;
 $offunusedfields = \Yii::$app->request->get('offunusedfields');
 $hideUnusedFields = $offunusedfields ? 'display:none' : '';
+$enableAnnualArchiving = $documentsModule->enableAnnualArchiving;
+$enableCountdownUnpublishing = $documentsModule->enableCountdownUnpublishing;
 
 $disableStandardWorkflow = $appController->documentsModule->disableStandardWorkflow;
 
-
-$moduleSeo = \Yii::$app->getModule('seo');
+/** @var AmosDocumenti $module */
+$module = Yii::$app->getModule(AmosDocumenti::getModuleName());
+$moduleSeo = Yii::$app->getModule('seo');
 $hideSeoModuleClass = $documentsModule->hideSeoModule ? ' hidden' : '';
 
 $moduleGroups = Yii::$app->getModule('groups');
@@ -70,6 +74,10 @@ $enableComments = '';
 /** @var \open20\amos\comments\AmosComments $commentsModule */
 $commentsModule = Yii::$app->getModule('comments');
 
+$allowedExtensions = str_replace(' ', '', $documentsModule->whiteListFilesExtensions);
+
+$showSectionScheduledSettings = ($module->hidePubblicationDate == false) || ($enableCountdownUnpublishing && !$isFolder) || ($enableAnnualArchiving && !$isFolder);
+$commentsEnabled = (!is_null($commentsModule) && in_array($model->className(), $commentsModule->modelsEnabled));
 if ($enableGroupNotification) {
 
     $modelSearchProfile = new UserProfileSearch();
@@ -201,6 +209,36 @@ if ($viewReportWidgets) {
     ]);
 }
 
+// id 20683: CHECK/VALIDATE FIELDS "DATE PUBBLICAZIONE" ON FOCUSOUT AND KEYUP
+$this->registerJs(
+    <<<JS
+
+$("#documenti-data_pubblicazione-disp").on("keyup", function () {
+  validateDatePubblicazioneFields();
+});
+
+$("#documenti-data_rimozione-disp").on("keyup", function () {
+  validateDatePubblicazioneFields();
+});
+
+$("#documenti-data_pubblicazione-disp").on("focusout", function () {
+  validateDatePubblicazioneFields();
+});
+
+$("#documenti-data_rimozione-disp").on("focusout", function () {
+  validateDatePubblicazioneFields();
+});
+
+window.validateDatePubblicazioneFields = function () {
+  setTimeout(function () {
+    $('#doc-form').yiiActiveForm('validateAttribute', 'documenti-data_pubblicazione');
+    $('#doc-form').yiiActiveForm('validateAttribute', 'documenti-data_rimozione');
+  }, 1000);
+}
+JS
+);
+
+
 $form = ActiveForm::begin([
     'options' => ['enctype' => 'multipart/form-data'], // important
     'id' => 'doc-form',
@@ -236,7 +274,6 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
         <div class="row">
             <!--documenti-->
             <?php if (!$isFolder) { ?>
-
                 <div class="col-xs-12 section-form">
                     <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', 'Documenti') ?></h2>
                     <?= $this->render('boxes/box_custom_uploads_begin', [
@@ -258,15 +295,16 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 </div>
             <?php } ?>
 
-            <?php if (!$isFolder) : ?>
+            <?php if (!$isFolder){ ?>
                 <!--Allegati-->
-                <div class="col-xs-12 section-form">
-                    <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', 'Allegati') ?></h2>
-                    <?= $this->render('boxes/box_custom_uploads_begin', [
-                        'form' => $form,
-                        'model' => $model,
-                    ]); ?>
-                    <div class="row">
+                <?php if (!$offunusedfields && $module->enableDocumentAttachments) { ?>
+                    <div class="col-xs-12 section-form">
+                        <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', 'Allegati') ?></h2>
+                        <?= $this->render('boxes/box_custom_uploads_begin', [
+                            'form' => $form,
+                            'model' => $model,
+                        ]); ?>
+                        <div class="row">
 
                         <div class="col-xs-12 ">
                             <?= $form->field($model, 'documentAttachments')->widget(AttachmentsInput::classname(), [
@@ -277,23 +315,24 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                     'maxFileCount' => 100, // Client max files
                                     'showPreview' => true,
                                     'showRemove' => true,
-                                    'allowedFileExtensions' => explode(',', $documentsModule->whiteListFilesExtensions)
+                                    'allowedFileExtensions' => explode(',', $allowedExtensions)
                                 ],
                                 'enableDragAndDrop' => $enableDragAndDrop,
                             ])->label(AmosDocumenti::t('amosdocumenti', 'document_attachments'))
                                 ->hint(AmosDocumenti::t('amosdocumenti', 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta.</br> Le estensioni accettate sono: {whiteListFilesExtensions}', ['whiteListFilesExtensions' => $documentsModule->whiteListFilesExtensions])) ?>
 
-                            <?= AttachmentsList::widget([
-                                'model' => $model,
-                                'attribute' => 'documentAttachments',
-                                'enableSort' => true,
-                                'requireModalMoveFile' => $documentsModule->requireModalMoveFile
-                            ]) ?>
+                                <?= AttachmentsList::widget([
+                                    'model' => $model,
+                                    'attribute' => 'documentAttachments',
+                                    'enableSort' => true,
+                                    'requireModalMoveFile' => $documentsModule->requireModalMoveFile
+                                ]) ?>
+                            </div>
                         </div>
+                        <?= $this->render('boxes/box_custom_uploads_end', ['form' => $form, 'model' => $model]); ?>
                     </div>
-                    <?= $this->render('boxes/box_custom_uploads_end', ['form' => $form, 'model' => $model]); ?>
-                </div>
-            <?php endif; ?>
+                <?php } ?>
+            <?php } ?>
 
 
             <!--Informazioni di base-->
@@ -303,7 +342,14 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
 
                     <div class="col-xs-12">
                         <?= $this->render('boxes/box_custom_fields_begin', ['form' => $form, 'model' => $model]); ?>
-                        <?= $form->field($model, 'titolo')->textInput(['maxlength' => true, 'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')])->hint(AmosDocumenti::t('amosdocumenti', '#documents_title_field_hint')) ?>
+
+                        <!-- Titolo -->
+                        <?= $form->field($model, 'titolo')->textInput([
+                            'maxlength' => true,
+                            'placeholder' => AmosDocumenti::t('amosdocumenti', '#documents_title_field_placeholder')
+                        ])->hint(AmosDocumenti::t('amosdocumenti', 'Limite max: {x} caratteri', [
+                            'x' => !empty(\Yii::$app->params['amosDocumentiFieldTitleMaxLength']) ? \Yii::$app->params['amosDocumentiFieldTitleMaxLength'] : Documenti::FIELD_TITOLO_MAX_LENGTH
+                        ])); ?>
                     </div>
                     <?php if ($offunusedfields) { ?>
                         <div class="col-xs-12">
@@ -378,6 +424,34 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                                         'disabled' => false
                                     ],
                                     'data' => ArrayHelper::map(DocumentsUtility::getDocumentiCategorie()->orderBy('titolo')->all(), 'id', 'titolo'),
+                                    'pluginEvents' => [
+                                        "change" => "function() {
+
+                                            var id = $(this).val();
+                                            var from_date = $('#documenti-data_pubblicazione').val();
+                                            
+                                            $.post('/documenti/documenti/get-category-annual-archiving',{id:id},function(data){
+                                                $('#documenti-enable_annual_archiving').bootstrapSwitch('state', data.value);
+                                            },'json');
+                                            
+                                            var enable_countdown = $('#documenti-enable_countdown_unpublishing').bootstrapSwitch('state');
+                                            
+                                            if(enable_countdown){
+                                                $.post('/documenti/documenti/get-unpublishing-date',{id:id,from:from_date},function(data){
+                                                    if(data.response){            
+
+                                                        $('#documenti-data_rimozione-disp').val(data.value_format);
+                                                        $('#documenti-data_rimozione').val(data.value);
+                                                        var hint = $('.field-documenti-data_rimozione').find('.help-block span').attr('data-original-title');                  
+                                                        var new_hint = hint.replace(/\d+/, data.years);
+                                                        $('.field-documenti-data_rimozione').find('.help-block span').attr('data-original-title',new_hint);
+
+                                                    }
+                                                },'json');
+                                            }
+
+                                        }",
+                                    ],
                                 ]); ?>
                             </div>
                             <div class="col-xs-12 ">
@@ -699,7 +773,7 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 <?php if ($showReceiverSection) : ?>
                     <div class="col-xs-12 section-form" <?= $hidden ?>>
                         <div class="section-modalita-pubblicazione">
-                            <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#tag_title'), ['class' => 'subtitle-form']) ?>
+                            <?= Html::tag('h2', AmosDocumenti::t('amosdocumenti', '#tags_title'), ['class' => 'subtitle-form']) ?>
                             <div class="row">
                                 <div class="col-xs-12">
                                     <?=
@@ -715,9 +789,329 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                     </div>
                 <?php endif; ?>
 
+                <!--opzioni visibilità-->
+                <?php if (Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')): ?>
+
+                    <div class="col-xs-12 section-form">
+                        <div class="row">
+                            <?php if (Yii::$app->getModule('documenti')->params['site_publish_enabled']):
+                                if ($model->isNewRecord)
+                                    $model->primo_piano = 0;
+
+                            ?>
+                                <div class="col-md-6 col-xs-12">
+                                    <?= $form->field($model, 'primo_piano')->widget(Select::class, [
+                                        'auto_fill' => true,
+                                        'data' => [
+                                            '0' => AmosDocumenti::t('amosdocumenti', '#only_registered_users'),
+                                            '1' => AmosDocumenti::t('amosdocumenti', '#all_users'),
+                                        ],
+                                        'options' => [
+                                            'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->primo_piano,
+        //                                    'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
+                                            'disabled' => false,
+                                            'tabindex' => 0,
+                                            'onchange' => '
+                                                        if($(this).val() == 1) $(\'#documenti-in_evidenza\').prop(\'disabled\', false);
+                                                        if($(this).val() == 0) {
+                                                            $(\'#documenti-in_evidenza\').prop(\'disabled\', true);
+                                                            $(\'#documenti-in_evidenza\').val(0);
+                                                        }
+                                                        ',
+                                        ]
+                                        ])->hint($isFolder ? AmosDocumenti::t('amosdocumenti', '#primo_piano_hint_folder') : AmosDocumenti::t('amosdocumenti', '#primo_piano_hint'));
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (Yii::$app->getModule('documenti')->params['site_featured_enabled']): ?>
+                                <div class="col-md-6 col-xs-12">
+                                    <?= $form->field($model, 'in_evidenza')->widget(Select::class, [
+                                        'auto_fill' => true,
+                                        'data' => [
+                                            '0' => 'No',
+                                            '1' => 'Si',
+                                        ],
+                                        'options' => [
+                                            'tabindex' => 0,
+                                            'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->in_evidenza,
+                                            //'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
+                                            'disabled' => (isset($enableAgid) && true == $enableAgid) ? false : ($model->primo_piano == 1 ? false : true)
+                                        ]
+                                    ])->hint($isFolder ? AmosDocumenti::t('amosdocumenti', '#evidenza_hint_folder') : AmosDocumenti::t('amosdocumenti', '#evidenza_hint'));
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                <?php endif; ?>
+
+                <?php if($showSectionScheduledSettings) : ?>
+                    <!--pubblicazione programmata-->
+                    <div class="col-xs-12 section-form" style="<?= $hideUnusedFields ?>">
+
+                        <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', '#scheduled_settings') ?></h2>
+
+                        <?php if ($module->hidePubblicationDate == false): ?>
+                            <div class="row">
+
+                                <?php
+                                    $endPublicationDateHint = ($model->is_folder ?
+                                        AmosDocumenti::t('amosdocumenti', '#folder_end_publication_date_hint') :
+                                        ($module->enableCountdownUnpublishing ? AmosDocumenti::t('amosdocumenti', '#end_publication_date_hint',['tooltipDataRimozione' => '<span class="mdi mdi-clock-time-eight" title="' . AmosDocumenti::t('amosdocumenti', '#tooltip_end_publication_date',['years'=>$model->getUnpublishingYears()]) . '" data-toggle="tooltip"></span>']) : AmosDocumenti::t('amosdocumenti', '#end_publication_date_hint', ['tooltipDataRimozione' => '']))
+                                    );
+                                    $tooltipDataPubblicazione = ($model->is_folder ?
+                                        '<span class="mdi mdi-information-outline" title="' . AmosDocumenti::t('amosdocumenti', '#tooltip_folder_start_publication_date') . '" data-toggle="tooltip"></span>' :
+                                        '<span class="mdi mdi-information-outline" title="' . AmosDocumenti::t('amosdocumenti', '#tooltip_start_publication_date') . '" data-toggle="tooltip"></span>'
+                                    );
+                                    $startPublicationDateHint = ($model->is_folder ?
+                                        AmosDocumenti::t('amosdocumenti', '#folder_start_publication_date_hint', ['tooltipDataPubblicazione' => $tooltipDataPubblicazione]) :
+                                        AmosDocumenti::t('amosdocumenti', '#start_publication_date_hint', ['tooltipDataPubblicazione' => $tooltipDataPubblicazione])
+                                    );
+
+                                    if($documentsModule->dateFormatDocumenti === DateControl::FORMAT_DATE) {
+                                        $dateFormat = 'Y-MM-d';
+                                    } else {
+                                        $dateFormat = 'Y-MM-d HH:mm:ss';
+                                    }
+                                    if(!$model->isNewRecord) {
+                                        $model->data_rimozione = Yii::$app->getFormatter()->asDateTime($model->data_rimozione, $dateFormat);
+                                        $model->data_pubblicazione = Yii::$app->getFormatter()->asDateTime($model->data_pubblicazione, $dateFormat);
+                                    }
+                                    if (in_array($model->data_rimozione, ['9999-12-31', '9999-12-31 00:00:00'])) {
+                                        $model->data_rimozione = null;
+                                    }
+                                ?>
+
+                                <div class="col-md-6 col-xs-12">
+                                    <?= $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
+                                            'type' => $documentsModule->dateFormatDocumenti,
+                                            'widgetOptions' => [
+                                                'options' => [
+                                                    'placeholder' => \Yii::t('amosdocumenti', 'Pubblicazione immediata'),
+                                                ],
+                                                'pluginEvents' => [
+                                                    "changeDate" => "function () { validateDatePubblicazioneFields(); }",
+                                                ],
+                                            ],
+                                        ])->hint($startPublicationDateHint);
+                                    ?>
+                                </div>
+
+                                <div class="col-md-6 col-xs-12">
+                                    <?= $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
+                                            'type' => $documentsModule->dateFormatDocumenti,
+                                            'widgetOptions' => [
+                                                'options' => [
+                                                    'placeholder' => \Yii::t('amosdocumenti', 'Sempre pubblica'),
+                                                ],
+                                                'pluginEvents' => [
+                                                    "changeDate" => "function () { validateDatePubblicazioneFields(); $('#doc-form').yiiActiveForm('validateAttribute', 'documenti-date_start_archiving');}",
+                                                ],
+                                            ]
+                                        ])->hint($endPublicationDateHint);
+                                    ?>
+                                </div>
+
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="row">
+
+                            <?php if($enableCountdownUnpublishing && !$isFolder): ?>
+                                <div class="col-md-6 col-xs-12 d-flex">
+
+                                    <?= Html::tag('label',AmosDocumenti::t('amosdocumenti', '#count_down_unpublishing_document'),['class'=>'control-label']) ?>
+
+                                    <?= $form->field($model, 'enable_countdown_unpublishing')->widget(SwitchInput::class, [
+                                            'options'=>['style'=>'width:100px'],
+                                            'pluginOptions' => [
+                                                    'size' => 'medium',
+                                                    'onColor' => 'success',
+                                                    'offColor' => 'danger',
+                                                    'onText' => AmosDocumenti::t('amosdocumenti','#comments_ok'),
+                                                    'offText' => AmosDocumenti::t('amosdocumenti','#comments_no'),
+                                            ],
+                                            'pluginEvents'=>[
+                                                "switchChange.bootstrapSwitch" => "function(event,state) {
+    
+                                                    if(state){
+                                                        $('.field-documenti-data_rimozione').find('.help-block span').show();
+    
+                                                        var id = $('#documenti_categorie_id-id').val();
+                                                        var from_date = $('#documenti-data_pubblicazione').val();
+                                                        $.post('/documenti/documenti/get-unpublishing-date',{id:id,from:from_date},function(data){
+                                                            if(data.response){            
+    
+                                                                $('#documenti-data_rimozione-disp').val(data.value_format);
+                                                                $('#documenti-data_rimozione').val(data.value);
+                                                                var hint = $('.field-documenti-data_rimozione').find('.help-block span').attr('data-original-title');                  
+                                                                var new_hint = hint.replace(/\d+/, data.years);
+                                                                $('.field-documenti-data_rimozione').find('.help-block span').attr('data-original-title',new_hint);
+    
+                                                            }
+                                                        },'json');
+                                                    }else{
+                                                         $('.field-documenti-data_rimozione').find('.help-block span').hide();
+                                                    }
+    
+                                                }",
+                                            ],
+                                        ])->label(false);
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if($enableAnnualArchiving && !$isFolder): ?>
+                                <div class="col-md-6 col-xs-12 d-flex">
+
+                                    <?= Html::tag('label',AmosDocumenti::t('amosdocumenti', '#annual_archiving_document'),['class'=>'control-label']) ?>
+
+                                    <?= $form->field($model, 'enable_annual_archiving')->widget(SwitchInput::class, [
+                                            'options'=>['style'=>'width:100px'],
+                                            'pluginOptions' => [
+                                                    'size' => 'medium',
+                                                    'onColor' => 'success',
+                                                    'offColor' => 'danger',
+                                                    'onText' => AmosDocumenti::t('amosdocumenti','#comments_ok'),
+                                                    'offText' => AmosDocumenti::t('amosdocumenti','#comments_no'),
+                                            ],
+                                            'pluginEvents'=>[
+                                                "switchChange.bootstrapSwitch" => 'function(event,state) {
+    
+                                                    if(state){
+                                                        $(".archiving-options").show();
+                                                    }else{
+                                                        $(".archiving-options").hide();
+                                                    }
+    
+                                                }',
+                                            ],
+                                        ])->label(false);
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+
+                        </div>
+
+                    </div>
+                <?php endif; ?>
+
+                <!--opzioni archiviazione-->
+                <?php if($enableAnnualArchiving && !$isFolder): ?>
+                    <div class="col-xs-12 section-form archiving-options" style="display:<?= $model->enable_annual_archiving ? 'block' : 'none'?>">
+
+                        <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', '#archiving_options') ?></h2>
+
+                        <div class="row">
+
+                            <div class="col-md-4 col-xs-12">
+
+                                <?= $form->field($model, 'year')->textInput(['maxlength' => true])->hint(AmosDocumenti::t('amosdocumenti', '#year_hint')) ?>
+
+                            </div>
+
+                            <div class="col-md-4 col-xs-12">
+
+                                <?= $form->field($model, 'date_start_archiving')->widget(DateControl::className(), [
+                                        'type' => DateControl::FORMAT_DATE,
+                                        'widgetOptions' => [
+                                            'options' => [
+                                                'placeholder' => AmosDocumenti::t('amosdocumenti', '#now'),
+                                            ],
+                                            'pluginEvents' => [
+
+                                            ],
+                                        ]
+                                    ])->hint('')
+                                ?>
+
+                            </div>
+
+                            <div class="col-md-4 col-xs-12">
+
+                                <?= $form->field($model, 'stop_archiving')->widget(SwitchInput::class, [
+                                        'options'=>['style'=>'width:100px'],
+                                        'pluginOptions' => [
+                                                'size' => 'medium',
+                                                'onColor' => 'success',
+                                                'offColor' => 'danger',
+                                                'onText' => AmosDocumenti::t('amosdocumenti','#comments_ok'),
+                                                'offText' => AmosDocumenti::t('amosdocumenti','#comments_no'),
+                                        ],
+                                        'pluginEvents'=>[
+                                            "switchChange.bootstrapSwitch" => 'function(event,state) {
+
+                                                if(state){
+
+                                                }else{
+
+                                                }
+
+                                            }',
+                                        ],
+                                    ])->hint(AmosDocumenti::t('amosdocumenti', '#stop_archiving_hint'));
+                                ?>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                <?php endif; ?>
+
+                <!--opzioni commento-->
+                <?php if(!$isFolder && $commentsEnabled) : ?>
+                    <div class="col-xs-12 section-form">
+                        <h2 class="subtitle-form"><?= AmosDocumenti::t('amosdocumenti', '#options') ?></h2>
+                        <div class="row">
+
+                                <?php $model->comments_enabled = '1'; //default enable comment
+                                if($commentsEnabled) : ?>
+
+                                    <div class="col-md-6 col-xs-12">
+
+                                        <?= $form->field($model, 'comments_enabled')->widget(SwitchInput::class, [
+                                            'options'=>['style'=>'width:100px'],
+                                            'pluginOptions' => [
+                                                    'size' => 'medium',
+                                                    'onColor' => 'success',
+                                                    'offColor' => 'danger',
+                                                    'onText' => AmosDocumenti::t('amosdocumenti','#comments_ok'),
+                                                    'offText' => AmosDocumenti::t('amosdocumenti','#comments_no'),
+                                            ],
+                                            'pluginEvents'=>[
+                                                "switchChange.bootstrapSwitch" => 'function(event,state) {
+    
+                                                    if(state){
+    
+                                                    }else{
+    
+                                                    }
+    
+                                                }',
+                                            ],
+                                            ]);
+                                        ?>
+
+                                    </div>
+
+                                <?php else: ?>
+                                    <?= $form->field($model, 'comments_enabled')->hiddenInput()->label(false); ?>
+                                <?php endif; ?>
+
+                            <?php if ($moduleNotify && !empty($moduleNotify->enableNotificationContentLanguage) && $moduleNotify->enableNotificationContentLanguage): ?>
+                            <div class="col-xs-12">
+                                <?= \open20\amos\notificationmanager\widgets\NotifyContentLanguageWidget::widget(['model' => $model]) ?>
+                            </div>
+                            <?php endif; ?>
+
+                        </div>
+                    </div>
+                <?php endif; ?>
 
             </div>
-
 
             <div class="row">
                 <div class="col-md-6 col-xs-12 ">
@@ -725,333 +1119,209 @@ echo WorkflowTransitionStateDescriptorWidget::widget([
                 </div>
             </div>
 
-
         </div>
-    </div>
 
+        <div class="row">
+            <div class="col-xs-12 section-form">
+                <div style="<?= $hideUnusedFields ?>">
 
-    <div class="row">
-        <div class="col-xs-12">
-            <div style="<?= $hideUnusedFields ?>">
-
-                <?php
-                if (\Yii::$app->user->can('DOCUMENTI_PUBLISHER_FRONTEND')) :
-                    if (Yii::$app->getModule('documenti')->params['site_publish_enabled']) :
-                        if ($model->isNewRecord) {
-                            $model->primo_piano = 0;
-                        }
-                        $primoPiano = '';
-                        $primoPiano = Html::tag(
-                            'div',
-                            $form->field($model, 'primo_piano')->dropDownList(
-                                [
-                                    '0' => 'No',
-                                    '1' => 'Si',
+                    <?php if (isset($moduleSeo)) : ?>
+                        <div class="<?= $hideSeoModuleClass ?>">
+                            <?= AccordionWidget::widget([
+                                'items' => [
+                                    [
+                                        'header' => AmosDocumenti::t('amosdocumenti', 'Search Engine Optimization'),
+                                        'content' => \open20\amos\seo\widgets\SeoWidget::widget([
+                                            'contentModel' => $model,
+                                        ]),
+                                    ],
                                 ],
-                                [
-                                    'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->primo_piano,
-//                                    'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
-                                    'disabled' => false,
-                                    'tabindex' => 0,
-                                    'onchange' => '
-                                                if($(this).val() == 1) $(\'#documenti-in_evidenza\').prop(\'disabled\', false);
-                                                if($(this).val() == 0) {
-                                                    $(\'#documenti-in_evidenza\').prop(\'disabled\', true);
-                                                    $(\'#documenti-in_evidenza\').val(0);
-                                                }
-                                                ',
-                                ]
-                            ),
-                            ['class' => 'col-md-6 col-xs-12',]
-                        );
-                        ?>
+                                'headerOptions' => ['tag' => 'h2'],
+                                'options' => (Yii::$app->user->can('ADMIN') || Yii::$app->user->can('CAPOREDATTORECMS')) ? [] : ['style' => 'display:none;'],
+                                'clientOptions' => [
+                                    'collapsible' => true,
+                                    'active' => 'false',
+                                    'icons' => [
+                                        'header' => 'ui-icon-amos mdi mdi-chevron-down',
+                                        'activeHeader' => 'ui-icon-amos mdi mdi-chevron-up ',
+                                    ],
+                                ],
+                            ]);
+                            ?>
+                        </div>
                     <?php endif; ?>
 
-                    <?php if (Yii::$app->getModule('documenti')->params['site_featured_enabled']) : ?>
+                </div>
+
+                <div class="col-xs-12">
+                    <?= RequiredFieldsTipWidget::widget(['containerClasses' => 'note_asterisk']) ?>
+                </div>
+
+                <div class="col-xs-12">
+                    <!-- MANCA EMAIL DI NOTIFICA TAB -->
                     <?php
-                    $inEvidenza = '';
-                    $inEvidenza = Html::tag(
-                        'div',
-                        $form->field($model, 'in_evidenza')->dropDownList([
-                            '0' => 'No',
-                            '1' => 'Si',
-                        ], [
-                            'tabindex' => 0,
-                            'value' => (isset($enableAgid) && true == $enableAgid) ? 1 : $model->in_evidenza,
-                            'prompt' => AmosDocumenti::t('amosdocumenti', 'Seleziona...'),
-                            'disabled' => (isset($enableAgid) && true == $enableAgid) ? false : ($model->primo_piano == 1 ? false : true)
-                        ]),
-                        ['class' => 'col-md-6 col-xs-12']
-                    );
-                    ?>
-                <?php endif; ?>
-                <?php endif; ?>
-                <?php
-                $module = \Yii::$app->getModule(AmosDocumenti::getModuleName());
-                $publicationDate = '';
-                if ($module->hidePubblicationDate == false) {
-                    $endPublicationDateHint = ($model->is_folder ?
-                        AmosDocumenti::t('amosdocumenti', '#folder_end_publication_date_hint') :
-                        AmosDocumenti::t('amosdocumenti', '#end_publication_date_hint'));
-                    $publicationDate = Html::tag(
-                            'div',
-                            $form->field($model, 'data_pubblicazione')->widget(DateControl::className(), [
-                                'type' => DateControl::FORMAT_DATE
-                            ])->hint(AmosDocumenti::t('amosdocumenti', '#start_publication_date_hint')),
-                            ['class' => 'col-md-4 col-xs-12']
-                        ) .
-                        Html::tag(
-                            'div',
-                            $form->field($model, 'data_rimozione')->widget(DateControl::className(), [
-                                'type' => DateControl::FORMAT_DATE
-                            ])->hint($endPublicationDateHint),
-                            ['class' => 'col-md-4 col-xs-12']
-                        );
-                }
-                ?>
+                    if ($enableGroupNotification && !$model->is_folder) {
+                        $emailNotify = '';
+                        $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text1'));
+                        $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text2'));
 
-                <?php if (!$isFolder) {
-                    $model->comments_enabled = '1'; //default enable comment
-                    if (!is_null($commentsModule) && in_array($model->className(), $commentsModule->modelsEnabled)) {
-                        $enableComments = Html::tag(
-                            'div',
-                            $form->field($model, 'comments_enabled')->inline()->radioList(
-                                [
-                                    '1' => AmosDocumenti::t('amosdocumenti', '#comments_ok'),
-                                    '0' => AmosDocumenti::t('amosdocumenti', '#comments_no'),
+                        if (!empty($moduleGroups) && !empty($moduleCommunity) && !empty($moduleCwh)) {
+                            $entityId = null;
+                            $this->params['idUserprofileCommunity'] = [];
 
-                                ],
-                                ['class' => 'comment-choice']
-                            ),
-                            ['class' => 'col-md-4 col-xs-12']
-                        );
-                    } else {
-                        $enableComments = $form->field($model, 'comments_enabled')->hiddenInput()->label(false);
-                    }
-                }
-                ?>
-                <?php if ($moduleNotify && !empty($moduleNotify->enableNotificationContentLanguage) && $moduleNotify->enableNotificationContentLanguage) { ?>
-                    <?php
-                    $contentLanguage = "<div class=\"col-xs-6 nop\">" . \open20\amos\notificationmanager\widgets\NotifyContentLanguageWidget::widget(['model' => $model]) . "</div>"
-                    ?>
-                <?php } ?>
+                            if (isset($moduleCommunity)) {
+                                $dataProvider = new \yii\data\ActiveDataProvider([
+                                    'query' => \open20\amos\groups\models\Groups::getGroupsByParent(),
+                                ]);
+                            } else {
+                                $dataProvider = new \yii\data\ActiveDataProvider([
+                                    'query' => \open20\amos\groups\models\Groups::find()->andWhere(0),
+                                ]);
+                            }
 
-                <?= AccordionWidget::widget([
-                    'items' => [
-                        [
-                            'header' => AmosDocumenti::t('amosdocumenti', '#settings_optional'),
-                            'content' => $publicationDate . $enableComments . '<div class="clearfix"></div>' . $primoPiano . $inEvidenza . $contentLanguage,
-                        ],
-                    ],
-                    'headerOptions' => ['tag' => 'h2'],
-                    'clientOptions' => [
-                        'collapsible' => true,
-                        'active' => 'false',
-                        'icons' => [
-                            'header' => 'ui-icon-amos am am-plus-square',
-                            'activeHeader' => 'ui-icon-amos am am-minus-square',
-                        ],
-                    ],
-                ]);
-                ?>
-
-                <?php if (isset($moduleSeo)) : ?>
-                    <div class="<?= $hideSeoModuleClass ?>">
-                        <?= AccordionWidget::widget([
-                            'items' => [
-                                [
-                                    'header' => AmosDocumenti::t('amosdocumenti', '#settings_seo_title'),
-                                    'content' => \open20\amos\seo\widgets\SeoWidget::widget([
-                                        'contentModel' => $model,
-                                    ]),
-                                ],
-                            ],
-                            'headerOptions' => ['tag' => 'h2'],
-                            'options' => Yii::$app->user->can('ADMIN') ? [] : ['style' => 'display:none;'],
-                            'clientOptions' => [
-                                'collapsible' => true,
-                                'active' => 'false',
-                                'icons' => [
-                                    'header' => 'ui-icon-amos am am-plus-square',
-                                    'activeHeader' => 'ui-icon-amos am am-minus-square',
-                                ],
-                            ],
-                        ]);
-                        ?>
-                    </div>
-                <?php endif; ?>
-
-            </div>
-
-            <div class="col-xs-12">
-                <?= RequiredFieldsTipWidget::widget(['containerClasses' => 'note_asterisk']) ?>
-            </div>
-
-            <div class="col-xs-12">
-                <!-- MANCA EMAIL DI NOTIFICA TAB -->
-                <?php
-                if ($enableGroupNotification && !$model->is_folder) {
-                    $emailNotify = '';
-                    $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text1'));
-                    $emailNotify .= Html::tag('p', AmosDocumenti::t('amosdocumenti', '#email_notification_text2'));
-
-                    if (!empty($moduleGroups) && !empty($moduleCommunity) && !empty($moduleCwh)) {
-                        $entityId = null;
-                        $this->params['idUserprofileCommunity'] = [];
-
-                        if (isset($moduleCommunity)) {
-                            $dataProvider = new \yii\data\ActiveDataProvider([
-                                'query' => \open20\amos\groups\models\Groups::getGroupsByParent(),
-                            ]);
-                        } else {
-                            $dataProvider = new \yii\data\ActiveDataProvider([
-                                'query' => \open20\amos\groups\models\Groups::find()->andWhere(0),
-                            ]);
-                        }
-
-                        \yii\widgets\Pjax::begin(['id' => 'pjax-container', 'timeout' => 2000, 'clientOptions' => ['data-pjax-container' => 'grid-members']]);
-                        $pjaxContent = \open20\amos\core\views\AmosGridView::widget([
-                            'dataProvider' => $dataProviderProfiles,
-                            'id' => 'grid-members',
-                            'columns' => [
-                                'nomeCognome',
-                                [
-                                    'class' => '\kartik\grid\CheckboxColumn',
-                                    'rowSelectedClass' => \kartik\grid\GridView::TYPE_SUCCESS,
-                                    'name' => 'element-profiles',
-                                    //  'checkboxOptions' => function ($model, $key, $index, $column) {
-                                    //                                $idUserProfileComunity = $this->params['idUserprofileCommunity'];
-                                    //                                return ['value' => $model->id,
-                                    //                                    'checked' => true,
-                                    //                                ];
-                                    //                            }
-                                ],
-                            ],
-
-                        ]);
-                        \yii\widgets\Pjax::end();
-
-                        $emailNotify .= Html::tag(
-                            'div',
-                            Html::tag(
-                                'div',
-                                Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Utenti'), ['class' => 'subtitle-form']),
-                                ['class' => 'col-xs-12']
-                            ) . $pjaxContent,
-                            ['class' => 'col-xs-12 col-lg-6']
-                        );
-
-                        $emailNotify .= Html::tag(
-                            'div',
-                            Html::tag(
-                                'div',
-                                Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Gruppi'), ['class' => 'subtitle-form']),
-                                ['class' => 'col-xs-12']
-                            ) .
-                            \open20\amos\core\views\AmosGridView::widget([
-                                'dataProvider' => $dataProvider,
+                            \yii\widgets\Pjax::begin(['id' => 'pjax-container', 'timeout' => 2000, 'clientOptions' => ['data-pjax-container' => 'grid-members']]);
+                            $pjaxContent = \open20\amos\core\views\AmosGridView::widget([
+                                'dataProvider' => $dataProviderProfiles,
+                                'id' => 'grid-members',
                                 'columns' => [
-                                    'name',
-                                    'description',
-                                    [
-                                        'attribute' => 'numberGroupMembers',
-                                        'label' => AmosDocumenti::t('amosdocumenti', '#number_group_members'),
-                                    ],
+                                    'nomeCognome',
                                     [
                                         'class' => '\kartik\grid\CheckboxColumn',
                                         'rowSelectedClass' => \kartik\grid\GridView::TYPE_SUCCESS,
-                                        'name' => 'selection-groups',
-                                        // you may configure additional properties here
+                                        'name' => 'element-profiles',
+                                        //  'checkboxOptions' => function ($model, $key, $index, $column) {
+                                        //                                $idUserProfileComunity = $this->params['idUserprofileCommunity'];
+                                        //                                return ['value' => $model->id,
+                                        //                                    'checked' => true,
+                                        //                                ];
+                                        //                            }
                                     ],
                                 ],
 
-                            ]),
-                            ['class' => 'col-xs-12 col-lg-6']
-                        );
+                            ]);
+                            \yii\widgets\Pjax::end();
+
+                            $emailNotify .= Html::tag(
+                                'div',
+                                Html::tag(
+                                    'div',
+                                    Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Utenti'), ['class' => 'subtitle-form']),
+                                    ['class' => 'col-xs-12']
+                                ) . $pjaxContent,
+                                ['class' => 'col-xs-12 col-lg-6']
+                            );
+
+                            $emailNotify .= Html::tag(
+                                'div',
+                                Html::tag(
+                                    'div',
+                                    Html::tag('h2', AmosDocumenti::t('amosdocumenti', 'Gruppi'), ['class' => 'subtitle-form']),
+                                    ['class' => 'col-xs-12']
+                                ) .
+                                \open20\amos\core\views\AmosGridView::widget([
+                                    'dataProvider' => $dataProvider,
+                                    'columns' => [
+                                        'name',
+                                        'description',
+                                        [
+                                            'attribute' => 'numberGroupMembers',
+                                            'label' => AmosDocumenti::t('amosdocumenti', '#number_group_members'),
+                                        ],
+                                        [
+                                            'class' => '\kartik\grid\CheckboxColumn',
+                                            'rowSelectedClass' => \kartik\grid\GridView::TYPE_SUCCESS,
+                                            'name' => 'selection-groups',
+                                            // you may configure additional properties here
+                                        ],
+                                    ],
+
+                                ]),
+                                ['class' => 'col-xs-12 col-lg-6']
+                            );
+                        }
                     }
-                }
-                /*echo AccordionWidget::widget([
-                        'items' => [
-                        [
-                        'header' => AmosDocumenti::t('amosdocumenti', '#settings_email_notify'),
-                        'content' => $emailNotify,
-                        ]
-                        ],
-                        'headerOptions' => ['tag' => 'h2'],
-                        'clientOptions' => [
-                        'collapsible' => true,
-                        'active' => 'false',
-                        'icons' => [
-                        'header' => 'ui-icon-amos am am-plus-square',
-                        'activeHeader' => 'ui-icon-amos am am-minus-square',
-                        ]
-                        ],
-                        ]);*/
-                ?>
+                    /*echo AccordionWidget::widget([
+                            'items' => [
+                            [
+                            'header' => AmosDocumenti::t('amosdocumenti', '#settings_email_notify'),
+                            'content' => $emailNotify,
+                            ]
+                            ],
+                            'headerOptions' => ['tag' => 'h2'],
+                            'clientOptions' => [
+                            'collapsible' => true,
+                            'active' => 'false',
+                            'icons' => [
+                            'header' => 'ui-icon-amos am am-plus-square',
+                            'activeHeader' => 'ui-icon-amos am am-minus-square',
+                            ]
+                            ],
+                            ]);*/
+                    ?>
+                </div>
             </div>
+            <?php
+            $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
+                ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
+                : AmosDocumenti::t('amosdocumenti', 'Annulla');
+
+            $statusToRenderToHide = $model->getStatusToRenderToHide();
+
+            $daValidareDescription = $model->is_folder
+                ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"')
+                : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"');
+
+            $validatoDescription = $model->is_folder
+                ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"')
+                : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"');
+
+            $draftButtons = [];
+            if ($disableStandardWorkflow == false) {
+                $draftButtons = [
+                    Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-primary']),
+                        'description' => $daValidareDescription,
+                    ],
+                    Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-primary']),
+                        'description' => $validatoDescription,
+                    ],
+                    'default' => [
+                        'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-primary']),
+                        'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
+                    ],
+                ];
+            }
+
+            $enableDataConfirm = $enablePublishUnpublishFolder && !$model->is_folder;
+
+            $closeButtonUrl = !empty(\Yii::$app->request->get('urlRedirect')) ? \Yii::$app->request->get('urlRedirect') : $appController->getFormCloseUrl($model);
+            echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
+                // parametri ereditati da verioni precedenti del widget WorkflowTransition
+                'form' => $form,
+                'model' => $model,
+                'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
+                'viewWidgetOnNewRecord' => true,
+                'enableDataConfirm' => $enableDataConfirm,
+                'closeButton' => Html::a($closeButtonText, $closeButtonUrl, ['class' => 'btn btn-secondary']),
+
+                // fisso lo stato iniziale per generazione pulsanti e comportamenti
+                // "fake" in fase di creazione (il record non e' ancora inserito nel db)
+                'initialStatusName' => "BOZZA",
+                'initialStatus' => $model->getWorkflowSource()->getWorkflow(Documenti::DOCUMENTI_WORKFLOW)->getInitialStatusId(),
+
+                'statusToRender' => $statusToRenderToHide['statusToRender'],
+                'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
+
+                'draftButtons' => $draftButtons,
+            ]);
+            ?>
         </div>
-        <?php
-        $closeButtonText = ($enableVersioning && !$model->isNewRecord && $isNewVersion)
-            ? AmosDocumenti::t('amosdocumenti', '#CANCEL_NEW_VERSION')
-            : AmosDocumenti::t('amosdocumenti', 'Annulla');
-
-        $statusToRenderToHide = $model->getStatusToRenderToHide();
-
-        $daValidareDescription = $model->is_folder
-            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella in "richiesta di pubblicazione"')
-            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento in "richiesta di pubblicazione"');
-
-        $validatoDescription = $model->is_folder
-            ? AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni la cartella "pubblicato"')
-            : AmosDocumenti::t('amosdocumenti', 'le modifiche e mantieni il documento "pubblicato"');
-
-        $draftButtons = [];
-        if ($disableStandardWorkflow == false) {
-            $draftButtons = [
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_DAVALIDARE => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-primary']),
-                    'description' => $daValidareDescription,
-                ],
-                Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva'), ['class' => 'btn btn-primary']),
-                    'description' => $validatoDescription,
-                ],
-                'default' => [
-                    'button' => Html::submitButton(AmosDocumenti::t('amosdocumenti', 'Salva in bozza'), ['class' => 'btn btn-primary']),
-                    'description' => AmosDocumenti::t('amosdocumenti', 'potrai richiedere la pubblicazione in seguito'),
-                ],
-            ];
-        }
-
-        $enableDataConfirm = $enablePublishUnpublishFolder && !$model->is_folder;
-
-        $closeButtonUrl = !empty(\Yii::$app->request->get('urlRedirect')) ? \Yii::$app->request->get('urlRedirect') : $appController->getFormCloseUrl($model);
-        echo \open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget::widget([
-            // parametri ereditati da verioni precedenti del widget WorkflowTransition
-            'form' => $form,
-            'model' => $model,
-            'workflowId' => Documenti::DOCUMENTI_WORKFLOW,
-            'viewWidgetOnNewRecord' => true,
-            'enableDataConfirm' => $enableDataConfirm,
-            'closeButton' => Html::a($closeButtonText, $closeButtonUrl, ['class' => 'btn btn-outline-primary']),
-
-            // fisso lo stato iniziale per generazione pulsanti e comportamenti
-            // "fake" in fase di creazione (il record non e' ancora inserito nel db)
-            'initialStatusName' => "BOZZA",
-            'initialStatus' => $model->getWorkflowSource()->getWorkflow(Documenti::DOCUMENTI_WORKFLOW)->getInitialStatusId(),
-
-            'statusToRender' => $statusToRenderToHide['statusToRender'],
-            'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
-
-            'draftButtons' => $draftButtons,
-        ]);
-        ?>
     </div>
-
 
 <?php //echo Html::a(AmosDocumenti::t('amosdocumenti','#go_back'), \Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']);
 ?>
-<?php if ($enablePublishUnpublishFolder) { ?>
+<?php if (!$enablePublishUnpublishFolder) { ?>
     <div>
         <?= $this->render('_modal_publish_folder', ['model' => $model]) ?>
     </div>
@@ -1083,18 +1353,21 @@ $script = <<< JS
 
             ajaxPostCall(url, data, selectOptionDocumentiAgidType);
         });
-        
-        // Aggiunta del parametro nascosto per indicare al validatore che i file ci sono se caricati da databank (altrimenti non li vede)
-        $('#doc-form').on('beforeSubmit', function(e) {
-            if(execBeforeSubmit) {
-                execBeforeSubmit = 0;
-                e.preventDefault();
-                selected_file_ids = []; //manca la variabile è da errore, da fixare con il giro giusto
-                if('documentMainFile' in selected_file_ids){
-                    $('#mainDocumentNumber').val(selected_file_ids['documentMainFile'].length);
-                }
-            }
-        });
+ 
+		
+        if(typeof selected_file_ids !== 'undefined'){
+                // Aggiunta del parametro nascosto per indicare al validatore che i file ci sono se caricati da databank (altrimenti non li vede)
+                $('#doc-form').on('beforeSubmit', function(e) {
+                        if(execBeforeSubmit) {
+                                execBeforeSubmit = 0;
+                                e.preventDefault();
+                                if('documentMainFile' in selected_file_ids){
+                                        $('#mainDocumentNumber').val(selected_file_ids['documentMainFile'].length);
+                                }
+                        }
+                });
+        }    
+
     });
 
     function selectOptionDocumentiAgidType(data){

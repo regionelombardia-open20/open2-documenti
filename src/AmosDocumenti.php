@@ -24,7 +24,9 @@ use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCategorie;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiCreatedBy;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDashboard;
 use open20\amos\documenti\widgets\icons\WidgetIconDocumentiDaValidare;
+use kartik\datecontrol\DateControl;
 use Yii;
+use yii\base\BootstrapInterface;
 use yii\helpers\ArrayHelper;
 use open20\amos\core\interfaces\CmsModuleInterface;
 use open20\amos\core\interfaces\BreadcrumbInterface;
@@ -33,7 +35,7 @@ use open20\amos\core\interfaces\BreadcrumbInterface;
  * Class AmosDocumenti
  * @package open20\amos\documenti
  */
-class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface {
+class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleInterface, CmsModuleInterface, BreadcrumbInterface, BootstrapInterface {
 
     /**
      *
@@ -95,8 +97,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $defaultRequired = [
         'titolo',
         'status',
-        'descrizione_breve',
+        'descrizione_breve',       
     ];
+    
+    /**
+     * @var array $documentMainFile - default required fields in document form
+     */
+    public $documentMainFileRequired = true;
 
     /**
      * @var array $documentExtraRequiredFields - extra mandatory fields in document form
@@ -112,6 +119,11 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var bool
      */
     public $enableExtensionFilter = true;
+
+    /**
+     * @var bool Enables folder search
+     */
+    public $enableFoldersFilter = true;
 
     /**
      * @var string List of the allowed mime types.
@@ -143,7 +155,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
-    public $defaultListViews = ['list', 'grid'];
+    public $defaultListViews = ['icon','list', 'grid'];
 
     /**
      * @var array $viewPathEmailSummary
@@ -246,6 +258,16 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $enableGoogleDrive = false;
 
     /**
+     * @var bool
+     */
+    public $enableLogDocumentActivity = false;
+
+    /**
+     * @var bool
+     */
+    public $enableDocumentAttachments = true;
+
+    /**
      *
      */
     public $googleDriveConf = [
@@ -291,7 +313,7 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      */
     public $enableAgid = false;
 
-    /**
+    /**1
      *
      * @var boolean
      */
@@ -341,13 +363,13 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
     public $excludeFoldersInWGCmsUltimiDocumenti = false;
 
     /**
-     * hide create butto on explore documents action
+     * hide create button on explore documents action
      * @var bool
      */
     public $hideCreateOnExploreDocuments = false;
 
     /**
-     * hide second action butto on explore documents action
+     * hide second action button on explore documents action
      * @var bool
      */
     public $hideSecondActionOnExploreDocuments = false;
@@ -382,6 +404,44 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @var int $truncateGetPath param for string truncation on and off in the getPath function in model DocumentiCartellePath
      */
     public $truncateGetPath = false;
+    
+    /**
+     * @var bool $enableAnnualArchiving param for annual archiving options
+     */
+    public $enableAnnualArchiving = false;
+    
+    /**
+     * @var bool $enableCountdownUnpublishing param for auto unpublish a document
+     */
+    public $enableCountdownUnpublishing = false;
+	
+	
+    /**
+     * @var bool $enableGridView param for the grid view list
+     */
+    public $enableGridView = false;
+    
+    /**
+     * @var bool $enableOnlyIconView param for the icon view list only
+     */
+    public $enableOnlyIconView = false;
+    
+    /**
+     * @var bool $yearsCountdownUnpublishing param for auto unpublish a document after 5 (default) years
+     */
+    public $yearsCountdownUnpublishing = 5;
+
+    /**
+     * Format of the date used for publication range (start + end)
+     * @var string $dateFormatDocumenti
+     */
+    public $dateFormatDocumenti = DateControl::FORMAT_DATETIME;
+
+    /** If enabled, the main file will have a category equal of the document that contains it
+     * @var bool $enableAutomaticDocumentMainFileCategory
+     */
+    public $enableAutomaticDocumentMainFileCategory = false;
+
 
     /**
      * @inheritdoc
@@ -412,6 +472,16 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
 
         if (!is_array($this->defaultListViews)) {
             throw new AmosException(self::t('amosdocumenti', '#exception_msg_defaultlistviews_not_array'));
+        }
+    }
+
+    /**
+     * @param \yii\base\Application $app
+     */
+    public function bootstrap($app)
+    {
+        if ($app instanceof \yii\console\Application) {
+            $this->controllerNamespace = 'open20\amos\documents\commands';
         }
     }
 
@@ -492,7 +562,8 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
             'documenti/all-documents',
             'documenti/own-documents',
             'documenti/own-interest-documents',
-            'documenti/to-validate-documents'
+            'documenti/to-validate-documents',
+            'documenti/admin-all-documents',
         ];
     }
 
@@ -500,10 +571,28 @@ class AmosDocumenti extends AmosModule implements ModuleInterface, SearchModuleI
      * @return array
      */
     public function defaultControllerIndexRoute() {
+        $previousUrl = Yii::$app->session->get('previousUrl');
+
+        $routes = [
+            'admin-all-documents' => '/documenti/documenti/admin-all-documents',
+            'to-validate-documents' => '/documenti/documenti/to-validate-documents',
+            'own-documents' => '/documenti/documenti/own-documents',
+            'all-documents' => '/documenti/documenti/all-documents',
+        ];
+
+        foreach ($routes as $actionId => $url) {
+            if (strpos($previousUrl, '/documenti/documenti/'.$actionId) !== false) {
+                return [
+                    'documenti' => $url
+                ];
+            }
+        }
+
         return [
-            'documenti' => '/documenti/documenti/own-interest-documents',
+            'documenti' => '/documenti/documenti/own-interest-documents'
         ];
     }
+
 
     /**
      * @return array

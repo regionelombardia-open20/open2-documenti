@@ -95,6 +95,10 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
      */
     public $enableSideBar = true;
 
+    public $collapse = false;
+
+    public $maxLevels = 1;
+
     /**
      * @inheritdoc
      */
@@ -225,8 +229,9 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
 
 
 
-        $lastyear = date('Y') - $this->years;
-        $query->andWhere(['>', new \yii\db\Expression('YEAR(documenti.created_at)'), $lastyear]);
+        $lastyear = isset($this->years) ? (date('Y') - $this->years) : null;
+        if (isset($lastyear))
+            $query->andWhere(['>', new \yii\db\Expression('YEAR(documenti.created_at)'), $lastyear]);
         $query->select(new \yii\db\Expression("concat(YEAR(documenti.created_at), '-', MONTH(documenti.created_at)) as titolodate, documenti.titolo, YEAR(documenti.created_at) anno, MONTH(documenti.created_at) mese, documenti.id id"));
         $query->groupBy('anno, mese');
         $query->orderBy('anno, mese DESC');
@@ -494,7 +499,10 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
         $active = '';
 
         $icon    = '<span class="icon icon-folder icon-sm mdi mdi-folder mr-1"></span>';
-        $arrow   = '<span class="icon icon-arrow icon-sm mdi mdi-chevron-right ml-1"></span>';
+        if ($lvl >= $this->maxLevels)
+            $arrow = '';
+        else
+            $arrow = '<span class="icon icon-arrow icon-sm mdi mdi-chevron-right ml-1"></span>';
         $content = $icon.date('Y').$arrow;
 
 
@@ -523,10 +531,10 @@ class WidgetGraphicsHierarchicalDocumentsBefeByDate extends WidgetGraphic
         $options                = ['title' => $titolo, 'class' => 'hierarchical-link text-black text-decoration-none font-weight-normal'];
 
         if ($lvl > 0) {
-            $element = '<div class="hierarchical-element ml-'.$lvl.' px-2 py-2 bg-white mb-3 font-weight-normal '.$active.'">'.Html::a($content,
+            $element = '<div style="margin-left: '.$lvl.'rem;" class="hierarchical-element px-2 py-2 bg-white mb-3 font-weight-normal '.$active.'" data-root="'.$parent.'" data-level="'.$lvl.'" data-active="'.$active.'">'.Html::a($content,
                     $url, $options).'</div>';
         } else {
-            $element = '<div class="hierarchical-element px-2 py-2 bg-white mb-3 '.$active.'">'.Html::a($content, $url,
+            $element = '<div class="hierarchical-element px-2 py-2 bg-white mb-3 '.$active.'" data-root="'.$parent.'" data-level="'.$lvl.'" data-active="'.$active.'">'.Html::a($content, $url,
                     $options).'</div>';
         }
 

@@ -203,6 +203,9 @@ class DocumentiCategorieController extends CrudController
         $this->setUpLayout('form');
 
         $this->model = $this->documentsModule->createModel('DocumentiCategorie');
+        
+        if($this->documentsModule->enableCountdownUnpublishing)
+            $this->model->years_countdown_unpublishing = $this->documentsModule->yearsCountdownUnpublishing;
 
         if ($this->model->load(Yii::$app->request->post())) {
             if ($this->model->validate()) {
@@ -238,6 +241,10 @@ class DocumentiCategorieController extends CrudController
         $this->model = $this->findModel($id);
         $this->model->loadDocumentiCategoryCommunities();
         $this->model->loadDocumentiCategoryRoles();
+        
+        if($this->documentsModule->enableCountdownUnpublishing && empty($this->model->years_countdown_unpublishing))
+            $this->model->years_countdown_unpublishing = $this->documentsModule->yearsCountdownUnpublishing;
+
 
         if ($this->model->load(Yii::$app->request->post())) {
             if ($this->model->validate()) {

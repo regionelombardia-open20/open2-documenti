@@ -13,6 +13,7 @@ namespace open20\amos\documenti\models;
 
 use yii\helpers\ArrayHelper;
 use open20\amos\attachments\behaviors\FileBehavior;
+use open20\amos\documenti\AmosDocumenti;
 
 /**
  * This is the model class for table "documenti_categorie".
@@ -37,10 +38,23 @@ class DocumentiCategorie extends \open20\amos\documenti\models\base\DocumentiCat
      */
     public function rules()
     {
-        return ArrayHelper::merge(parent::rules(), [
+        $rules = ArrayHelper::merge(parent::rules(), [
             [['documentCategoryImage'], 'file', 'extensions' => 'jpeg, jpg, png, gif','maxFiles' => 1, 'mimeTypes'=>'image/*'],
-            [['documentiCategoryRoles' ,'documentiCategoryCommunities','visibleToCommunityRole'], 'safe']
+            [['documentiCategoryRoles' ,'documentiCategoryCommunities','visibleToCommunityRole'], 'safe'],
+            [['years_countdown_unpublishing'],'required',
+                'when' => function ($model) {
+                    return $model->enable_countdown_unpublishing;
+                }, 'whenClient' => "function(attribute, value) {
+                        var enable = $('#documenticategorie-enable_countdown_unpublishing').prop('checked');                                
+                        return enable;
+                }",
+                'message' => AmosDocumenti::t('amosdocumenti', '#years_countdown_unpublishing_required')
+            ],
         ]);
+        if($this->enable_countdown_unpublishing) {
+            $rules = ArrayHelper::merge($rules, [['years_countdown_unpublishing'], 'integer', 'min' => 1, 'max' => 99]);
+        }
+        return $rules;
     }
 
     /**

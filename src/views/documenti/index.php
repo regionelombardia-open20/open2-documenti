@@ -15,26 +15,64 @@ use open20\amos\core\utilities\ModalUtility;
 use open20\amos\core\views\DataProviderView;
 use open20\amos\documenti\AmosDocumenti;
 use open20\amos\documenti\models\Documenti;
-use open20\amos\documenti\models\DocumentiCartellePath;
-use open20\amos\documenti\models\search\DocumentiSearch;
 use open20\amos\documenti\utility\DocumentsUtility;
 use open20\amos\documenti\widgets\DocumentsOwlCarouselWidget;
-
-if ($currentView['name'] == 'expl') {
-    echo $this->render('_explorer', []);
-    return null;
-}
-
-$moduleCwh = \Yii::$app->getModule('cwh');
-isset($moduleCwh) ? $showReceiverSection = true : null;
-isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
 
 /**
  * @var yii\web\View $this
  * @var yii\data\ActiveDataProvider $dataProvider
  * @var open20\amos\documenti\models\search\DocumentiSearch $model
  * @var \open20\amos\dashboard\models\AmosUserDashboards $currentDashboard
+ * @var array $previousDocumentParentIds
+ * @var array $currentView
  */
+
+
+$js = <<<JS
+    // Toggle active class to row expanded/collapsed
+    var grid = $('#admin-all-documents-grid');
+    grid.on('kvexprow:toggle', function (event, ind, key, extra, state) {
+        var tr = $(this).find('tr[data-key="' + key + '"]');
+        tr.toggleClass('active');
+    });
+    // Add active class to row expanded by default if previousDocumentParentIds is not empty
+    grid.on('kvexprow:loaded', function (event, ind, key, extra) {
+        var tr = $(this).find('tr[data-key="' + key + '"]');
+        tr.addClass('active');
+    });
+
+JS;
+$this->registerJs($js);
+
+$jsCount = <<<JS
+    $('.link-document-id').click(function() {
+        var idDoc = $(this).attr('data-key');
+        $.ajax({
+           url: 'increment-count-download-link?id='+idDoc,
+           type: 'get',
+           success: function (data) {
+           }
+
+      });
+    })
+JS;
+
+$this->registerJs($jsCount);
+
+if ($currentView['name'] == 'expl') {
+    echo $this->render('_explorer', []);
+    return null;
+}
+
+/*
+if ($currentView['name'] == 'grid') {
+    $dataProvider->pagination = false;
+}
+*/
+
+$moduleCwh = \Yii::$app->getModule('cwh');
+isset($moduleCwh) ? $showReceiverSection = true : null;
+isset($moduleCwh) ? $scope = $moduleCwh->getCwhScope() : null;
 
 /** @var \open20\amos\documenti\controllers\DocumentiController $controller */
 $controller = Yii::$app->controller;
@@ -45,52 +83,114 @@ $foldersEnabled = $controller->documentsModule->enableFolders;
 $enableCategories = $controller->documentsModule->enableCategories;
 $hidePubblicationDate = $controller->documentsModule->hidePubblicationDate;
 $showCountDocumentRecursive = $controller->documentsModule->showCountDocumentRecursive;
+$enableVersioning = $controller->documentsModule->enableDocumentVersioning;
 
+$queryParams = \Yii::$app->request->getQueryParams();
 $parentId = \Yii::$app->request->get('parentId');
+
 if (!empty($parentId)) {
     $folder = Documenti::findOne($parentId);
     if ($folder) {
-        $statusFolder = '';
-        if ($model->status != \open20\amos\documenti\models\Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
-            $statusFolder = "<span style='color:#777777' class='m-l-5'><i> (". AmosDocumenti::t('amosdocumenti', $folder->status) . ") </i></span>";
-        }
-        $this->params['subTitleSection'] = '<span class="icon icon-folder icon-sm mdi mdi-folder "></span>'.ucfirst($folder->getTitle()).$statusFolder;
-        $this->params['subTitleAdditionalClass'] = 'lead m-t-10';
+        $isTeams = !empty($folder->msgraph_drive_item_id) ? true : false;
 
+        $statusFolder = '';
+        if ($model && $model->status != \open20\amos\documenti\models\Documenti::DOCUMENTI_WORKFLOW_STATUS_VALIDATO) {
+            $statusFolder = "<span style='color:#777777' class='m-l-5'><i> (" . AmosDocumenti::t('amosdocumenti', $folder->status) . ") </i></span>";
+        }
+        $this->params['subTitleSection'] = '<span class="icon  icon-sm mdi mdi-folder-open"></span>' . '<span class="label-root-folder">' . AmosDocumenti::t('amosdocumenti', 'Sei in: ') . '</span> '
+            . \open20\amos\documenti\widgets\DocumentiTreeInfo::widget(['parentId' => $parentId, 'isTeams' => $isTeams]);
+        $this->params['subTitleAdditionalClass'] = 'lead m-t-10';
+    }
+}
+$documentsModule = AmosDocumenti::instance();
+$moduleCommunity = \Yii::$app->getModule('community');
+$linkTeams = null;
+if ($moduleCommunity && $moduleCommunity->enableMicrosoftTeams && $scope) {
+    if (isset($scope['community'])) {
+        $communityId = $scope['community'];
+        $community = \open20\amos\community\models\Community::findOne($communityId);
+        if ($community) {
+            $msBuilder = new \open20\amos\community\models\clients\MsGraphBuilder();
+            $profile = \open20\amos\admin\models\UserProfile::find()->andWhere(['user_id' => \Yii::$app->user->id])->one();
+            if($profile && $profile->enable_msgraph && class_exists('open20\amos\community\models\CommunityMsgraphTokens')) {
+                $isConnected = \open20\amos\community\models\CommunityMsgraphTokens::find()->andWhere(['user_id' => \Yii::$app->user->id])->count();
+                if ($isConnected && method_exists($msBuilder, 'getLinkChannelFiles')) {
+                    $linkTeams = $msBuilder->getLinkChannelFiles($community);
+                }
+            }
+        }
     }
 }
 
-$documentsModule = AmosDocumenti::instance();
+if ($linkTeams) {
+    $labelOpenOnTeams = '<span class="mdi mdi-microsoft-teams mdi-24px m-r-5"></span>'
+        . '<strong>' . AmosDocumenti::t('amosdocumenti', "Apri documenti in teams") . '</strong>'
+        . '<span class="icon mdi mdi-open-in-new m-l-5"></span>';
+    echo Html::a($labelOpenOnTeams, $linkTeams, ['target' => '_blank', 'class' => 'color-ms-teams']);
+}
 
 $columns = [];
 if ($foldersEnabled) {
-    $columns['type'] = [
-        'label' => AmosDocumenti::t('amosdocumenti', '#type'),
-        'format' => 'html',
+    // Expand row
+    $columns['expandAllTitle'] = [
+        'width' => '2%',
+        'class' => 'kartik\grid\ExpandRowColumn',
+        'expandTitle' => AmosDocumenti::t('amosdocumenti', 'Espandi cartella'),
+        'collapseTitle' => AmosDocumenti::t('amosdocumenti', 'Comprimi cartella'),
+        'expandOneOnly' => false,
+        'detailRowCssClass' => '',
+        'allowBatchToggle' => false,
+        'extraData' => [
+            'actionId' => $actionId,
+            'queryParams' => $queryParams,
+            'previousDocumentParentIds' => $previousDocumentParentIds,
+        ],
+        //            'header' => AmosDocumenti::t('amosdocumenti', 'Expand / Collapse'),
+        //            'headerOptions' => [
+        //                'style' => 'white-space: nowrap;',
+        //            ],
+        //            'expandIcon' => Html::tag('span', '', ['class' => 'mdi mdi-plus']),
+        //            'collapseIcon' => Html::tag('span', '', ['class' => 'mdi mdi-minus']),
+        'value' => function ($model, $key, $index, $column) use ($controller, $previousDocumentParentIds) {
+            /** @var Documenti $model */
+            if (!empty($previousDocumentParentIds) && $model->is_folder && in_array($model->id, $previousDocumentParentIds)) {
+                return \kartik\grid\GridView::ROW_EXPANDED;
+            }
+            if ($model->is_folder && $model->hasChildren()) {
+                return \kartik\grid\GridView::ROW_COLLAPSED;
+            }
+            return '';
+        },
+        'disabled' => function ($model, $key, $index, $column) {
+            /** @var Documenti $model */
+            if (!$model->is_folder || ($model->is_folder && !$model->hasChildren())) {
+                return true;
+            }
+            return false;
+        },
+        'detailUrl' => \yii\helpers\Url::to(['/documenti/documenti/expand-folder-documents'])
+    ];
+    // Status
+    $columns['status'] = [
+        'label' => AmosDocumenti::t('amosdocumenti', 'Stato'),
         'value' => function ($model) {
             /** @var Documenti $model */
-            $title = AmosDocumenti::t('amosdocumenti', 'Documenti');
-            if ($model->is_folder) {
-                $title = AmosDocumenti::t('amosdocumenti', '#folder');
-            } else {
-                $documentFile = $model->getDocumentMainFile();
-                if ($documentFile) {
-                    $title = $documentFile->type;
-                }
-            }
-
-            if(\Yii::$app->params['befe']){
-                return DocumentsUtility::getDocumentIcon($model);
-            }else {
-                $icon = DocumentsUtility::getDocumentIcon($model, true);
-                if ($model->drive_file_id) {
-                    return AmosIcons::show($icon, ['title' => $title], 'dash') . AmosIcons::show('google-drive', ['class' => 'google-sync'], 'am');
-                } else {
-                    return AmosIcons::show($icon, ['title' => $title], 'dash');
-                }
-            }
-        }
+            return $model->getStatusIcon();
+        },
+        'format' => 'raw',
+        'width' => '2%'
     ];
+    // Type
+    $columns['type'] = [
+        'label' => AmosDocumenti::t('amosdocumenti', '#type'),
+        'format' => 'raw',
+        'value' => function ($model) {
+            /** @var Documenti $model */
+            return $model->getFileTypeIcon();
+        },
+        'width' => '2%'
+    ];
+    // Titolo
     $columns['titolo'] = [
         'attribute' => 'titolo',
         'headerOptions' => [
@@ -100,74 +200,66 @@ if ($foldersEnabled) {
             'headers' => $model->getAttributeLabel('titolo')
         ],
         'format' => 'raw',
-        'value' => function ($model) use ($actionId) {
-            $stringa = DocumentiCartellePath::getPath($model);
-            if ($model->is_folder) { 
-                $options =   [
-                    'title' => AmosDocumenti::t('amosdocumenti', 'Apri la cartella ')
-                        . '"'
-                        . $stringa
-                        . $model->titolo
-                        . '"'
-                ];
-            } else {
-                $options =   [
-                    'title' => AmosDocumenti::t('amosdocumenti', 'Scarica il documento ')
-                    . '"'
-                    . $stringa
-                    . $model->titolo
-                    . '"'
-                ];
-           }
-            /** @var Documenti $model */
-            $title = $model->titolo;
-            $append = '';
-            if ($model->is_folder) {
-                $url = [$actionId, 'parentId' => $model->id];
-            } else {
-                $url = '';
-                $document = $model->getDocumentMainFile();
-                if ($document) {
-                    $append = ' ('.$document->formattedSize.')';
-                    $url = $document->getUrl();
-                } else {
-                    $url = $model->link_document;
-                    $options['target'] = '_blank';
-                }
-            }
-
-            return Html::a(
-                $title,
-                $url,
-                $options
-            );
-        }
-    ];
-
-    $columns['downloads'] = [
-        'label' => AmosDocumenti::t('amosdocumenti', '#num_downloads'),
         'value' => function ($model) {
             /** @var Documenti $model */
-            if ($model->is_folder) {
-                return '';
-            } else {
-                $numDown = 0;
-                $file = $model->getDocumentMainFile();
-                if (!is_null($file)) {
-                    $numDown = $file->getNumDownloads();
-                }
-                return $numDown;
-            }
+            return $model->getTitleGridView();
         },
+        'width' => '40%'
     ];
-
-    if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
-        $columns['updated_by'] = [
-            'attribute' => 'updatedUserProfile',
-            'label' => AmosDocumenti::t('amosdocumenti', '#updated_by'),
+    if ($enableCategories) {
+        // Categoria
+        $columns['documenti_categorie_id'] = [
+            'attribute' => 'documentiCategorie.titolo',
+            'label' => AmosDocumenti::t('amosdocumenti', 'Categoria'),
             'value' => function ($model) {
                 /** @var Documenti $model */
-                $profile = \open20\amos\admin\models\UserProfile::find()->andWhere(['user_id' => $model->updated_by])->one();
+                if ($model->documentiCategorie) {
+                    return $model->documentiCategorie->titolo;
+                }
+
+                return '';
+            },
+            'width' => '15%'
+        ];
+    }
+
+    // Numero downloads
+    //    $columns['downloads'] = [
+    //        'label' => AmosDocumenti::t('amosdocumenti', '#num_downloads'),
+    //        'value' => function ($model) {
+    //            /** @var Documenti $model */
+    //            if ($model->is_folder) {
+    //                return '';
+    //            } else {
+    //                $numDown = 0;
+    //                $file = $model->getDocumentMainFile();
+    //                if (!is_null($file)) {
+    //                    $numDown = $file->getNumDownloads();
+    //                }
+    //                return $numDown;
+    //            }
+    //        },
+    //    ];
+
+    // Caricato da
+    if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
+        $columns['created_by'] = [
+            'attribute' => 'createdUserProfile',
+            'label' => AmosDocumenti::t('amosdocumenti', 'Caricato da'),
+            'width' => '15%'
+        ];
+    }
+
+    // Ultima modifica
+    if (!isset(\Yii::$app->params['hideListsContentCreatorName']) || (\Yii::$app->params['hideListsContentCreatorName'] === false)) {
+        $columns['updated_by'] = [
+            'label' => AmosDocumenti::t('amosdocumenti', 'Ultima modifica'),
+            'value' => function ($model) {
+                /** @var Documenti $model */
+                $profile = \open20\amos\admin\models\UserProfile::find()
+                    ->andWhere(['user_id' => $model->updated_by])
+                    ->one();
+
                 if (empty($profile)) {
                     return '';
                 }
@@ -176,33 +268,32 @@ if ($foldersEnabled) {
                     return $profile->nomeCognome;
                 }
 
-                return Html::a(
-                    $profile->nomeCognome,
-                    $profile->getFullViewUrl(),
-                    [
-                        'title' => AmosDocumenti::t('amosdocumenti', 'Apri il profilo di {nome_profilo}', ['nome_profilo' => $profile->nomeCognome])
-                    ]
-                );
+                return Html::a($profile->nomeCognome, $profile->getFullViewUrl(), [
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Apri il profilo di {nome_profilo}', [
+                        'nome_profilo' => $profile->nomeCognome
+                    ])
+                ]);
             },
-            'format' => 'html'
+            'format' => 'html',
+            'width' => '15%'
         ];
     }
 
-    $columns[] = [
-        'label' => AmosDocumenti::t('amosdocumenti', 'Documents'),
-        'value' => function ($model) use ($showCountDocumentRecursive) {
-            /** @var Documenti $model */
-            if ($model->is_folder) {
-                if ($showCountDocumentRecursive) {
-                    return count($model->allDocumentChildrens);
-                } else {
-                    return count($model->documentChildrens);
-                }
-            } else {
-                return '';
-            }
-        },
-    ];
+    //    $columns[] = [
+    //        'label' => AmosDocumenti::t('amosdocumenti', 'Documents'),
+    //        'value' => function ($model) use ($showCountDocumentRecursive) {
+    //            /** @var Documenti $model */
+    //            if ($model->is_folder) {
+    //                if ($showCountDocumentRecursive) {
+    //                    return count($model->allDocumentChildrens);
+    //                } else {
+    //                    return count($model->documentChildrens);
+    //                }
+    //            } else {
+    //                return '';
+    //            }
+    //        },
+    //    ];
 } else {
     $columns['titolo'] = [
         'attribute' => 'titolo',
@@ -219,24 +310,30 @@ if ($foldersEnabled) {
     }
 }
 
-$columns['status'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', 'Stato'),
-    'value' => function ($model) {
-        /** @var Documenti $model */
-        return AmosDocumenti::t('amosdocumenti', $model->status);
-    },
-    'attribute' => 'status'
-];
+// Data pubblicazione
+//$columns['data_pubblicazione'] = [
+//    'label' => AmosDocumenti::t('amosdocumenti', '#uploaded_at'),
+//    'attribute' => 'data_pubblicazione',
+//    'value' => function ($model) {
+//        /** @var Documenti $model */
+//        return is_null($model->data_pubblicazione)
+//            ? AmosDocumenti::t('amosdocumenti', 'Subito')
+//            : Yii::$app->formatter->asDate($model->data_pubblicazione);
+//    }
+//];
 
-$columns['data_pubblicazione'] = [
-    'label' => AmosDocumenti::t('amosdocumenti', '#uploaded_at'),
-    'attribute' => 'data_pubblicazione',
+// Data ultima modifica
+$columns['updated_at'] = [
+    'label' => AmosDocumenti::t('amosdocumenti', 'Data ultima modifica'),
+    'attribute' => 'updated_at',
     'value' => function ($model) {
         /** @var Documenti $model */
-        return is_null($model->data_pubblicazione)
-            ? AmosDocumenti::t('amosdocumenti', 'Subito')
-            : Yii::$app->formatter->asDate($model->data_pubblicazione);
-    }
+        if (!is_null($model->updated_at)) {
+            return date_format(date_create($model->updated_at), 'd/m/Y H:i');
+        }
+        return '';
+    },
+    'width' => '15%'
 ];
 
 if (!$foldersEnabled) {
@@ -261,19 +358,24 @@ if (!$foldersEnabled) {
     ];
 }
 
-if ($enableCategories) {
-    $columns['documenti_categorie_id'] = [
-        'attribute' => 'documentiCategorie.titolo',
-        'label' => AmosDocumenti::t('amosdocumenti', 'Categoria'),
-    ];
-}
+// Versione
+//if ($controller->documentsModule->enableDocumentVersioning) {
+//    $columns['version'] = [
+//        'attribute' => 'version',
+//        'value' => function ($model) {
+//            /** @var Documenti $model */
+//            return (!$model->is_folder && $model->version ? $model->version : '');
+//        },
+//    ];
+//}
 
-if ($controller->documentsModule->enableDocumentVersioning) {
-    $columns['version'] = [
-        'attribute' => 'version',
+if ($controller->documentsModule->enableAnnualArchiving) {
+    $columns['archiving'] = [
+        'label' => AmosDocumenti::t('amosdocumenti', '#archiviazione'),
         'value' => function ($model) {
             /** @var Documenti $model */
-            return (!$model->is_folder && $model->version ? $model->version : '');
+            $stato = $model->getArchiving();
+            return $stato === 0 ? AmosDocumenti::t('amosdocumenti', '#in_corso') : $stato;
         },
     ];
 }
@@ -291,47 +393,6 @@ $exportColumns['type'] = [
         return $return;
     }
 ];
-
-if ($controller->documentsModule->enableDocumentVersioning && !$model->is_folder) {
-    $columns['expandAllTitle'] = [
-        'class' => 'kartik\grid\ExpandRowColumn',
-        'expandAllTitle' => AmosDocumenti::t('amosdocumenti', 'Version'),
-        'allowBatchToggle' => false,
-        'header' => AmosDocumenti::t('amosdocumenti', 'Expand / Collapse'),
-        'headerOptions' => [
-            'style' => 'white-space: nowrap;',
-        ],
-        'contentOptions' => [
-            'class' => 'text-center',
-        ],
-        'value' => function ($model, $key, $index, $column) use ($controller) {
-            /** @var Documenti $model */
-            $queryParams = \Yii::$app->request->getQueryParams();
-            $queryParams['parent_id'] = $model->id;
-
-            /** @var DocumentiSearch $modelSearch */
-            $modelSearch = $controller->documentsModule->createModel('DocumentiSearch');
-            /** @var  $dataProvider \yii\data\ActiveDataProvider */
-            $dataProvider = $modelSearch->searchVersions($queryParams);
-
-            if (!$model->is_folder && $dataProvider->count > 0) {
-                return \kartik\grid\GridView::ROW_COLLAPSED;
-            } else
-                return '';
-        },
-        'expandIcon' => AmosIcons::show(
-            'caret-down',
-            ['title' => AmosDocumenti::t('amosdocumenti', '#expand_title')]
-        ),
-        'collapseIcon' => AmosIcons::show(
-            'caret-up',
-            ['title' => AmosDocumenti::t('amosdocumenti', '#collapse_title')]
-        ),
-        'expandTitle' => AmosDocumenti::t('amosdocumenti', ''),
-        'collapseTitle' => AmosDocumenti::t('amosdocumenti', ''),
-        'detailUrl' => \yii\helpers\Url::to(['/documenti/documenti/list-only'])
-    ];
-}
 
 $deleteOptions = DocumentsUtility::getGridActionColumnsButtonsOptions('delete');
 $deleteOptions['data-confirm'] = function ($model) {
@@ -375,15 +436,17 @@ $actionColumns = [
         'move' => function ($url, $model) use ($documentsModule) {
             /** @var Documenti $model */
             $btn = '';
-            
-            if (Yii::$app->getUser()->can('DOCUMENTI_READ', ['model' => $model]) 
-                    && $documentsModule->enableMoveDoc 
-                    ) {
-                $btn = \yii\helpers\Html::a(AmosIcons::show('swap'),'#modalMove', [
-                        'class' => 'open-modalMove btn btn-tools-secondary',
-                        'data-toggle' => 'modal',
-                        'data-id' => $model->id,
-                    ]);
+
+            if (
+                Yii::$app->getUser()->can('DocumentValidate', ['model' => $model])
+                && $documentsModule->enableMoveDoc
+            ) {
+                $btn = \yii\helpers\Html::a(AmosIcons::show('swap'), '#modalMove', [
+                    'class' => 'open-modalMove btn btn-tools-secondary',
+                    'data-toggle' => 'modal',
+                    'data-id' => $model->id,
+                    'title' => AmosDocumenti::t('amosdocumenti', 'Sposta documento'),
+                ]);
             }
             return $btn;
         },
@@ -483,21 +546,25 @@ $columns[] = $actionColumns;
 ?>
 
 <?php
-if($documentsModule->enableMoveDoc){
-        echo $this->render('_move_document', [
-            'parentId' => $parentId,
-    ]); 
-
+if ($documentsModule->enableMoveDoc) {
+    echo $this->render('_move_document', [
+        'parentId' => $parentId,
+    ]);
 }
 ?>
 
 
-
-
-
 <div class="documents-index">
     <?php
-    echo $this->render('_search', ['model' => $model, 'originAction' => Yii::$app->controller->action->id]);
+    echo $this->render('_search', [
+        'model' => $model,
+        'originAction' => Yii::$app->controller->action->id,
+        'queryParams' => $queryParams
+    ]);
+    echo $this->render('_order', [
+        'model' => $model,
+        'queryParams' => $queryParams
+    ]);
 
     echo DocumentsOwlCarouselWidget::widget([
         'owlCarouselId' => 'documentOwlCarousel',
@@ -542,6 +609,9 @@ if($documentsModule->enableMoveDoc){
         'dataProvider' => $dataProvider,
         'currentView' => $currentView,
         'gridView' => [
+            'options' => [
+                'id' => 'admin-all-documents-grid',
+            ],
             'rowOptions' => function ($model) {
                 return ['class' => 'kv-disable-click'];
             },
@@ -552,6 +622,13 @@ if($documentsModule->enableMoveDoc){
             'itemView' => '_item',
             'showItemToolbar' => false,
         ],
+        'iconView' => [
+            'itemView' => '_icon',
+            'itemOptions' => [
+                'role' => 'option',
+                'class' => 'card-icon-wrapper',
+            ],
+        ],
         'exportConfig' => [
             'exportEnabled' => true,
             'exportColumns' => $exportColumns
@@ -559,3 +636,20 @@ if($documentsModule->enableMoveDoc){
     ]);
     ?>
 </div>
+<script>
+    // Seleziona tutti i div con la classe 'folder-card'
+    var folderCards = document.querySelectorAll('.folder-card');
+
+    // Se c'è almeno un elemento
+    if (folderCards.length > 0) {
+        // Seleziona l'ultimo elemento
+        var lastFolderCard = folderCards[folderCards.length - 1];
+
+        // Aggiungi la classe 'last-folder-card' all'ultimo elemento
+        lastFolderCard.classList.add('last-folder-card');
+
+        // Aggiungi la classe 'last-folder-card' anche al padre dell'ultimo elemento
+        var parentOfLastFolderCard = lastFolderCard.parentNode;
+        parentOfLastFolderCard.classList.add('last-folder-card-parent');
+    }
+</script>

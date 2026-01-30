@@ -37,8 +37,9 @@ ModuleDocumentiHierarchyBefeAsset::register($this);
 ?>
 <?php
 $redirectLink = '';
-if (!Yii::$app->getUser()->can('DocumentValidate'))
+if (!Yii::$app->getUser()->can('DocumentValidate')){
     $redirectLink = '/documenti/documenti/own-documents?download=1%26currentView=grid';
+}
 
 $titleSection = AmosDocumenti::t('amosdocumenti', 'Esplora documenti');
 $urlLinkAll = '/documenti/documenti/all-documents';
@@ -72,7 +73,7 @@ if (method_exists($controller, 'getManageLinks')) {
     }
 
     $categories = (!empty($widget->categories) ? '&categories=' . $widget->categories : '');
-    Pjax::begin(['id' => $toRefreshSectionId, 'enablePushState' => false, 'timeout' => 15000]);
+    Pjax::begin(['id' => $toRefreshSectionId, 'enablePushState' => false, 'timeout' => 60000]);
     $parentId = $widget->parentId;
 
     $addParentId = '';
@@ -110,7 +111,7 @@ if (method_exists($controller, 'getManageLinks')) {
                     $.pjax.reload({
                         container: '#$toRefreshSectionId',
                         url: url + $(this).val() + '$categories',
-                        timeout: 15000,
+                        timeout: 60000,
                         push: false,
                         replace: false
                     });
@@ -144,80 +145,111 @@ if (method_exists($controller, 'getManageLinks')) {
         </div>
         <div class="row hierarchical-widget">
             <?php if ($widget->enableSideBar == true) { ?>
-            <div id="hierarchical-widget-address-bar-id" class="hierarchical-widget-address-bar col-sm-4 col-xs-12 mx-2 mx-md-0">
-                <?php } else { ?>
+                <div id="hierarchical-widget-address-bar-id" class="hierarchical-widget-address-bar col-sm-4 col-xs-12 mx-2 mx-md-0">
+            <?php } else { ?>
                 <div id="hierarchical-widget-address-bar-id" class="hierarchical-widget-address-bar col-xs-12 mb-3">
-                    <?php } ?>
+            <?php } ?>
                     <?php echo $widget->getNavBar() ?>
-                </div>
-                <?php if ($widget->enableSideBar == true) { ?>
+            </div>
+            <?php if ($widget->enableSideBar == true) { ?>
                 <div id="hierarchical-widget-list-id" class="col-sm-8 col-xs-12 hierarchical-widget-list">
-                    <?php } else { ?>
-                    <div id="hierarchical-widget-list-id" class="col-xs-12 hierarchical-widget-list">
-                        <?php } ?>
-                        <div class="row" role="listbox" data-role="list-view">
-                            <?php if ($dataProviderFolders->count > 0) {
-                                ?>
-                                <?php foreach ($dataProviderFolders->getModels() as $modelF) {
-                                    $mainDocument = $modelF->documentMainFile;
-                                    $relationQuery = $modelF->getCreatedUserProfile();
-                                    $relationCreated = CachedActiveQuery::instance($relationQuery);
-                                    $relationCreated->cache(60);
-                                    $createdUserProfile = $relationCreated->one(); ?>
+            <?php } else { ?>
+                <div id="hierarchical-widget-list-id" class="col-xs-12 hierarchical-widget-list">
+            <?php } ?>
+            </div>
+            <div class="row" role="listbox" data-role="list-view">
+                <?php if ($dataProviderFolders->count > 0) {
+                    ?>
+                    <?php
+                    foreach ($dataProviderFolders->getModels() as $modelF) {
+                        $mainDocument = $modelF->documentMainFile;
+                        $relationQuery = $modelF->getCreatedUserProfile();
+                        $relationCreated = CachedActiveQuery::instance($relationQuery);
+                        $relationCreated->cache(60);
+                        $createdUserProfile = $relationCreated->one(); ?>
 
-                                    <?=
-                                    ItemDocumentCardWidget::widget(
-                                        [
-                                            'model' => $modelF,
-                                            'type' => 'folder',
-                                            'date' => $modelF->data_pubblicazione,
-                                            'nameSurname' => $createdUserProfile->nomeCognome,
-                                            'actionModify' => '/documenti/documenti/update?id=' . $modelF->id,
-                                            'title' => $modelF->titolo,
-                                            'fileUrl' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::getLinkOptions($modelF),
-                                            'actionView' => '/documenti/documenti/view?id=' . $modelF->id,
-                                            'widthColumn' => ($widget->enableSideBar == true) ? 'col-sm-6 col-xs-12' : 'col-md-4 col-sm-6',
-                                        ])
-                                    ?>
-                                <?php }
-                                ?>
-                            <?php } ?>
-                            <?php if ($dataProviderDocuments->count > 0) { ?>
-                                <?php
-                                foreach ($dataProviderDocuments->getModels() as $modelD) {
-                                    /** @var Documenti $modelD */
-                                    /** @var File $mainDocument */
-                                    $mainDocument = $modelD->documentMainFile;
-                                    $relationQuery = $modelD->getCreatedUserProfile();
-                                    $relationCreated = CachedActiveQuery::instance($relationQuery);
-                                    $relationCreated->cache(60);
-                                    $createdUserProfile = $relationCreated->one();
-                                    ?>
-                                    <?=
-                                    ItemDocumentCardWidget::widget(
-                                        [
-                                            'model' => $modelD,
-                                            'type' => (!empty($mainDocument) ? $mainDocument->type : null),
-                                            'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
-                                            'actionModify' => '/documenti/documenti/update?id=' . $modelD->id,
-                                            'date' => $modelD->data_pubblicazione,
-                                            'nameSurname' => $createdUserProfile->nomeCognome,
-                                            'fileName' => (!empty($mainDocument) ? $mainDocument->name : ''),
-                                            'allegatiNum' => $modelD->getFilesByAttributeName('documentAttachments')->count(),
-                                            'title' => $modelD->titolo,
-                                            'actionView' => '/documenti/documenti/view?id=' . $modelD->id,
-                                            'fileUrl' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::getLinkOptions($modelD),
-                                            'link_document' => $modelD->link_document,
-                                            'widthColumn' => ($widget->enableSideBar == true) ? 'col-sm-6 col-xs-12' : 'col-md-4 col-sm-6',
-                                        ])
-                                    ?>
-                                <?php } ?>
-                            <?php } ?>
-                        </div>
+                        <?php
+                        if ($this->beginCache('hierarchical_document_folder_' . $modelF->id, [
+                            'duration' => 86400,
+                            'dependency' => [
+                                'class' => 'yii\caching\DbDependency',
+                                'sql' => 'SELECT updated_at FROM documenti WHERE id = ' . $modelF->id,
+                            ]
+                        ])) {
+                            ?>
+
+                            <?=
+                            ItemDocumentCardWidget::widget(
+                                [
+                                    'model' => $modelF,
+                                    'type' => 'folder',
+                                    'date' => $modelF->data_pubblicazione,
+                                    'nameSurname' => $createdUserProfile->nomeCognome,
+                                    'actionModify' => '/documenti/documenti/update?id=' . $modelF->id,
+                                    'title' => $modelF->titolo,
+                                    'fileUrl' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::getLinkOptions($modelF),
+                                    'actionView' => '/documenti/documenti/view?id=' . $modelF->id,
+                                    'widthColumn' => ($widget->enableSideBar == true) ? 'col-sm-6 col-xs-12' : 'col-md-4 col-sm-6',
+                                ])
+                            ?>
+
+                            <?php
+                            $this->endCache();
+                        }
+                    }
+                    ?>
+                <?php } ?>
+                <?php if ($dataProviderDocuments->count > 0) { ?>
+                    <?php
+                    foreach ($dataProviderDocuments->getModels() as $modelD) {
+                        /** @var Documenti $modelD */
+                        /** @var File $mainDocument */
+                        $mainDocument = $modelD->documentMainFile;
+                        $relationQuery = $modelD->getCreatedUserProfile();
+                        $relationCreated = CachedActiveQuery::instance($relationQuery);
+                        $relationCreated->cache(900);
+                        $createdUserProfile = $relationCreated->one();
+                        ?>
+
+                        <?php
+                        if ($this->beginCache('hierarchical_document_item_' . $modelD->id, [
+                            'duration' => 86400,
+                            'dependency' => [
+                                'class' => 'yii\caching\DbDependency',
+                                'sql' => 'SELECT updated_at FROM documenti WHERE id = ' . $modelD->id,
+                            ]
+                        ])) {
+                        ?>
+                                                                <?=
+                            ItemDocumentCardWidget::widget(
+                                [
+                                    'model' => $modelD,
+                                    'type' => (!empty($mainDocument) ? $mainDocument->type : null),
+                                    'size' => (!empty($mainDocument) ? $mainDocument->formattedSize : null),
+                                    'actionModify' => '/documenti/documenti/update?id=' . $modelD->id,
+                                    'date' => $modelD->data_pubblicazione,
+                                    'nameSurname' => $createdUserProfile->nomeCognome,
+                                    'fileName' => (!empty($mainDocument) ? $mainDocument->name : ''),
+                                    'allegatiNum' => $modelD->getFilesByAttributeName('documentAttachments')->count(),
+                                    'title' => $modelD->titolo,
+                                    'actionView' => '/documenti/documenti/view?id=' . $modelD->id,
+                                    'fileUrl' => \open20\amos\documenti\widgets\graphics\WidgetGraphicsHierarchicalDocumentsBefeCommunity::getLinkOptions($modelD),
+                                    'link_document' => $modelD->link_document,
+                                    'widthColumn' => ($widget->enableSideBar == true) ? 'col-sm-6 col-xs-12' : 'col-md-4 col-sm-6',
+                                ])
+                            ?>
+                            <?php
+                            $this->endCache();
+                        }
+                    }
+
+                    ?>
+                <?php } ?>
+            </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+
+
     <?php Pjax::end(); ?>
-</div>
+

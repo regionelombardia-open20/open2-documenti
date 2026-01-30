@@ -13,7 +13,6 @@
  * @var yii\web\View $this
  * @var open20\amos\documenti\models\Documenti $model
  */
-
 $renderParams = [
     'model' => $model,
     'statsToolbar' => (isset($statsToolbar) ? $statsToolbar : null)
